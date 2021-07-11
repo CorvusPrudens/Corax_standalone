@@ -4,26 +4,30 @@ ANTLR_JAR = ${ANTLR_HOME}/antlr-4.9.1-complete.jar
 ANTLR = java -jar ${ANTLR_JAR}
 GRUN = java org.antlr.v4.gui.TestRig
 
-SRC       = ./src
-GRAMMAR   = Cp.g4
+SRC  = ./src
+ANTLR4 = antlr4
+GRAMMARS = grammars
+POST   = Cp_post
+PRE = Cp_pre
 JAVA_PATH = build
-# GRAMMAR = ./src/Cp.g4
-PYTHON_PATH = ./assembler/gen
-# JAVA_PATH = ./src/build
+BUILD_PATH = ${SRC}/build
 
 ASSEMBLER = ./assembler/assembler.py
 EXAMPLE  = ./examples/test.cp
 
-all: build_python parse_python test_python
+all: build_cpp
 
-test: build_java test_java
+test: post_java_build post_java_test
 
-clean: clean_java clean_python
+test_pre: pre_java_build pre_java_test
 
-.PHONY: all test clean build_python build_java parse_python test_java clean_java clean_python test_python
+.PHONY: all test clean build_cpp build_java parse_python test_java test_python
 
-build_python: ${GRAMMAR}
-	${ANTLR} -Dlanguage=Python3 -o ${PYTHON_PATH} ${GRAMMAR}
+build_cpp: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}.g4
+	$(info Building main compiler...)
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -package Post -o build/${POST} ${POST}.g4;
+	$(info Building pre-compiler...)
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -package Pre -o build/${PRE} ${PRE}.g4;
 
 parse_python: ${ASSEMBLER} ${EXAMPLE}
 	python3 test.py
@@ -31,16 +35,25 @@ parse_python: ${ASSEMBLER} ${EXAMPLE}
 test_python:
 	cd tests; py.test;
 	
-build_java: ${SRC}/${GRAMMAR}
-	cd ${SRC}; ${ANTLR} -o ${JAVA_PATH} ${GRAMMAR}; \
-	javac -d ${JAVA_PATH} ${JAVA_PATH}/Cp*.java
+post_java_build: ${SRC}/${GRAMMARS}/${POST}.g4
+	$(info Building main compiler parse tree...)
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${POST}_java ${POST}.g4; \
+	javac -d ${JAVA_PATH}/${POST}_java ${JAVA_PATH}/${POST}_java/${POST}*.java
 
-test_java: ${SRC}/${EXAMPLE}
-	cd ${SRC}/${JAVA_PATH}; \
-	${GRUN} Cp parse .${EXAMPLE} -gui
+post_java_test: ${SRC}/${EXAMPLE}
+	$(info Executing main compiler parse tree...)
+	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${POST}_java; \
+	${GRUN} ${POST} parse ../../.${EXAMPLE} -gui
 
-clean_python:
-	@ if [ -d "${PYTHON_PATH}" ]; then rm -r ${PYTHON_PATH}; fi
+pre_java_build: ${SRC}/${GRAMMARS}/${PRE}.g4
+	$(info Building pre-compiler parse tree...)
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${PRE}_java ${PRE}.g4; \
+	javac -d ${JAVA_PATH}/${PRE}_java ${JAVA_PATH}/${PRE}_java/${PRE}*.java
 
-clean_java:
-	@ if [ -d "${JAVA_PATH}" ]; then rm -r ${JAVA_PATH}; fi
+pre_java_test: ${SRC}/${EXAMPLE}
+	$(info Executing pre-compiler parse tree...)
+	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${PRE}_java; \
+	${GRUN} ${PRE} parse ../../.${EXAMPLE} -gui
+
+clean:
+	@ if [ -d "${SRC}/${GRAMMARS}/build" ]; then rm -r ${SRC}/${GRAMMARS}/build; fi

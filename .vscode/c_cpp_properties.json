@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/src/grammars/build/**",
+                "${workspaceFolder}/src/compiler",
+                "${workspaceFolder}/src/precompiler",
+                "${workspaceFolder}/src/antlr4/runtime/Cpp/runtime/src/"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
