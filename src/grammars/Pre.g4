@@ -4,14 +4,14 @@ import Corax;
 
 parse      : (directive | pre_expression)* EOF;
 
-scope      : OBRACE (call | variable_init | statement | directive)* CBRACE;
+scope      : OBRACE (variable_init | statement | label | directive)* CBRACE;
 
 directive  : define
            | include
-           | if_
+           | if_pre
            | ifdef
            | ifndef
-           | else_
+           | else_pre
            | endif
            ;
 
@@ -21,17 +21,17 @@ pre_expression : function | variable_init | struct_;
 
 math_pre       : pre_constant (OPERATOR pre_constant)*;
 
-define         : HASH DEFINE NAME expression?;
+define         : HASH DEFINE NAME operand?;
 
 include        : HASH INCLUDE STRING;
 
-if_            : HASH IF (math_pre | math_pre COMPARATOR math_pre);
+if_pre         : HASH IF (math_pre | math_pre COMPARATOR math_pre);
 
 ifdef          : HASH IFDEF NAME;
 
 ifndef         : HASH IFNDEF NAME;
 
-else_          : HASH ELSE;
+else_pre       : HASH ELSE;
 
 endif          : HASH ENDIF;
 

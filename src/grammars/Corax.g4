@@ -4,16 +4,24 @@ grammar Corax;
 
 parse         : (function | variable_init | struct_)* EOF;
 
-scope         : OBRACE (call | variable_init | statement)* CBRACE;
+scope         : OBRACE (variable_init | statement | label)* CBRACE;
+
+label         : NAME COLON;
 
 variable_init : variable_def 
               | variable_dec;
 
-variable_def : type NAME assignment SEMI;
+variable_def : type (assignment | variable list) SEMI;
 
 variable_dec : type NAME array_init? SEMI;
 
-call         : variable OPAREN ( | type | NAME (COMMA NAME)* COMMA?) CPAREN SEMI;
+call         : variable OPAREN ( | type | expression (COMMA expression)* COMMA?) CPAREN SEMI;
+
+array_init   : OBRACKET expression? CBRACKET;
+
+type         : NAME;
+
+list         : (array_init EQUALS OBRACE expression (COMMA expression)* COMMA? CBRACE);
 
 variable     : NAME accessor?;
 
@@ -27,26 +35,50 @@ dot          : DOT variable;
 
 indexer      : OBRACKET expression CBRACKET;
 
-array_init   : OBRACKET expression? CBRACKET;
-
-type         : NAME;
-
-assignment   : single
-             | list
+// macros will be handled by a proper pre-processor
+operand      : NUMBER 
+             | variable
+             | preop
+             | postop
              ;
 
-single       : EQUALS expression;
+preop        : adjacent variable;
 
-list         : (array_init EQUALS OBRACE expression (COMMA expression)* COMMA? CBRACE);
+postop       : variable adjacent;
 
-// macros will be handled by a proper pre-processor
-expression   : NUMBER 
-             | variable (INCREMENT | DECREMENT)?;
+adjacent     : INCREMENT | DECREMENT;
 
-// Obviously this will need expansion
-statement    : variable (EQUALS | COMPOUND) expression (OPERATOR expression)* SEMI;
+statement    : assignment SEMI | if_ | while_ | for_ | call | preop SEMI | postop SEMI | empty;
+
+empty        : SEMI;
+
+assignment   : variable (EQUALS | COMPOUND) expression;
+
+expression   : combination (OPERATOR combination)*;
+
+combination  : operand
+             | subgroup
+             ;
+
+subgroup     : OPAREN operand (OPERATOR operand)* CPAREN;
 
 struct_      : STRUCT NAME EQUALS OBRACE variable+ CBRACE SEMI;
+
+if_          : IF condition (scope | statement) else_*;
+
+else_        : ELSE (IF condition)? (scope | statement);
+
+condition    : OPAREN (expression | conditional) CPAREN;
+
+conditional  : expression COMPARATOR expression;
+
+for_         : FOR for_construct (scope | statement);
+
+for_construct : OPAREN (statement | variable_init) (expression SEMI | conditional SEMI | empty) for_end CPAREN;
+
+for_end       : | assignment | preop | postop;
+
+while_       : WHILE condition (statement | scope);
 
 function     : function_def 
              | function_dec SEMI;
@@ -62,8 +94,6 @@ COMMENT_BLOCK          : '/*' .*? '*/' -> skip;
 TEST_BLOCK             : '$' .*? '$end' -> skip;
 PRAGMA                 : '#pragma';
 
-NAME                   : [a-zA-Z_][a-zA-Z_0-9]*;
-
 OBRACE                 : '{';
 CBRACE                 : '}';
 OBRACKET               : '[';
@@ -72,11 +102,18 @@ OPAREN                 : '(';
 CPAREN                 : ')';
 COMMA                  : ',';
 SEMI                   : ';';
+COLON                  : ':';
 
 ARROW                  : '->';
 DOT                    : '.';
 
 STRUCT                 : 'struct';
+IF                     : 'if';
+ELSE                   : 'else';
+FOR                    : 'for';
+WHILE                  : 'while';
+
+NAME                   : [a-zA-Z_][a-zA-Z_0-9]*;
 
 COMPOUND               : [+\-*/] '=';
 OPERATOR               : [+\-*/%] | '**';
