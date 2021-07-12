@@ -4,17 +4,42 @@
 
 #include "compiler.h"
 
-void PostListener::Process(ANTLRInputStream* stream)
+void CompilerListener::Process(ANTLRInputStream* stream)
 {
-  Cp_postLexer lexer(stream);
+  PostLexer lexer(stream);
   CommonTokenStream tokens(&lexer);
-  Cp_postParser parser(&tokens);
+  PostParser parser(&tokens);
+
+  parse = &parser;
 
   tree::ParseTree *tree = parser.parse();
   tree::ParseTreeWalker::DEFAULT.walk(this, tree);
 }
 
-void PostListener::enterParse(Cp_postParser::ParseContext *ctx)
+void CompilerListener::enterParse(PostParser::ParseContext *ctx)
 {
-  printf("HELLO WORLDY");
+  
+}
+
+void CompilerListener::enterVariable_init(PostParser::Variable_initContext *ctx)
+{
+  auto def = ctx->variable_def();
+  auto dec = ctx->variable_dec();
+
+  if (def != nullptr)
+  {
+    std::cout << def->type()->NAME()->getText() << "\n";
+    std::cout << def->NAME()->getText() << "\n";
+    if (def->assignment()->single() != nullptr)
+      std::cout << def->assignment()->single()->expression()->getText() << "\n";
+    else
+      std::cout << def->assignment()->list()->getText() << "\n";
+  }
+    
+  if (dec != nullptr)
+  {
+    std::cout << dec->type()->NAME()->getText() << "\n";
+    std::cout << dec->NAME()->getText() << "\n";
+  }
+    
 }

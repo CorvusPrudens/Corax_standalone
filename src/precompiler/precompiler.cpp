@@ -4,17 +4,17 @@
 
 #include "precompiler.h"
 
-void PreListener::Process(ANTLRInputStream* stream)
+void PreprocessListener::Process(ANTLRInputStream* stream)
 {
-  Cp_preLexer lexer(stream);
+  PreLexer lexer(stream);
   CommonTokenStream tokens(&lexer);
-  Cp_preParser parser(&tokens);
+  PreParser parser(&tokens);
 
   tree::ParseTree *tree = parser.parse();
   tree::ParseTreeWalker::DEFAULT.walk(this, tree);
 }
 
-void PreListener::enterParse(Cp_preParser::ParseContext *ctx)
+void PreprocessListener::enterParse(PreParser::ParseContext *ctx)
 {
-  printf("HELLO WORLDY PRE");
+  
 }

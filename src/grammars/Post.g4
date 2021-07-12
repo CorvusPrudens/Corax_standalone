@@ -1,6 +1,6 @@
-grammar Cp_post;
+grammar Post;
 
-import Cp;
+import Corax;
 
 // Technically, these shouldn't be present after the
 // precompiler runs, but this makes testing easy

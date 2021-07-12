@@ -1,6 +1,6 @@
-grammar Cp_pre;
+grammar Pre;
 
-import Cp;
+import Corax;
 
 parse      : (directive | pre_expression)* EOF;
 

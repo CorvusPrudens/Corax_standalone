@@ -1,4 +1,4 @@
-grammar Cp;
+grammar Corax;
 
 // parsey
 
@@ -9,11 +9,11 @@ scope         : OBRACE (call | variable_init | statement)* CBRACE;
 variable_init : variable_def 
               | variable_dec;
 
-variable_def : type NAME assignment? SEMI;
+variable_def : type NAME assignment SEMI;
 
 variable_dec : type NAME array_init? SEMI;
 
-call         : variable OPAREN ( | VOID | NAME (COMMA NAME)* COMMA?) CPAREN SEMI;
+call         : variable OPAREN ( | type | NAME (COMMA NAME)* COMMA?) CPAREN SEMI;
 
 variable     : NAME accessor?;
 
@@ -29,11 +29,15 @@ indexer      : OBRACKET expression CBRACKET;
 
 array_init   : OBRACKET expression? CBRACKET;
 
-type         : NAME 
-             | VOID;
+type         : NAME;
 
-assignment   : (EQUALS expression)
-             | (array_init EQUALS OBRACE expression (COMMA expression)* COMMA? CBRACE);
+assignment   : single
+             | list
+             ;
+
+single       : EQUALS expression;
+
+list         : (array_init EQUALS OBRACE expression (COMMA expression)* COMMA? CBRACE);
 
 // macros will be handled by a proper pre-processor
 expression   : NUMBER 
@@ -47,7 +51,7 @@ struct_      : STRUCT NAME EQUALS OBRACE variable+ CBRACE SEMI;
 function     : function_def 
              | function_dec SEMI;
 
-function_dec : type NAME OPAREN ( | VOID | type NAME (COMMA type NAME)* COMMA?) CPAREN;
+function_dec : type NAME OPAREN ( | type | type NAME (COMMA type NAME)* COMMA?) CPAREN;
 
 function_def : function_dec scope;
 
@@ -72,7 +76,6 @@ SEMI                   : ';';
 ARROW                  : '->';
 DOT                    : '.';
 
-VOID                   : 'void';
 STRUCT                 : 'struct';
 
 COMPOUND               : [+\-*/] '=';

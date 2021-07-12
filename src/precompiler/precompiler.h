@@ -1,22 +1,22 @@
 
 #include "antlr4-runtime.h"
-#include "Cp_preLexer.h"
-#include "Cp_preParser.h"
-#include "Cp_preBaseListener.h"
+#include "PreLexer.h"
+#include "PreParser.h"
+#include "PreBaseListener.h"
 
 using namespace antlr4;
 using namespace Pre;
 
-class PreListener : Cp_preBaseListener {
+class PreprocessListener : PreBaseListener {
 
   public:
-    PreListener() {}
-    ~PreListener() {}
+    PreprocessListener() {}
+    ~PreprocessListener() {}
 
     void Process(ANTLRInputStream* stream);
 
   private:
   
-    void enterParse(Cp_preParser::ParseContext *ctx) override;
+    void enterParse(PreParser::ParseContext *ctx) override;
 
 };

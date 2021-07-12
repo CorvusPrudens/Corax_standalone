@@ -58,6 +58,10 @@
     "streambuf": "cpp",
     "thread": "cpp",
     "cinttypes": "cpp",
-    "typeinfo": "cpp"
+    "typeinfo": "cpp",
+    "complex": "cpp",
+    "forward_list": "cpp",
+    "regex": "cpp",
+    "shared_mutex": "cpp"
   }
 }

@@ -6,7 +6,8 @@
                 "${workspaceFolder}/src/grammars/build/**",
                 "${workspaceFolder}/src/compiler",
                 "${workspaceFolder}/src/precompiler",
-                "${workspaceFolder}/src/antlr4/runtime/Cpp/runtime/src/"
+                "${workspaceFolder}/src/antlr4/runtime/Cpp/runtime/src/",
+                "${workspaceFolder}/src/cli11/include/CLI/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

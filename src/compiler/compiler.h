@@ -1,23 +1,30 @@
 
 #include <iostream>
+#include <vector>
 #include "antlr4-runtime.h"
-#include "Cp_postLexer.h"
-#include "Cp_postParser.h"
-#include "Cp_postBaseListener.h"
+#include "PostLexer.h"
+#include "PostParser.h"
+#include "PostBaseListener.h"
+
+#include "variable.h"
 
 using namespace antlr4;
 using namespace Post;
 
-class PostListener : Cp_postBaseListener {
+class CompilerListener : PostBaseListener {
 
   public:
-    PostListener() {}
-    ~PostListener() {}
+    CompilerListener() {}
+    ~CompilerListener() {}
 
     void Process(ANTLRInputStream* stream);
 
+    void enterParse(PostParser::ParseContext* ctx) override;
+    void enterVariable_init(PostParser::Variable_initContext* ctx) override;
+
   private:
 
-    void enterParse(Cp_postParser::ParseContext *ctx) override;
+    std::vector<Variable> globals;
+    PostParser* parse;
 
 };
