@@ -29,11 +29,10 @@ void CompilerListener::enterVariable_init(PostParser::Variable_initContext *ctx)
   if (def != nullptr)
   {
     std::cout << def->type()->NAME()->getText() << "\n";
-    std::cout << def->NAME()->getText() << "\n";
-    if (def->assignment()->single() != nullptr)
-      std::cout << def->assignment()->single()->expression()->getText() << "\n";
-    else
-      std::cout << def->assignment()->list()->getText() << "\n";
+    if (def->assignment() != nullptr)
+    {
+      std::cout << def->assignment()->variable()->NAME()->getText() << "\n";
+    }
   }
     
   if (dec != nullptr)

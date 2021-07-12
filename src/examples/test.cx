@@ -1,5 +1,7 @@
 
 #define MACRO 100
+#include "import.cx"
+#include "import.cx"
 
 int variable;
 int var2 = 0;
