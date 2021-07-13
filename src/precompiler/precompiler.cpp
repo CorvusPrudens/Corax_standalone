@@ -22,7 +22,7 @@ string PreprocessListener::Process(string filename, Error* err, bool top, string
   
   imports.push_back(imp);
 
-  std::cout << imp.parent.native();
+  std::cout << imp.parent.native() << "\n";
 
   std::ifstream stream(imp.parent.native());
   ANTLRInputStream input(stream);
@@ -48,7 +48,7 @@ string PreprocessListener::Process(string filename, Error* err, bool top, string
       {
         // we'll need to add proper path searching
         string temp_p = import.parent.parent_path();
-        std::cout << "import: " << name << ", " << temp_p << "\n";
+        // std::cout << "import: " << name << ", " << temp_p << "\n";
         string imp_code = file_string(temp_p + "/" + name);
         output = replace(output, "#include +\"" + name + "\"", imp_code);
       }

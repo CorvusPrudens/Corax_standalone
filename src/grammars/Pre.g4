@@ -1,49 +1,59 @@
 grammar Pre;
 
-import Corax;
+parse         : anything* EOF;
 
-parse      : (directive | pre_expression)* EOF;
+anything      : directive | anything_else;
 
-scope      : OBRACE (variable_init | statement | label | directive)* CBRACE;
+directive     : include_ | if_ | ifdef_ | ifndef_ | define_;
 
-directive  : define
-           | include
-           | if_pre
-           | ifdef
-           | ifndef
-           | else_pre
-           | endif
-           ;
+include_      : INCLUDE STRING NEWLINE;
 
-pre_constant   : NAME | NUMBER;
+if_           : IF condition? NEWLINE anything* (endif_ | else_);
 
-pre_expression : function | variable_init | struct_;
+ifdef_        : IFDEF NAME NEWLINE anything* (endif_ | else_);
 
-math_pre       : pre_constant (OPERATOR pre_constant)*;
+ifndef_       : IFNDEF NAME NEWLINE anything* (endif_ | else_);
 
-define         : HASH DEFINE NAME operand?;
+else_         : ELSE NEWLINE anything* endif_;
+ 
+endif_        : ENDIF NEWLINE;
 
-include        : HASH INCLUDE STRING;
+define_       : DEFINE NAME anything_else* NEWLINE;
 
-if_pre         : HASH IF (math_pre | math_pre COMPARATOR math_pre);
+condition     : OPAREN (expression || expression COMPARATOR expression); 
 
-ifdef          : HASH IFDEF NAME;
+expression    : (NAME | NUMBER) (OPERATOR (NAME | NUMBER))*;
 
-ifndef         : HASH IFNDEF NAME;
+anything_else : (ANYTHING | NAME | NUMBER | OPERATOR | COMPARATOR | OPAREN | CPAREN | NEWLINE)+;
 
-else_pre       : HASH ELSE;
+// Lexy
 
-endif          : HASH ENDIF;
+STRING        : '"' (~["\r\n] | '""' | '\\"')* '"';
+COMMENT       : '//' ~[\n\r]* [\n\r] -> skip;
+COMMENT_BLOCK : '/*' .*? '*/' -> skip;
+TEST_BLOCK    : '$' .*? '$end' -> skip;
 
+INCLUDE       : '#include';
+IF            : '#if';
+IFDEF         : '#ifdef';
+IFNDEF        : '#ifndef';
+ELSE          : '#else';
+ENDIF         : '#endif';
+DEFINE        : '#define';
 
-// lexy
-HASH                   : '#';
-DEFINE                 : 'define';
-INCLUDE                : 'include';
-IF                     : 'if';
-IFDEF                  : 'ifdef';
-IFNDEF                 : 'ifndef';
-ELSE                   : 'else';
-ENDIF                  : 'endif';
+OPAREN        : '(';
+CPAREN        : ')';
+NEWLINE       : [\n\r];
 
-WHITESPACE             : [ \t\n\r] -> skip;
+NAME          : [a-zA-Z_][a-zA-Z_0-9]*;
+OPERATOR      : [+\-*/%] | '**';
+COMPARATOR    : [><] '='? | '==';
+
+fragment DEC  : [1-9][0-9_]* | '0';
+fragment HEX  : '0x'[0-9A-Fa-f][0-9A-Fa-f_]*;
+fragment BIN  : '0b'[0-1][0-1_]*;
+fragment FLT  : ([1-9][0-9_]* | '0') '.' ([1-9][0-9_]* | '0');
+NUMBER        : DEC | BIN | HEX | FLT;
+
+WHITESPACE    : [ \t] -> skip;
+ANYTHING      : .+?;

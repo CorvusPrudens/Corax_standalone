@@ -1,5 +1,6 @@
 
 #define MACRO 100
+#define OTHER
 #include "import.cx"
 #include "import.cx"
 
@@ -29,6 +30,9 @@ int mult(int a, int b)
 void loop() {
     #ifdef MACRO
     function();
+    #else
+    mult(20, 21);
+    #define NUT
     #endif
     var2 += 1;
 }

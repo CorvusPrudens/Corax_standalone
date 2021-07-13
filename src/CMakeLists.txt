@@ -20,7 +20,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/grammars/build/Pre
     ${CMAKE_SOURCE_DIR}/compiler
     ${CMAKE_SOURCE_DIR}/precompiler
-    ${CMAKE_SOURCE_DIR}/antlr4/runtime/Cpp/runtime/src
+    # ${CMAKE_SOURCE_DIR}/antlr4/runtime/Cpp/runtime/src
     ${CMAKE_SOURCE_DIR}/cli11/include/CLI/
     )
 
@@ -29,7 +29,7 @@ set (SOURCE_FILES
     )
 
 set (INCLUDE_FILES
-    antlr4/runtime/Cpp/runtime/src/antlr4-runtime.h
+    # antlr4/runtime/Cpp/runtime/src/antlr4-runtime.h
 
     colors.h
     error.h
