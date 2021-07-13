@@ -21,6 +21,11 @@ void function() {
         }
 }
 
+int mult(int a, int b)
+{
+    return a * b;
+}
+
 void loop() {
     #ifdef MACRO
     function();

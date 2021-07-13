@@ -6,6 +6,16 @@ parse         : (function | variable_init | struct_)* EOF;
 
 scope         : OBRACE (variable_init | statement | label)* CBRACE;
 
+control       : return_ | break_ | breakall | continue_;
+
+return_       : RETURN expression? SEMI;
+
+break_        : BREAK SEMI;
+
+breakall      : BREAKALL SEMI;
+
+continue_     : CONTINUE SEMI;
+
 label         : NAME COLON;
 
 variable_init : variable_def 
@@ -48,7 +58,7 @@ postop       : variable adjacent;
 
 adjacent     : INCREMENT | DECREMENT;
 
-statement    : assignment SEMI | if_ | while_ | for_ | call | preop SEMI | postop SEMI | empty;
+statement    : assignment SEMI | control | if_ | while_ | for_ | call | preop SEMI | postop SEMI | empty;
 
 empty        : SEMI;
 
@@ -112,6 +122,10 @@ IF                     : 'if';
 ELSE                   : 'else';
 FOR                    : 'for';
 WHILE                  : 'while';
+RETURN                 : 'return';
+BREAK                  : 'break';
+BREAKALL               : 'breakall';
+CONTINUE               : 'continue';
 
 NAME                   : [a-zA-Z_][a-zA-Z_0-9]*;
 

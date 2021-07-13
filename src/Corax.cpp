@@ -1,13 +1,16 @@
 
 #include <iostream>
+#include <sstream>
 
 #include "CLI.hpp"
 #include "antlr4-runtime.h"
 #include "precompiler.h"
 #include "compiler.h"
+#include "error.h"
 
 PreprocessListener pre;
 CompilerListener comp;
+Error err;
 
 int main(int argc, const char* argv[])
 {
@@ -21,15 +24,20 @@ int main(int argc, const char* argv[])
 
   CLI11_PARSE(app, argc, argv);
 
-  std::ifstream stream1;
-  stream1.open(filename);
-  ANTLRInputStream preinput(stream1);
-  pre.Process(&preinput);
+  auto prepped = pre.Process(filename, &err);
 
-  std::ifstream stream2;
-  stream2.open(filename);
-  ANTLRInputStream postinput(stream2);
-  comp.Process(&postinput);
+  std::cout << prepped;
+
+  // std::ifstream stream2;
+  // std::stringstream buffer;
+  // stream2.open(filename);
+  // buffer << stream2.rdbuf();
+
+  // std::cout << buffer.str();
+
+  // stream2.open(filename);
+  // ANTLRInputStream postinput(stream2);
+  // comp.Process(&postinput);
 
   return 0;
 }
