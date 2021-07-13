@@ -3,7 +3,6 @@
 #include <sstream>
 
 #include "CLI.hpp"
-#include "antlr4-runtime.h"
 #include "precompiler.h"
 #include "compiler.h"
 #include "error.h"

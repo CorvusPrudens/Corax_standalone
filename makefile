@@ -15,7 +15,11 @@ BUILD_PATH = ${SRC}/build
 ASSEMBLER = ./assembler/assembler.py
 EXAMPLE  = ./examples/test.cx
 
-all: build_cpp build_compiler
+all: build_compiler
+
+update: update_compiler build_compiler
+
+grammar: build_cpp build_compiler
 
 test: post_java_build post_java_test
 
@@ -29,9 +33,13 @@ build_cpp: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}.g4
 	$(info Building pre-compiler...)
 	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -package Pre -o build/${PRE} ${PRE}.g4;
 
-build_compiler:
-	@ if ![ -d "${SRC}/build" ]; then mkdir ${SRC}/build; fi
-	cd src; cmake . -B build; cd build; make;
+build_compiler: ${SRC}/${GRAMMARS}/build/${POST} ${SRC}/${GRAMMARS}/build/${PRE}
+	@ if ![ -d "${SRC}/build" ]; then $(MAKE) update_compiler; fi
+	cd ${SRC}/build; make;
+
+update_compiler:
+	@ if ![ -d "${SRC}/build" ]; then mkdir ${SRC}/build; 
+	cd src; cmake . -B build; fi
 
 parse_python: ${ASSEMBLER} ${EXAMPLE}
 	python3 test.py
@@ -65,3 +73,6 @@ clean:
 reset: clean
 	@ if [ -d "${SRC}/build" ]; then rm -rf ${SRC}/build; fi
 	@ if [ -d "${SRC}/dist" ]; then rm -rf ${SRC}/dist; fi
+
+run: ${SRC}/build/corax
+	${SRC}/build/corax ${SRC}/examples/test.cx
