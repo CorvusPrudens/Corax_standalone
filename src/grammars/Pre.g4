@@ -4,7 +4,13 @@ parse         : anything* EOF;
 
 anything      : directive | anything_else;
 
-directive     : include_ | if_ | ifdef_ | ifndef_ | define_;
+directive     : include_ 
+              | if_ 
+              | ifdef_ 
+              | ifndef_ 
+              | define_ 
+              | error_
+              ;
 
 include_      : INCLUDE STRING NEWLINE;
 
@@ -20,9 +26,14 @@ endif_        : ENDIF NEWLINE;
 
 define_       : DEFINE NAME anything_else? NEWLINE;
 
+error_        : ERROR STRING;
+
 condition     : OPAREN (expression || expression COMPARATOR expression); 
 
-expression    : (NAME | NUMBER) (OPERATOR (NAME | NUMBER))*;
+expression    : expression OPERATOR expression
+              | NAME
+              | NUMBER
+              ;
 
 anything_else : (ANYTHING | NAME | NUMBER | OPERATOR | COMPARATOR | OPAREN | CPAREN | NEWLINE)+;
 
@@ -40,6 +51,7 @@ IFNDEF        : '#ifndef';
 ELSE          : '#else';
 ENDIF         : '#endif';
 DEFINE        : '#define';
+ERROR         : '#error';
 
 OPAREN        : '(';
 CPAREN        : ')';

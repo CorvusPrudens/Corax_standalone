@@ -1,5 +1,5 @@
 
-#define MACRO 100
+#define MACRO 100 
 #define OTHER
 #include "import.cx"
 #include "import.cx"
@@ -14,6 +14,8 @@ void function() {
     begin:
     variable = var2 + 2 + MACRO;
     variable += (var2 + 1) * 2;
+    variable += 1 + var2 * 2;
+    goto begin;
 
     for (int i = 0; i < variable; i++)
         if (i > 2)
@@ -24,7 +26,9 @@ void function() {
 
 int mult(int a, int b)
 {
+    #if MACRO + 2 > OTHER
     return a * b;
+    #endif
 }
 
 void loop() {
