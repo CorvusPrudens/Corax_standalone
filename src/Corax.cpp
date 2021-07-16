@@ -7,7 +7,7 @@
 #include "compiler.h"
 #include "error.h"
 
-PreprocessListener pre;
+ImportListener pre;
 CompilerListener comp;
 Error err;
 

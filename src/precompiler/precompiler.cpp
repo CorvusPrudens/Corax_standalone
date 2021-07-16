@@ -13,7 +13,11 @@
 
 using std::string;
 
-string PreprocessListener::Process(string filename, Error* err, bool top, string parent)
+//////////////////////////////
+// Import Processor
+//////////////////////////////
+
+string ImportListener::Process(string filename, Error* err, bool top, string parent)
 {
   Import imp;
   imp.name = filename;
@@ -61,16 +65,96 @@ string PreprocessListener::Process(string filename, Error* err, bool top, string
   }
 }
 
-void PreprocessListener::enterParse(PreParser::ParseContext *ctx)
-{
-  
-}
-
-void PreprocessListener::enterInclude(PreParser::IncludeContext *ctx)
+void ImportListener::enterInclude_(PreParser::Include_Context *ctx)
 {
   string filename = ctx->STRING()->getText();
   filename = filename.substr(1, filename.length() - 2);
 
   imports[imports.size() - 1].imports.push_back(filename);
   // string temp = file_string(filename);
+}
+
+//////////////////////////////
+// Preprocessor
+//////////////////////////////
+
+PreprocessListener::Macro 
+PreprocessListener::getMacro(string macro_name)
+{
+  for (auto macro : macros)
+  {
+    if (macro.name == macro_name)
+      return macro;
+  }
+  Macro empty{"", ""};
+  return empty;
+}
+
+void PreprocessListener::handleElse(PreParser::Ifdef_Context *ifdef, bool prev_condition)
+{
+  if (ifdef->else_() != nullptr)
+  {
+    auto else_ = ifdef->else_();
+    if (prev_condition)
+    {
+      // mark this for removal!
+    }
+  }
+}
+
+void PreprocessListener::handleElse(PreParser::Ifndef_Context *ifdef, bool prev_condition)
+{
+  if (ifdef->else_() != nullptr)
+  {
+    auto else_ = ifdef->else_();
+    if (prev_condition)
+    {
+      // mark this for removal!
+    }
+  }
+}
+
+void PreprocessListener::handleElse(PreParser::If_Context *ifdef, bool prev_condition)
+{
+  if (ifdef->else_() != nullptr)
+  {
+    auto else_ = ifdef->else_();
+    if (prev_condition)
+    {
+      // mark this for removal!
+    }
+  }
+}
+
+// Process: Collect macros with this processor, skipping any that are 
+// contained in a false conditional block, then remove any blocks
+// contianed in false conditionals, and finally replace every _NAME_
+// using the normal parser
+void PreprocessListener::enterDirective(PreParser::DirectiveContext *ctx)
+{
+  // #define
+  if (ctx->define_() != nullptr)
+  {
+    auto def = ctx->define_();
+    Macro macro;
+    macro.name = def->NAME()->getText();
+    macro.content = "";
+    if (def->anything_else() != nullptr)
+    {
+      macro.content = def->anything_else()->getText();
+    }
+    macros.push_back(macro);
+  }
+
+  if (ctx->ifdef_() != nullptr)
+  {
+    auto ifdef = ctx->ifdef_();
+    bool defined = isDefined(ifdef->NAME()->getText());
+    if (defined)
+    {
+      
+    }
+
+    handleElse(ifdef, defined);
+  }
 }

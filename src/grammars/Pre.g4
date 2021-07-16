@@ -18,7 +18,7 @@ else_         : ELSE NEWLINE anything* endif_;
  
 endif_        : ENDIF NEWLINE;
 
-define_       : DEFINE NAME anything_else* NEWLINE;
+define_       : DEFINE NAME anything_else? NEWLINE;
 
 condition     : OPAREN (expression || expression COMPARATOR expression); 
 

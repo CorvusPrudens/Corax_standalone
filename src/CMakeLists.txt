@@ -20,7 +20,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/grammars/build/Pre
     ${CMAKE_SOURCE_DIR}/compiler
     ${CMAKE_SOURCE_DIR}/precompiler
-    # ${CMAKE_SOURCE_DIR}/antlr4/runtime/Cpp/runtime/src
+    ${CMAKE_SOURCE_DIR}/antlr4/runtime/Cpp/runtime/src
     ${CMAKE_SOURCE_DIR}/cli11/include/CLI/
     )
 

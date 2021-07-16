@@ -25,7 +25,7 @@ test: post_java_build post_java_test
 
 test_pre: pre_java_build pre_java_test
 
-.PHONY: all test clean build_cpp build_java parse_python test_java build_compiler 
+.PHONY: all test clean build_cpp build_java parse_python test_java build_compiler update grammar
 
 build_cpp: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}.g4
 	$(info Building main compiler...)
@@ -34,12 +34,11 @@ build_cpp: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}.g4
 	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -package Pre -o build/${PRE} ${PRE}.g4;
 
 build_compiler: ${SRC}/${GRAMMARS}/build/${POST} ${SRC}/${GRAMMARS}/build/${PRE}
-	@ if ![ -d "${SRC}/build" ]; then $(MAKE) update_compiler; fi
+	@ if [ ! -d "${SRC}/build" ]; then $(MAKE) update_compiler; fi
 	cd ${SRC}/build; make;
 
 update_compiler:
-	@ if ![ -d "${SRC}/build" ]; then mkdir ${SRC}/build; 
-	cd src; cmake . -B build; fi
+	@ if [ ! -d "${SRC}/build" ]; then mkdir ${SRC}/build; cd ..; cmake . -B build; fi
 
 parse_python: ${ASSEMBLER} ${EXAMPLE}
 	python3 test.py
