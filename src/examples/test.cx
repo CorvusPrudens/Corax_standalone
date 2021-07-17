@@ -4,11 +4,27 @@
 #include "import.cx"
 #include "import.cx"
 
+#define NAME "Corvus Prudens"
+
+#define func(a, b) a ## b
+#define conc(a) func(a, a)
+#define stri(a) # a
+#define WHY(a, b) # a ## b
+
+#define MULTI 100 + 20 * 2 / 5 \
++ 1000
+
 int variable;
 int var2 = 0;
 
 void function();
 void other();
+
+char* str = stri(NAME);
+// This makes it confused haha
+char* oth = WHY(hello, world);
+
+
 
 void function() {
     begin:
@@ -26,8 +42,10 @@ void function() {
 
 int mult(int a, int b)
 {
-    #if MACRO + 2 > OTHER
+    #if ! defined MACRO
     return a * b;
+    #elif defined OTHER
+    return a;
     #endif
 }
 

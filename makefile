@@ -56,10 +56,11 @@ post_java_test: ${SRC}/${EXAMPLE}
 	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${POST}_java; \
 	${GRUN} ${POST} parse ../../.${EXAMPLE} -gui
 
-pre_java_build: ${SRC}/${GRAMMARS}/${PRE}.g4
-	$(info Building pre-compiler parse tree...)
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${PRE}_java ${PRE}.g4; \
-	javac -d ${JAVA_PATH}/${PRE}_java ${JAVA_PATH}/${PRE}_java/${PRE}*.java
+pre_java_build: ${SRC}/${GRAMMARS}/${PRE}Parser.g4
+	$(info Building pre-compiler parser...)
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${PRE}_java ${PRE}Lexer.g4; \
+	${ANTLR} -o ${JAVA_PATH}/${PRE}_java ${PRE}Parser.g4; \
+	cd ${JAVA_PATH}/${PRE}_java; javac ${PRE}*.java
 
 pre_java_test: ${SRC}/${EXAMPLE}
 	$(info Executing pre-compiler parse tree...)
