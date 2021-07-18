@@ -1,6 +1,9 @@
 grammar PreExpr;
 
-expression    : DEFINED expression                  # defined
+statement     : expression NEWLINE;
+
+expression    : DEFINED NAME                        # defined
+              | DEFINED LP NAME RP                  # defined
               | EXCL expression                     # negation 
               | PLUS expression                     # positive
               | MINUS expression                    # negative
@@ -23,7 +26,6 @@ expression    : DEFINED expression                  # defined
               | expression BIT_OR expression        # bit_or
               | expression AND expression           # and
               | expression OR expression            # or
-              | NAME                                # expr_name
               | number                              # const
               | LP expression RP                    # group
               ;
@@ -33,6 +35,7 @@ number        : DEC #dec
               | HEX #hex
               | OCT #oct
               | FLT #flt
+              | SCI #flt
               ;
 
 // lexer
@@ -43,7 +46,7 @@ LP            : '(';
 RP            : ')';
 
 ESCAPED_NEW   : '\\' '\r'? '\n' -> skip;
-NEWLINE       : '\r'? '\n' ->skip;
+NEWLINE       : '\r'? '\n';
 
 // We shouldn't ever see this
 // NEWLINE       : '\r'? '\n' -> mode(DEFAULT_MODE);
@@ -83,5 +86,12 @@ HEX           : '0x'[0-9A-Fa-f][0-9A-Fa-f_]*;
 BIN           : '0b'[0-1][0-1_]*;
 OCT           : '0'[0-7]+;
 FLT           : ([1-9][0-9_]* | '0') '.' ([1-9][0-9_]* | '0');
+
+fragment FD   : ([1-9][0-9]* | '0') '.'?
+              | ([1-9][0-9]* | '0') '.' ([1-9][0-9]* | '0')
+              | '.' ([1-9][0-9]* | '0')
+              ;
+
+SCI           : FD 'e' '-'? [0-9]+;
 
 WHITESPACE    : [ \t] -> channel(HIDDEN);

@@ -6,16 +6,18 @@
 
 #define NAME "Corvus Prudens"
 
-#define func(a, b) a ## b
-#define conc(a) func(a, a)
-#define stri(a) # a
-#define WHY(a, b) # a ## b
+// #define func(a, b) a ## b
+// #define conc(a) func(a, a)
+// #define stri(a) # a
+// #define WHY(a, b) # a ## b
 
-#define RE 100
-#define CURS RE + 100
+int var; #define RE 100
+#define CURS RE + 69
+
+#define YOLO 0x00FF + 00077 + 0b1010 + 1e3
 
 #define MULTI 100 + 20 * 2 / 5 \
-+ 1000
++ 1000 + CURS + YOLO
 
 int variable;
 int var2 = 0;
@@ -23,10 +25,9 @@ int var2 = 0;
 void function();
 void other();
 
-char* str = stri(NAME);
-// This makes it confused haha
-char* oth = WHY(hello, world);
-
+// char* str = stri(NAME);
+// // This makes it confused haha
+// char* oth = WHY(hello, world);
 
 void function() {
     begin:
@@ -48,6 +49,10 @@ int mult(int a, int b)
     return a * b;
     #elif defined OTHER
     return a;
+    #endif
+
+    #if MULTI
+    return a * b;
     #endif
 
     #ifdef SIVE

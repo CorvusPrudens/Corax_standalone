@@ -13,6 +13,7 @@
 
 using std::string;
 using std::regex;
+using antlrcpp::Any;
 
 void LineData::add(int line_in, int line_out, string file)
 {
@@ -59,118 +60,475 @@ void ProcessedCode::removeMacro(string name)
   macros.erase(name);
 }
 
-// Don't forget to make recursive
-string Expander::expand(string text, ProcessedCode* code_)
+Any Evaluator::visitStatement(PreExprParser::StatementContext* ctx)
 {
-  code = code_;
-
-  string output = "";
-
-  ANTLRInputStream input(text);
-  PreLexer lexer(&input);
-  CommonTokenStream tokens_(&lexer);
-  tokens = &tokens_;
-  PreParser parser(tokens);
-
-  PreParser::Anything_exprContext *ctx = parser.anything_expr();
-  // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
-  if (visitChildren(ctx).isNull())
-    std::cout << "NULL\n";
-  else
-    std::cout << "NOT NULL\n";
-  // string expansion = visitChildren(ctx).as<string>();
-
+  visitChildren(ctx);
+  vals.put(ctx, vals.get(ctx->expression()));
   return nullptr;
 }
 
-antlrcpp::Any Expander::visitAnyName(PreParser::AnyNameContext* ctx)
-{
-  string text(tokens->getText(ctx));
-  std::cout << "NAME: " << text << "\n";
-  antlrcpp::Any any(text);
-  return any;
+Any Evaluator::visitDefined(PreExprParser::DefinedContext* ctx) {
+  string name = ctx->NAME()->getText();
+  Expression exp;
+  exp.isValue = true;
+  try
+  {
+    code->getMacro(name);
+    exp.fvalue = 1;
+  }
+  catch (int e)
+  {
+    exp.fvalue = 0;
+  }
+  vals.put(ctx, exp);
+  return nullptr;
 }
 
-antlrcpp::Any Expander::visitAnyPass(PreParser::AnyPassContext* ctx)
-{
-  string text = tokens->getText(ctx);
-  std::cout << "ANY: " << text << "\n";
-  antlrcpp::Any any(text);
+Any Evaluator::visitNegation(PreExprParser::NegationContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  if (!vals.get(ctx->expression()).isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-  std::cout << "ANY: " << any.as<string>() << "\n";
+  Expression child = vals.get(ctx->expression());
+  exp.fvalue = child.fvalue != 0 ? 0 : 1;
 
-  return any;
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitPositive(PreExprParser::PositiveContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  if (!vals.get(ctx->expression()).isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  // this has no effect right??
+  Expression child = vals.get(ctx->expression());
+  exp.fvalue = child.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitNegative(PreExprParser::NegativeContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  if (!vals.get(ctx->expression()).isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  Expression child = vals.get(ctx->expression());
+  exp.fvalue = -child.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitNot(PreExprParser::NotContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  if (!vals.get(ctx->expression()).isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  Expression child = vals.get(ctx->expression());
+  int intermed = child.fvalue;
+  exp.fvalue = ~intermed;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitMult(PreExprParser::MultContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = lhs.fvalue * rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitDiv(PreExprParser::DivContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = lhs.fvalue / rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitMod(PreExprParser::ModContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = (int) lhs.fvalue % (int) rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitPlus(PreExprParser::PlusContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = lhs.fvalue + rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
 }
 
-// antlrcpp::Any Evaluator::visitDirName(PreParser::DirNameContext* ctx)
-// {
-//   string name = ctx->ID()->getText();
-//   string expansion;
-//   try
-//   {
-//     string macro = code->getMacro(name);
-//     // do recursive thing here
-//     string expansion = expandMacros(macro);
+Any Evaluator::visitMinus(PreExprParser::MinusContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-//     return expansion;
-//   }
-//   catch (int e)
-//   {
-//     return name;
-//   }
-// }
+  exp.fvalue = lhs.fvalue - rhs.fvalue;
 
-// antlrcpp::Any Evaluator::visitDirAny(PreParser::DirAnyContext* ctx)
-// {
-//   return ctx->getText();
-// }
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitShift_left(PreExprParser::Shift_leftContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-// // We'll need to fix this later
-// antlrcpp::Any Evaluator::visitDirHash(PreParser::DirHashContext* ctx)
-// {
-//   return ctx->getText();
-// }
+  exp.fvalue = (int) lhs.fvalue << (int) rhs.fvalue;
 
-// // We'll need to fix this later
-// antlrcpp::Any Evaluator::visitDirDHash(PreParser::DirDHashContext* ctx)
-// {
-//   return ctx->getText();
-// }
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitShift_right(PreExprParser::Shift_rightContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-// string Evaluator::expandMacros(string name)
-// {
-//   string output = "";
+  exp.fvalue = (int) lhs.fvalue >> (int) rhs.fvalue;
 
-//   ANTLRInputStream input(name);
-//   PreLexer lexer(&input);
-//   CommonTokenStream tokens(&lexer);
-//   PreParser parser(&tokens);
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitLess(PreExprParser::LessContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-//   PreParser::Anything_elseContext *ctx = parser.anything_else();
-//   // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
-//   string expansion = visitChildren(ctx).as<string>();
+  exp.fvalue = lhs.fvalue < rhs.fvalue;
 
-//   return expansion;
-// }
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitGreater(PreExprParser::GreaterContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-// Expression Evaluator::eval(string expression)
-// {
+  exp.fvalue = lhs.fvalue > rhs.fvalue;
 
-//   string expr = expandMacros(expression);
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitLess_equal(PreExprParser::Less_equalContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-//   std::cout << "Expanded expression: " << expr << "\n";
+  exp.fvalue = lhs.fvalue <= rhs.fvalue;
 
-//   ANTLRInputStream input(expr);
-//   PreLexer lexer(&input);
-//   CommonTokenStream tokens(&lexer);
-//   PreParser parser(&tokens);
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitGreater_equal(PreExprParser::Greater_equalContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
 
-//   PreParser::ExpressionContext *ctx = parser.expression();
-//   // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
-//   visitChildren(ctx);
+  exp.fvalue = lhs.fvalue <= rhs.fvalue;
 
-//   return expr_vals.get(ctx);
-// }
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitEqual(PreExprParser::EqualContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = lhs.fvalue == rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitNot_equal(PreExprParser::Not_equalContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = lhs.fvalue != rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+
+Any Evaluator::visitBit_and(PreExprParser::Bit_andContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = (int) lhs.fvalue & (int) rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitBit_xor(PreExprParser::Bit_xorContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = (int) lhs.fvalue ^ (int) rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitBit_or(PreExprParser::Bit_orContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = (int) lhs.fvalue | (int) rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitAnd(PreExprParser::AndContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = lhs.fvalue && rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitOr(PreExprParser::OrContext* ctx) {
+  Expression exp{true, 0};
+  visitChildren(ctx);
+  Expression lhs = vals.get(ctx->children[0]);
+  Expression rhs = vals.get(ctx->children[2]);
+  if (!lhs.isValue || !rhs.isValue)
+  {
+    exp.isValue = false;
+    vals.put(ctx, exp);
+    return nullptr;
+  }
+
+  exp.fvalue = lhs.fvalue || rhs.fvalue;
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+
+Any Evaluator::visitConst(PreExprParser::ConstContext* ctx) {
+  visitChildren(ctx);
+  vals.put(ctx, vals.get(ctx->number()));
+  return nullptr;
+}
+Any Evaluator::visitGroup(PreExprParser::GroupContext* ctx) {
+  visitChildren(ctx);
+  vals.put(ctx, vals.get(ctx->expression()));
+  return nullptr;
+}
+
+Any Evaluator::visitDec(PreExprParser::DecContext* ctx) {
+  Expression exp{true, 0};
+  
+  exp.fvalue = stoi(ctx->getText());
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitBin(PreExprParser::BinContext* ctx) {
+  Expression exp{true, 0};
+  
+  exp.fvalue = stoi(ctx->getText().substr(2), nullptr, 2);
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitHex(PreExprParser::HexContext* ctx) {
+  Expression exp{true, 0};
+  
+  exp.fvalue = stoi(ctx->getText().substr(2), nullptr, 16);
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitOct(PreExprParser::OctContext* ctx) {
+  Expression exp{true, 0};
+  
+  exp.fvalue = stoi(ctx->getText().substr(1), nullptr, 8);
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+Any Evaluator::visitFlt(PreExprParser::FltContext* ctx) {
+  Expression exp{true, 0};
+  
+  exp.fvalue = stof(ctx->getText());
+
+  vals.put(ctx, exp);
+  return nullptr;
+}
+
+Expression Evaluator::eval(string text, ProcessedCode* code_)
+{
+  code = code_;
+
+  ANTLRInputStream input(text);
+  PreExprLexer lexer(&input);
+  CommonTokenStream tokens_(&lexer);
+  PreExprParser parser(&tokens_);
+  tree::ParseTree *tree = parser.statement();
+  visit(tree);
+
+  Expression result = vals.get(tree);
+
+  // TODO -- make this clearable
+  // vals._annotations.clear();
+
+  return result;
+}
 
 regex Precompiler::id("\\b[A-Za-z_][A-Za-z_0-9]*\\b");
 
@@ -226,38 +584,176 @@ void Precompiler::addText(string text, int line_number)
 
 // }
 
-antlrcpp::Any Precompiler::visitTopDirective(PreParser::TopDirectiveContext* ctx)
+Any Precompiler::visitTopDirective(PreParser::TopDirectiveContext* ctx)
 {
-  string data = tokens->getText(ctx->directive());
-  std::cout << "Directive: " << data << "\n";
-  visitChildren(ctx);
-  return nullptr;
+  return visitChildren(ctx);
 }
 
-antlrcpp::Any Precompiler::visitIf(PreParser::IfContext* ctx)
+Any Precompiler::visitIf_(PreParser::If_Context* ctx)
 {
   // return visitChildren(ctx);
-  string expr = tokens->getText(ctx->if_()->anything_expr());
+  string expr = tokens->getText(ctx->anything_expr());
 
-  std::cout << "If: " << expr << "\n";
+  // std::cout << "If: " << expr << "\n";
   // Evaluator eval(output);
-  Expander expand;
+  string expansion = expandExpr(ctx->anything_expr());
 
-  string out = expand.expand(expr, output);
+  // std::cout << "EXPANSION: " << expansion << "\n";
+
+  Expression exp = eval.eval(expansion + "\n", output);
+
+  if (exp.isValue && exp.fvalue)
+  {
+    
+  }
+
+  // std::cout << "RESULT: " << exp.fvalue << " VALID: " << exp.isValue << "\n";
 
   return nullptr;
 }
 
+Any Precompiler::visitObject(PreParser::ObjectContext* ctx)
+{
+  string expansion = expandExpr(ctx->anything_expr());
+  output->addMacro(ctx->NAME()->getText(), expansion);
+  return nullptr;
+}
+
+// TODO -- this needs more work
+Any Precompiler::visitFunction(PreParser::FunctionContext* ctx)
+{
+
+  // First, verify it really is function-like
+  int p1 = ctx->children[2]->getSourceInterval().a;
+  int p2 = ctx->children[3]->getSourceInterval().a;
+  if (p1 + 1 == p2)
+  {
+    // actually function-like
+    // TODO -- put warning here for now
+  }
+  else
+  {
+    // object-like in disguise
+    string expansion = expandExpr(ctx->anything_expr());
+
+    // int start = ctx->LP()->getSourceInterval().a;
+    // int end = ctx->NEWLINE()->getSourceInterval().a;
+    // string expansion = rewriter->getText(start, end);
+    output->addMacro(ctx->NAME()[0]->getText(), expansion);
+  }
+
+  // string expansion = expandExpr(ctx->anything_expr());
+  // output->addMacro(ctx->define_()->NAME()->getText(), expansion);
+  return nullptr;
+}
+
+string Precompiler::expandExpr(PreParser::Anything_exprContext* ctx)
+{
+  string expansion = "";
+
+  if (ctx != nullptr)
+  {
+    visit(ctx);
+    expansion = rewriter->getText(ctx->getSourceInterval());
+  }
+
+  return expansion;
+}
+
+Any Precompiler::visitAnyName(PreParser::AnyNameContext* ctx)
+{
+  // we only need one level of expansion!
+  try
+  {
+    string replace = output->getMacro(ctx->getText());
+    rewriter->replace(ctx->getStart(), ctx->getStop(), replace);
+  }
+  catch (int e)
+  {
+    // pass
+  }
+
+  return nullptr;
+}
+
+Any Precompiler::visitAnyNum(PreParser::AnyNumContext* ctx)
+{
+  return visit(ctx->children[0]);
+}
+
+Any Precompiler::visitAnyPass(PreParser::AnyPassContext* ctx)
+{
+  return nullptr;
+}
+
+Any Precompiler::visitBin(PreParser::BinContext* ctx)
+{
+
+  int value = stoi(ctx->getText().substr(2), nullptr, 2);
+  string replace = std::to_string(value);
+  rewriter->replace(ctx->getStart(), ctx->getStop(), replace);
+
+  return nullptr;
+}
+
+Any Precompiler::visitHex(PreParser::HexContext* ctx)
+{
+
+  int value = stoi(ctx->getText().substr(2), nullptr, 16);
+  string replace = std::to_string(value);
+  rewriter->replace(ctx->getStart(), ctx->getStop(), replace);
+
+  return nullptr;
+}
+
+Any Precompiler::visitSci(PreParser::SciContext* ctx)
+{
+  int value = stof(ctx->getText());
+  string replace = std::to_string(value);
+  rewriter->replace(ctx->getStart(), ctx->getStop(), replace);
+
+  return nullptr;
+}
+
+Any Precompiler::visitOct(PreParser::OctContext* ctx)
+{
+  int value = stoi(ctx->getText().substr(1), nullptr, 8);
+  string replace = std::to_string(value);
+  rewriter->replace(ctx->getStart(), ctx->getStop(), replace);
+
+  return nullptr;
+}
+
+// TODO -- make error condition for directive that
+// doesn't start on a new line
+Any Precompiler::visitDirective(PreParser::DirectiveContext* ctx)
+{
+  // int start = ctx->getSourceInterval().a;
+  // if (start != 0)
+  // {
+  //   string token = tokens->getTokens(start - 1, start)[0]->getText();
+  //   std::cout << "FOUND NON NEWLINE: " << ctx->getText() << "CHAR: " << (int) token[0] << "\n";
+  // }
+  // if (start != 0 && tokens->getTokens(start - 1, start)[0]->getText() != "\n")
+  // {
+  //   std::cout << "ERROR!!!";
+  //   return nullptr;
+  // }
+  return visitChildren(ctx);
+}
 
 void Precompiler::Process()
 {
-
   std::ifstream stream;
   stream.open(file.native());
   ANTLRInputStream input(stream);
   PreLexer lexer(&input);
   CommonTokenStream tokens_(&lexer);
   tokens = &tokens_;
+
+  TokenStreamRewriter rewriter_(tokens);
+  rewriter = &rewriter_;
+
   // CommonTokenStream tokens(&lexer);
   PreParser parser(&tokens_);
 

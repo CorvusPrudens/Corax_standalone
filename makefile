@@ -23,6 +23,8 @@ test: post_java_build post_java_test
 
 test_pre: pre_java_build pre_java_test
 
+test_expr: expr_java_build expr_java_test
+
 .PHONY: all test clean build_cpp build_java parse_python test_java build_compiler update grammar
 
 grammar: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}Parser.g4 clean
@@ -63,7 +65,7 @@ post_java_test: ${SRC}/${EXAMPLE}
 	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${POST}_java; \
 	${GRUN} ${POST} parse ../../.${EXAMPLE} -gui
 
-pre_java_build: ${SRC}/${GRAMMARS}/${PRE}Parser.g4
+pre_java_build: ${SRC}/${GRAMMARS}/${PRE}.g4
 	$(info Building pre-compiler parser...)
 	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${PRE}_java ${PRE}.g4; \
 	cd ${JAVA_PATH}/${PRE}_java; javac ${PRE}*.java
@@ -72,6 +74,16 @@ pre_java_test: ${SRC}/${EXAMPLE}
 	$(info Executing pre-compiler parse tree...)
 	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${PRE}_java; \
 	${GRUN} ${PRE} parse ../../.${EXAMPLE} -gui
+
+expr_java_build: ${SRC}/${GRAMMARS}/${PRE}Expr.g4
+	$(info Building pre-compiler expression parser...)
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${PRE}Expr_java ${PRE}Expr.g4; \
+	cd ${JAVA_PATH}/${PRE}Expr_java; javac ${PRE}Expr*.java
+
+expr_java_test: ${SRC}/${EXAMPLE}
+	$(info Executing pre-compiler expression parse tree...)
+	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${PRE}Expr_java; \
+	${GRUN} ${PRE}Expr statement ../../../examples/expr.txt -gui
 
 clean:
 	@ if [ -d "${SRC}/${GRAMMARS}/build" ]; then rm -r ${SRC}/${GRAMMARS}/build; fi
