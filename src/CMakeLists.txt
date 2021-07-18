@@ -15,8 +15,8 @@ endif()
 
 add_subdirectory(antlr4/runtime/Cpp)
 add_subdirectory(cli11)
-add_subdirectory(compiler)
-add_subdirectory(precompiler)
+# add_subdirectory(compiler)
+# add_subdirectory(precompiler)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
@@ -30,10 +30,41 @@ include_directories(
 
 set (SOURCE_FILES 
     error.cpp
+    utils.cpp
+
+    ./precompiler/precompiler.cpp
+
+    ./grammars/build/Pre/PreBaseListener.cpp
+    ./grammars/build/Pre/PreBaseVisitor.cpp
+    ./grammars/build/Pre/PreLexer.cpp
+    ./grammars/build/Pre/PreParser.cpp
+    ./grammars/build/Pre/PreListener.cpp
+    ./grammars/build/Pre/PreVisitor.cpp
+
+    ./grammars/build/Pre/PreExprBaseListener.cpp
+    ./grammars/build/Pre/PreExprBaseVisitor.cpp
+    ./grammars/build/Pre/PreExprLexer.cpp
+    ./grammars/build/Pre/PreExprParser.cpp
+    ./grammars/build/Pre/PreExprListener.cpp
+    ./grammars/build/Pre/PreExprVisitor.cpp
+
+    ./compiler/compiler.cpp
+    ./compiler/asm.cpp
+    ./compiler/for.cpp
+    ./compiler/function.cpp
+    ./compiler/label.cpp
+    ./compiler/scope.cpp
+    ./compiler/variable.cpp
+    ./compiler/while.cpp
+
+    ./grammars/build/Post/PostParser.cpp
+    ./grammars/build/Post/PostBaseListener.cpp
+    ./grammars/build/Post/PostListener.cpp
+    ./grammars/build/Post/PostLexer.cpp
     )
 
 set (INCLUDE_FILES
-    # antlr4/runtime/Cpp/runtime/src/antlr4-runtime.h
+    antlr4/runtime/Cpp/runtime/src/antlr4-runtime.h
 
     colors.h
     error.h
@@ -41,13 +72,41 @@ set (INCLUDE_FILES
 
     precompiler/precompiler.h
     compiler/compiler.h
+
+    ./precompiler/sar.h
+
+    ./grammars/build/Pre/PreBaseListener.h
+    ./grammars/build/Pre/PreBaseVisitor.h
+    ./grammars/build/Pre/PreParser.h
+    ./grammars/build/Pre/PreListener.h
+    ./grammars/build/Pre/PreVisitor.h
+    ./grammars/build/Pre/PreLexer.h
+
+    ./grammars/build/Pre/PreExprBaseListener.h
+    ./grammars/build/Pre/PreExprBaseVisitor.h
+    ./grammars/build/Pre/PreExprLexer.h
+    ./grammars/build/Pre/PreExprParser.h
+    ./grammars/build/Pre/PreExprListener.h
+    ./grammars/build/Pre/PreExprVisitor.h
+
+    ./compiler/asm.h
+    ./compiler/for.h
+    ./compiler/function.h
+    ./compiler/label.h
+    ./compiler/scope.h
+    ./compiler/variable.h
+    ./compiler/while.h
+
+    ./grammars/build/Post/PostBaseListener.h
+    ./grammars/build/Post/PostLexer.h
+    ./grammars/build/Post/PostParser.h
+    ./grammars/build/Post/PostListener.h
+
     )
 
 list (APPEND LINK_LIBS
     antlr4_static
     CLI11::CLI11
-    compiler
-    precompiler
     )
 
 # add the executable
