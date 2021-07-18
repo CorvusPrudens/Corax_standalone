@@ -1,0 +1,71 @@
+
+#define MACRO 100 
+#define OTHER
+#include "import.cx"
+#include "import.cx"
+
+#define NAME "Corvus Prudens"
+
+// #define func(a, b) a ## b
+// #define conc(a) func(a, a)
+// #define stri(a) # a
+// #define WHY(a, b) # a ## b
+
+#define RE 100
+#define CURS RE + 69
+
+#define YOLO 0x00FF + 00077 + 0b1010 + 1e3
+
+#define MULTI 100 + 20 * 2 / 5 \
++ 1000 + CURS + YOLO
+
+int variable;
+int var2 = 0;
+
+void function();
+void other();
+
+// char* str = stri(NAME);
+// // This makes it confused haha
+// char* oth = WHY(hello, world);
+
+void function() {
+    begin:
+    variable = var2 + 2 + MACRO;
+    variable += (var2 + 1) * 2;
+    variable += 1 + var2 * 2;
+    goto begin;
+
+    for (int i = 0; i < variable; i++)
+        if (i > 2)
+        {
+            other();
+        }
+}
+
+int mult(int a, int b)
+{
+    #if ! defined MACRO
+    return a * b;
+    #elif defined OTHER
+    return a + MULTI;
+    #endif
+
+    #if MULTI
+    return a * b;
+    #endif
+
+    #ifdef SIVE
+    return a + b;
+    #endif
+}
+
+void loop() {
+    #ifdef MACRO
+    function();
+    #else
+    mult(20, 21);
+    #define NUT
+    #endif
+    var2 += 1;
+}

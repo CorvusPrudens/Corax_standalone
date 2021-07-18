@@ -15,51 +15,6 @@ using std::string;
 using std::regex;
 using antlrcpp::Any;
 
-void LineData::add(int line_in, int line_out, string file)
-{
-  int file_ref;
-  if (f2idx.count(file) == 0)
-  {
-    file_ref = files.size();
-    f2idx[file] = file_ref;
-    files.push_back(file);
-  }
-  else
-  {
-    file_ref = f2idx[file];
-  }
-
-  LineReference data{line_in, line_out, file_ref};
-  lines.push_back(data);
-}
-
-string ProcessedCode::getMacro(string name)
-{
-  if (macros.count(name) == 0)
-  {
-    throw 1;
-  }
-  return macros[name];
-}
-
-void ProcessedCode::addMacro(string name, string text)
-{
-  if (macros.count(name) > 0)
-  {
-    throw 2;
-  }
-  macros[name] = text;
-}
-
-void ProcessedCode::removeMacro(string name)
-{
-  if (macros.count(name) == 0)
-  {
-    throw 3;
-  }
-  macros.erase(name);
-}
-
 Any Evaluator::visitStatement(PreExprParser::StatementContext* ctx)
 {
   visitChildren(ctx);
@@ -589,6 +544,37 @@ Any Precompiler::visitTopDirective(PreParser::TopDirectiveContext* ctx)
   return visitChildren(ctx);
 }
 
+
+// TODO -- add library search path options
+Any Precompiler::visitLibrary(PreParser::LibraryContext* ctx)
+{
+
+  string name = ctx->LIBRARY()->getText();
+  path new_file = name.substr(1, name.size() - 2);
+
+  // this will need to be updated!!
+  new_file = file.parent_path() / new_file;
+
+  Precompiler pre(output, new_file, err);
+  pre.Process();
+
+  return nullptr;
+}
+
+Any Precompiler::visitString(PreParser::StringContext* ctx)
+{
+  string name = ctx->STRING()->getText();
+  path new_file = name.substr(1, name.size() - 2);
+
+  // this will need to be updated!!
+  new_file = file.parent_path() / new_file;
+
+  Precompiler pre(output, new_file, err);
+  pre.Process();
+
+  return nullptr;
+}
+
 Any Precompiler::visitIf_(PreParser::If_Context* ctx)
 {
   // return visitChildren(ctx);
@@ -602,13 +588,122 @@ Any Precompiler::visitIf_(PreParser::If_Context* ctx)
 
   Expression exp = eval.eval(expansion + "\n", output);
 
-  if (exp.isValue && exp.fvalue)
+  if (!exp.isValue)
   {
-    
+    // TODO -- insert error here
+    return nullptr;
   }
 
-  // std::cout << "RESULT: " << exp.fvalue << " VALID: " << exp.isValue << "\n";
+  if (exp.fvalue)
+  {
+    for (auto stuff : ctx->anything())
+      visit(stuff);
+  }
+  else
+  {
+    for (auto alt : ctx->elif_())
+    {
+      visit(alt);
+      if (vals.get(alt).fvalue)
+      {
+        // statement complete
+        return nullptr;
+      }
+    }
+    if (ctx->else_() != nullptr)
+      visit(ctx->else_());
+  }
 
+  return nullptr;
+}
+
+Any Precompiler::visitElif_(PreParser::Elif_Context* ctx)
+{
+  // return visitChildren(ctx);
+  string expr = tokens->getText(ctx->anything_expr());
+
+  // std::cout << "If: " << expr << "\n";
+  // Evaluator eval(output);
+  string expansion = expandExpr(ctx->anything_expr());
+
+  // std::cout << "EXPANSION: " << expansion << "\n";
+
+  Expression exp = eval.eval(expansion + "\n", output);
+
+  vals.put(ctx, exp);
+
+  if (!exp.isValue)
+  {
+    // TODO -- insert error here
+    return nullptr;
+  }
+
+  if (exp.fvalue)
+  {
+    for (auto stuff : ctx->anything())
+      visit(stuff);
+  }
+
+  return nullptr;
+}
+
+Any Precompiler::visitIfdef_(PreParser::Ifdef_Context* ctx)
+{
+  try
+  {
+    output->getMacro(ctx->NAME()->getText());
+    for (auto stuff : ctx->anything())
+      visit(stuff);
+  }
+  catch (int e)
+  {
+    if (ctx->else_() != nullptr)
+      visit(ctx->else_());
+  }
+  return nullptr;
+}
+
+Any Precompiler::visitIfndef_(PreParser::Ifndef_Context* ctx)
+{
+  try
+  {
+    output->getMacro(ctx->NAME()->getText());
+    if (ctx->else_() != nullptr)
+      visit(ctx->else_());
+  }
+  catch (int e)
+  {
+    for (auto stuff : ctx->anything())
+      visit(stuff);
+  }
+  return nullptr;
+}
+
+Any Precompiler::visitUndef_(PreParser::Undef_Context* ctx)
+{
+  output->removeMacro(ctx->NAME()->getText());
+  return nullptr;
+}
+
+// TODO -- add line support
+Any Precompiler::visitLine_(PreParser::Line_Context* ctx)
+{
+  return nullptr;
+}
+
+Any Precompiler::visitError_(PreParser::Error_Context* ctx)
+{
+  // TODO -- insert error
+  string errmess = ctx->STRING()->getText();
+  errmess = errmess.substr(1, errmess.length() - 1);
+  return nullptr;
+}
+
+// TODO -- add pragma support
+Any Precompiler::visitPragma_(PreParser::Pragma_Context* ctx)
+{
+  // string errmess = ctx->STRING()->getText();
+  // errmess = errmess.substr(1, errmess.length() - 1);
   return nullptr;
 }
 
@@ -740,6 +835,36 @@ Any Precompiler::visitDirective(PreParser::DirectiveContext* ctx)
   //   return nullptr;
   // }
   return visitChildren(ctx);
+}
+
+// NOTE -- this is where the line adding happens
+// TODO -- ensure whitespace is preserved to column-specific errors can be addressed
+Any Precompiler::visitAnyNewline(PreParser::AnyNewlineContext* ctx)
+{
+  visitChildren(ctx);
+  string line = tokens->getText(ctx->getSourceInterval());
+  string whitespace = "";
+  auto toks = tokens->getHiddenTokensToLeft(ctx->getStart()->getTokenIndex());
+  for (auto tok : toks)
+  {
+    whitespace += tok->getText();
+  }
+  output->addLine(ctx->start->getLine(), file.native(), line + whitespace);
+  return nullptr;
+}
+
+Any Precompiler::visitAnyEof(PreParser::AnyEofContext* ctx)
+{
+  visitChildren(ctx);
+  string line = tokens->getText(ctx->getSourceInterval()) + "\n";
+  string whitespace = "";
+  auto toks = tokens->getHiddenTokensToLeft(ctx->getStart()->getTokenIndex());
+  for (auto tok : toks)
+  {
+    whitespace += tok->getText();
+  }
+  output->addLine(ctx->start->getLine(), file.native(), whitespace + line);
+  return nullptr;
 }
 
 void Precompiler::Process()

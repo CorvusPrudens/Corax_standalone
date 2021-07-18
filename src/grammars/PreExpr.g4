@@ -94,4 +94,4 @@ fragment FD   : ([1-9][0-9]* | '0') '.'?
 
 SCI           : FD 'e' '-'? [0-9]+;
 
-WHITESPACE    : [ \t] -> channel(HIDDEN);
+WHITESPACE    : [ \t]+ -> channel(HIDDEN);

@@ -33,6 +33,10 @@ int main(int argc, const char* argv[])
 
   pre.Process();
 
+  std::cout << code.code;
+
+  
+
   // std::cout << prepped;
 
   // std::ifstream stream2;

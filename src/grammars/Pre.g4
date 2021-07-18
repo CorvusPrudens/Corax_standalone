@@ -1,6 +1,6 @@
 grammar Pre;
 
-parse         : anything* EOF;
+parse         : anything* EOF?;
 
 anything      : directive      #topDirective
               | anything_else+ #topAny
@@ -21,31 +21,31 @@ include_      : INCLUDE STRING NEWLINE  #string
               | INCLUDE LIBRARY NEWLINE #library
               ;
 
-if_           : IF anything_expr NEWLINE anything* (endif_ | elif_ | else_);
+if_           : IF anything_expr NEWLINE anything* elif_* else_? endif_;
 
-elif_         : ELIF anything_expr NEWLINE anything* (endif_ | elif_ | else_);
+elif_         : ELIF anything_expr NEWLINE anything*;
 
-ifdef_        : IFDEF NAME NEWLINE anything* (endif_ | else_);
+ifdef_        : IFDEF NAME NEWLINE anything* else_? endif_;
 
-ifndef_       : IFNDEF NAME NEWLINE anything* (endif_ | else_);
+ifndef_       : IFNDEF NAME NEWLINE anything* else_? endif_;
 
-else_         : ELSE NEWLINE anything* endif_;
+else_         : ELSE NEWLINE anything*;
  
-endif_        : ENDIF NEWLINE;
+endif_        : ENDIF end;
 
-define_       : DEFINE NAME anything_expr? NEWLINE                                 #object
-              | DEFINE NAME LP NAME (COMMA NAME)* COMMA? RP anything_expr? NEWLINE #function
+define_       : DEFINE NAME anything_expr? end                                 #object
+              | DEFINE NAME LP NAME (COMMA NAME)* COMMA? RP anything_expr? end #function
               ;
 
-undef_        : UNDEF NAME NEWLINE;
+undef_        : UNDEF NAME end;
 
-line_         : LINE number NEWLINE;
+line_         : LINE number end;
 
-error_        : ERROR STRING NEWLINE;
+error_        : ERROR STRING end;
 
-pragma_       : PRAGMA anything* NEWLINE;
+pragma_       : PRAGMA anything* end;
 
-empty_        : HASH NEWLINE;
+empty_        : HASH end;
 
 // These should be converted into simply
 // decimal ints and floats for easy compilation
@@ -74,7 +74,9 @@ anything_opt  : DEFINED NAME        #anyPass
 
 anything_else : anything_expr?  NEWLINE    #anyNewline
               | anything_expr              #anyEof
-              ;  
+              ; 
+
+end           : NEWLINE | EOF;
 
 
 // lexy
@@ -121,5 +123,5 @@ fragment FD   : ([1-9][0-9]* | '0') '.'?
 
 SCI           : FD 'e' '-'? [0-9]+;
 
-WHITESPACE    : [ \t] -> channel(HIDDEN);
+WHITESPACE    : [ \t]+ -> channel(HIDDEN);
 PP            : .+?;

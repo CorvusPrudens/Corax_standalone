@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <unordered_map>
 #include <filesystem>
 #include <regex>
 
@@ -17,6 +16,7 @@
 #include "PreExprBaseVisitor.h"
 
 #include "error.h"
+#include "utils.h"
 
 using namespace antlr4;
 using std::string;
@@ -53,52 +53,6 @@ using antlrcpp::Any;
 //     void handleElse(PreParser::Ifdef_Context *ifdef, bool prev_condition);
 //     void handleElse(PreParser::Ifndef_Context *ifdef, bool prev_condition);
 // };
-
-class Macro {
-
-  public:
-    Macro() {}
-    ~Macro() {}
-
-  private:
-    string text;
-};
-
-// This will permit us to maintain a reference
-// to the original file's line in the output
-class LineData {
-
-  public:
-
-    struct LineReference {
-      int line_out;
-      int line_in;
-      int file_in;
-    };
-
-    void add(int line_in, int line_out, string file);
-    int getLine(int line_out) { return lines[line_out].line_in; }
-    string getFile(int line_out) { return files[lines[line_out].file_in]; }
-
-  private:
-    std::unordered_map<string, int> f2idx;
-    std::vector<string> files;
-    std::vector<LineReference> lines;
-};
-
-// TODO -- add something to allow us to associate
-// ranges of code that were previously macros so
-// error reporting can be a bit more helpful
-struct ProcessedCode {
-  int current_line = 0;
-  LineData lines;
-  std::unordered_map<string, string> macros;
-  string code = "";
-
-  string getMacro(string name);
-  void addMacro(string name, string text);
-  void removeMacro(string name);
-};
 
 struct Expression {
   bool   isValue;
@@ -249,6 +203,8 @@ class Precompiler : PreBaseVisitor {
     TokenStreamRewriter* rewriter;
     Evaluator eval;
 
+    tree::ParseTreeProperty<Expression> vals;
+
     static constexpr int max_expansion = 32;
     string expandMacro(string name, int depth=0);
     
@@ -271,11 +227,26 @@ class Precompiler : PreBaseVisitor {
     Any visitAnyName(PreParser::AnyNameContext* ctx) override;
     Any visitAnyPass(PreParser::AnyPassContext* ctx) override;
     Any visitAnyNum(PreParser::AnyNumContext* ctx) override;
+    Any visitAnyNewline(PreParser::AnyNewlineContext* ctx) override;
+    Any visitAnyEof(PreParser::AnyEofContext* ctx) override;
 
     Any visitDirective(PreParser::DirectiveContext* ctx) override;
+
+    Any visitString(PreParser::StringContext* ctx) override;
+    Any visitLibrary(PreParser::LibraryContext* ctx) override;
 
     Any visitBin(PreParser::BinContext* ctx) override;
     Any visitHex(PreParser::HexContext* ctx) override;
     Any visitSci(PreParser::SciContext* ctx) override;
     Any visitOct(PreParser::OctContext* ctx) override;
+
+    Any visitElif_(PreParser::Elif_Context* ctx) override;
+    Any visitIfdef_(PreParser::Ifdef_Context* ctx) override;
+    Any visitIfndef_(PreParser::Ifndef_Context* ctx) override;
+    Any visitUndef_(PreParser::Undef_Context* ctx) override;
+
+    Any visitLine_(PreParser::Line_Context* ctx) override;
+    Any visitError_(PreParser::Error_Context* ctx) override;
+    Any visitPragma_(PreParser::Pragma_Context* ctx) override;
+
 };
