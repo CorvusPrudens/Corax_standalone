@@ -1,7 +1,7 @@
 lexer grammar PreLexer;
 
 NAME          : [a-zA-Z_][a-zA-Z_0-9]*;
-ANYTHING      : (.|[ \t\r\n])+?;
+ANYTHING      : (.|[ \t\r])+?;
 
 INCLUDE       : '#include' -> mode(PRE);
 IF            : '#if'      -> mode(PRE);
@@ -35,6 +35,7 @@ TEST_BLOCK    : '$' .*? '$end' -> skip;
 
 ID            : [a-zA-Z_][a-zA-Z_0-9]*;
 
+DOUBLE_HASH   : '##';
 HASH          : '#';
 EXCL          : '!';
 PLUS          : '+';

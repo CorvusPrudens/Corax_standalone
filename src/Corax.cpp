@@ -1,13 +1,15 @@
 
 #include <iostream>
 #include <sstream>
+#include <filesystem>
 
 #include "CLI.hpp"
 #include "precompiler.h"
 #include "compiler.h"
 #include "error.h"
 
-ImportListener pre;
+using std::filesystem::path;
+
 CompilerListener comp;
 Error err;
 
@@ -23,9 +25,15 @@ int main(int argc, const char* argv[])
 
   CLI11_PARSE(app, argc, argv);
 
-  auto prepped = pre.Process(filename, &err);
+  path infile = filename;
 
-  std::cout << prepped;
+  ProcessedCode code;
+
+  Precompiler pre(&code, infile, &err);
+
+  pre.Process();
+
+  // std::cout << prepped;
 
   // std::ifstream stream2;
   // std::stringstream buffer;

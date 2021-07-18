@@ -11,6 +11,9 @@
 #define stri(a) # a
 #define WHY(a, b) # a ## b
 
+#define RE 100
+#define CURS RE + 100
+
 #define MULTI 100 + 20 * 2 / 5 \
 + 1000
 
@@ -23,7 +26,6 @@ void other();
 char* str = stri(NAME);
 // This makes it confused haha
 char* oth = WHY(hello, world);
-
 
 
 void function() {
@@ -46,6 +48,10 @@ int mult(int a, int b)
     return a * b;
     #elif defined OTHER
     return a;
+    #endif
+
+    #ifdef SIVE
+
     #endif
 }
 

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
-#include <stdio.h>
+#include <regex>
 
 #include "precompiler.h"
 #include "sar.h"
@@ -12,149 +12,213 @@
 #include "utils.h"
 
 using std::string;
+using std::regex;
 
-//////////////////////////////
-// Import Processor
-//////////////////////////////
-
-string ImportListener::Process(string filename, Error* err, bool top, string parent)
+void LineData::add(int line_in, int line_out, string file)
 {
-  Import imp;
-  imp.name = filename;
-  std::filesystem::path temp_path(parent + '/' + filename);
-  imp.parent = temp_path.lexically_normal();
-  
-  imports.push_back(imp);
+  int file_ref;
+  if (f2idx.count(file) == 0)
+  {
+    file_ref = files.size();
+    f2idx[file] = file_ref;
+    files.push_back(file);
+  }
+  else
+  {
+    file_ref = f2idx[file];
+  }
 
-  std::cout << imp.parent.native() << "\n";
+  LineReference data{line_in, line_out, file_ref};
+  lines.push_back(data);
+}
 
-  std::ifstream stream(imp.parent.native());
-  ANTLRInputStream input(stream);
+string ProcessedCode::getMacro(string name)
+{
+  if (macros.count(name) == 0)
+  {
+    throw 1;
+  }
+  return macros[name];
+}
 
+void ProcessedCode::addMacro(string name, string text)
+{
+  if (macros.count(name) > 0)
+  {
+    throw 2;
+  }
+  macros[name] = text;
+}
+
+void ProcessedCode::removeMacro(string name)
+{
+  if (macros.count(name) == 0)
+  {
+    throw 3;
+  }
+  macros.erase(name);
+}
+
+antlrcpp::Any Evaluator::visitDirName(PreParser::DirNameContext* ctx)
+{
+  string name = ctx->ID()->getText();
+  string expansion;
+  try
+  {
+    string macro = code->getMacro(name);
+    // do recursive thing here
+    string expansion = expandMacros(macro);
+
+    return expansion;
+  }
+  catch (int e)
+  {
+    return name;
+  }
+}
+
+antlrcpp::Any Evaluator::visitDirAny(PreParser::DirAnyContext* ctx)
+{
+  return ctx->getText();
+}
+
+// We'll need to fix this later
+antlrcpp::Any Evaluator::visitDirHash(PreParser::DirHashContext* ctx)
+{
+  return ctx->getText();
+}
+
+// We'll need to fix this later
+antlrcpp::Any Evaluator::visitDirDHash(PreParser::DirDHashContext* ctx)
+{
+  return ctx->getText();
+}
+
+string Evaluator::expandMacros(string name)
+{
+  string output = "";
+
+  ANTLRInputStream input(name);
   PreLexer lexer(&input);
   CommonTokenStream tokens(&lexer);
   PreParser parser(&tokens);
 
-  auto tree = parser.parse();
-  tree::ParseTreeWalker::DEFAULT.walk(this, tree);
+  PreParser::Anything_elseContext *ctx = parser.anything_else();
+  // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
+  string expansion = visitChildren(ctx).as<string>();
 
-  for (auto import : imports[imports.size() - 1].imports)
-  {
-    Process(import, err, false, temp_path.parent_path());
-  }
-
-  if (top)
-  {
-    string output = file_string(filename);
-    for (auto import : imports)
-    {
-      for (auto name : import.imports)
-      {
-        // we'll need to add proper path searching
-        string temp_p = import.parent.parent_path();
-        // std::cout << "import: " << name << ", " << temp_p << "\n";
-        string imp_code = file_string(temp_p + "/" + name);
-        output = replace(output, "#include +\"" + name + "\"", imp_code);
-      }
-    }
-    return output;
-  }
-  else
-  {
-    return "";
-  }
+  return expansion;
 }
 
-void ImportListener::enterInclude_(PreParser::Include_Context *ctx)
+Expression Evaluator::eval(string expression)
 {
-  string filename = ctx->STRING()->getText();
-  filename = filename.substr(1, filename.length() - 2);
 
-  imports[imports.size() - 1].imports.push_back(filename);
-  // string temp = file_string(filename);
+  string expr = expandMacros(expression);
+
+  std::cout << "Expanded expression: " << expr << "\n";
+
+  ANTLRInputStream input(expr);
+  PreLexer lexer(&input);
+  CommonTokenStream tokens(&lexer);
+  PreParser parser(&tokens);
+
+  PreParser::ExpressionContext *ctx = parser.expression();
+  // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
+  visitChildren(ctx);
+
+  return expr_vals.get(ctx);
 }
 
-//////////////////////////////
-// Preprocessor
-//////////////////////////////
+regex Precompiler::id("\\b[A-Za-z_][A-Za-z_0-9]*\\b");
 
-PreprocessListener::Macro 
-PreprocessListener::getMacro(string macro_name)
+void Precompiler::addText(string text, int line_number)
 {
-  for (auto macro : macros)
-  {
-    if (macro.name == macro_name)
-      return macro;
+  if (text == "\n") {
+    output->lines.add(line_number, output->current_line, file.native());
+    output->current_line++;
   }
-  Macro empty{"", ""};
-  return empty;
+  output->current_line++;
 }
 
-void PreprocessListener::handleElse(PreParser::Ifdef_Context *ifdef, bool prev_condition)
+// // To avoid building a bunch of trees...
+// // Recursively expands macros given current symbol table
+// // This will need to be updated for function-like macros!!
+// string Precompiler::expandMacro(string sequence, int depth)
+// {
+
+//   if (depth > max_expansion)
+//   {
+//     // TODO -- add an error message
+//     // simple debug for now
+//     std::cout << "you suck at this";
+//     return sequence;
+//   }
+
+//   string input  = sequence;
+//   string output = sequence.substr();
+//   string previous_token = "";
+
+//   auto b = std::sregex_iterator(input.begin(), input.end(), id);
+//   auto e = std::sregex_iterator();
+//   for (auto iter = b; b != e; ++b)
+//   {
+//     std::smatch match = *iter;
+//     try {
+//       string matched = match.str();
+//       string replacement = getMacro(matched);
+//       replacement = expandMacro(replacement, depth + 1);
+//       output = replace(output, matched, replacement);
+//     } catch (int e) {
+//       // means matched identifier wasn't a macro
+//     }
+//   }
+
+//   return output;
+// }
+
+// Expression Precompiler::evaluateExpr(string expr)
+// {
+//   string expanded = expandMacro(expr);
+
+
+// }
+
+antlrcpp::Any Precompiler::visitTopDirective(PreParser::TopDirectiveContext* ctx)
 {
-  if (ifdef->else_() != nullptr)
-  {
-    auto else_ = ifdef->else_();
-    if (prev_condition)
-    {
-      // mark this for removal!
-    }
-  }
+  string data = tokens->getText(ctx->directive());
+  std::cout << "Directive: " << data << "\n";
+  visitChildren(ctx);
+  return nullptr;
 }
 
-void PreprocessListener::handleElse(PreParser::Ifndef_Context *ifdef, bool prev_condition)
+antlrcpp::Any Precompiler::visitIf(PreParser::IfContext* ctx)
 {
-  if (ifdef->else_() != nullptr)
-  {
-    auto else_ = ifdef->else_();
-    if (prev_condition)
-    {
-      // mark this for removal!
-    }
-  }
+  // return visitChildren(ctx);
+  string expr = tokens->getText(ctx->if_()->expression());
+
+  std::cout << "If: " << expr << "\n";
+  Evaluator eval(output);
+
+  Expression result = eval.eval(expr);
+
+  return nullptr;
 }
 
-void PreprocessListener::handleElse(PreParser::If_Context *ifdef, bool prev_condition)
+
+void Precompiler::Process()
 {
-  if (ifdef->else_() != nullptr)
-  {
-    auto else_ = ifdef->else_();
-    if (prev_condition)
-    {
-      // mark this for removal!
-    }
-  }
-}
 
-// Process: Collect macros with this processor, skipping any that are 
-// contained in a false conditional block, then remove any blocks
-// contianed in false conditionals, and finally replace every _NAME_
-// using the normal parser
-void PreprocessListener::enterDirective(PreParser::DirectiveContext *ctx)
-{
-  // #define
-  if (ctx->define_() != nullptr)
-  {
-    auto def = ctx->define_();
-    Macro macro;
-    macro.name = def->NAME()->getText();
-    macro.content = "";
-    if (def->anything_else() != nullptr)
-    {
-      macro.content = def->anything_else()->getText();
-    }
-    macros.push_back(macro);
-  }
+  std::ifstream stream;
+  stream.open(file.native());
+  ANTLRInputStream input(stream);
+  PreLexer lexer(&input);
+  CommonTokenStream tokens_(&lexer);
+  tokens = &tokens_;
+  // CommonTokenStream tokens(&lexer);
+  PreParser parser(&tokens_);
 
-  if (ctx->ifdef_() != nullptr)
-  {
-    auto ifdef = ctx->ifdef_();
-    bool defined = isDefined(ifdef->NAME()->getText());
-    if (defined)
-    {
-      
-    }
-
-    handleElse(ifdef, defined);
-  }
+  tree::ParseTree *tree = parser.parse();
+  // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
+  visit(tree);
+  
 }

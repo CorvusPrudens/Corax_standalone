@@ -18,10 +18,12 @@ set (SOURCE_FILES
     ./precompiler.cpp
     ../error.cpp
 
-    ../grammars/build/Pre/PreBaseListener.cpp
+    ../grammars/build/Pre/PreParserBaseListener.cpp
+    ../grammars/build/Pre/PreParserBaseVisitor.cpp
     ../grammars/build/Pre/PreLexer.cpp
     ../grammars/build/Pre/PreParser.cpp
-    ../grammars/build/Pre/PreListener.cpp
+    ../grammars/build/Pre/PreParserListener.cpp
+    ../grammars/build/Pre/PreParserVisitor.cpp
     )
 
 set (INCLUDE_FILES
@@ -34,9 +36,11 @@ set (INCLUDE_FILES
     ./precompiler.h
     ./sar.h
 
-    ../grammars/build/Pre/PreBaseListener.h
+    ../grammars/build/Pre/PreParserBaseListener.h
+    ../grammars/build/Pre/PreParserBaseVisitor.h
     ../grammars/build/Pre/PreParser.h
-    ../grammars/build/Pre/PreListener.h
+    ../grammars/build/Pre/PreParserListener.h
+    ../grammars/build/Pre/PreParserVisitor.h
     ../grammars/build/Pre/PreLexer.h
     )
 

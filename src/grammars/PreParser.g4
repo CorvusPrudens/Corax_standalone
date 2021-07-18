@@ -1,16 +1,16 @@
 parser grammar PreParser;
 
 // Lexy
-options {tokenVocab=PreLexer; }
+options { tokenVocab=PreLexer; }
 
 parse         : anything* EOF;
 
-not_directive : ANYTHING+ #ignore
-              | NAME      #top_name
+not_directive : ANYTHING+ #anyPass
+              | NAME      #anyName
               ;
 
-anything      : directive      #top_directive
-              | not_directive+ #top_anything
+anything      : directive      #topDirective
+              | not_directive+ #topAny
               ;
 
 directive     : include_ #include
@@ -21,6 +21,7 @@ directive     : include_ #include
               | undef_   #undef
               | line_    #line
               | error_   #error
+              | empty_   #empty
               ;
 
 include_      : INCLUDE STRING NEWLINE  #string
@@ -49,7 +50,7 @@ error_        : ERROR STRING NEWLINE;
 
 pragma_       : PRAGMA anything* NEWLINE;
 
-empty         : HASH NEWLINE;
+empty_        : HASH NEWLINE;
 
 expression    : DEFINED expression                  # defined
               | EXCL expression                     # negation 
@@ -88,32 +89,33 @@ number        : DEC #dec
 
 anything_else : anything_opt+;
 
-anything_opt  : PP         #any
-              | ID         #name
-              | STRING     #any
-              | number     #any
-              | EXCL       #any
-              | LP         #any
-              | RP         #any
-              | NEWLINE    #any
-              | DEFINED    #any
-              | PLUS       #any
-              | MINUS      #any
-              | NOT        #any
-              | MULT       #any
-              | DIV        #any
-              | MOD        #any
-              | SHIFT_LEFT #any
-              | SHIFT_RIGHT #any
-              | LESS       #any
-              | GREATER    #any
-              | LESS_EQUAL #any
-              | GREATER_EQUAL #any
-              | EQUAL      #any
-              | NOT_EQUAL  #any
-              | AND        #any
-              | OR         #any
-              | BIT_AND    #any
-              | BIT_XOR    #any
-              | BIT_OR     #any
+anything_opt  : PP         #dirAny
+              | ID         #dirName
+              | STRING     #dirAny
+              | number     #dirAny
+              | DOUBLE_HASH#dirDHash
+              | HASH       #dirHash
+              | EXCL       #dirAny
+              | LP         #dirAny
+              | RP         #dirAny
+              | NEWLINE    #dirAny
+              | PLUS       #dirAny
+              | MINUS      #dirAny
+              | NOT        #dirAny
+              | MULT       #dirAny
+              | DIV        #dirAny
+              | MOD        #dirAny
+              | SHIFT_LEFT #dirAny
+              | SHIFT_RIGHT#dirAny
+              | LESS       #dirAny
+              | GREATER    #dirAny
+              | LESS_EQUAL #dirAny
+              | GREATER_EQUAL#dirAny
+              | EQUAL      #dirAny
+              | NOT_EQUAL  #dirAny
+              | AND        #dirAny
+              | OR         #dirAny
+              | BIT_AND    #dirAny
+              | BIT_XOR    #dirAny
+              | BIT_OR     #dirAny
               ;

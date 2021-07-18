@@ -10,7 +10,6 @@
 #include "variable.h"
 
 using namespace antlr4;
-using namespace Post;
 
 class CompilerListener : PostBaseListener {
 

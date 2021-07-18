@@ -19,26 +19,28 @@ all: build_compiler
 
 update: update_compiler build_compiler
 
-grammar: build_cpp build_compiler
-
 test: post_java_build post_java_test
 
 test_pre: pre_java_build pre_java_test
 
 .PHONY: all test clean build_cpp build_java parse_python test_java build_compiler update grammar
 
-build_cpp: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}.g4
+grammar: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}Parser.g4
 	$(info Building main compiler...)
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -package Post -o build/${POST} ${POST}.g4;
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -o build/${POST} ${POST}.g4;
 	$(info Building pre-compiler...)
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -package Pre -o build/${PRE} ${PRE}.g4;
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -o build/${PRE} ${PRE}Lexer.g4;
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -visitor -Dlanguage=Cpp -o build/${PRE} ${PRE}Parser.g4;
+	$(info Done.)
 
+update_and_build: update_compiler build_compiler
+	
 build_compiler: ${SRC}/${GRAMMARS}/build/${POST} ${SRC}/${GRAMMARS}/build/${PRE}
-	@ if [ ! -d "${SRC}/build" ]; then $(MAKE) update_compiler; fi
 	cd ${SRC}/build; make;
 
-update_compiler:
-	@ if [ ! -d "${SRC}/build" ]; then mkdir ${SRC}/build; cd ..; cmake . -B build; fi
+update_compiler: 
+	@ if [ ! -d "${SRC}/build" ]; then mkdir ${SRC}/build; fi
+	cd ${SRC}; cmake . -B build;
 
 parse_python: ${ASSEMBLER} ${EXAMPLE}
 	python3 test.py
