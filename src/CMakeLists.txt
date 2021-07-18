@@ -9,6 +9,10 @@ set(LIB_OUTPUT_DIR "${CMAKE_HOME_DIRECTORY}/build/dist")
 
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wno-attributes")
 
+if(DEBUG)
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -O0")
+endif()
+
 add_subdirectory(antlr4/runtime/Cpp)
 add_subdirectory(cli11)
 add_subdirectory(compiler)

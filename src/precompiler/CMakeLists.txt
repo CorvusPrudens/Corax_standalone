@@ -18,12 +18,19 @@ set (SOURCE_FILES
     ./precompiler.cpp
     ../error.cpp
 
-    ../grammars/build/Pre/PreParserBaseListener.cpp
-    ../grammars/build/Pre/PreParserBaseVisitor.cpp
+    ../grammars/build/Pre/PreBaseListener.cpp
+    ../grammars/build/Pre/PreBaseVisitor.cpp
     ../grammars/build/Pre/PreLexer.cpp
     ../grammars/build/Pre/PreParser.cpp
-    ../grammars/build/Pre/PreParserListener.cpp
-    ../grammars/build/Pre/PreParserVisitor.cpp
+    ../grammars/build/Pre/PreListener.cpp
+    ../grammars/build/Pre/PreVisitor.cpp
+
+    ../grammars/build/Pre/PreExprBaseListener.cpp
+    ../grammars/build/Pre/PreExprBaseVisitor.cpp
+    ../grammars/build/Pre/PreExprLexer.cpp
+    ../grammars/build/Pre/PreExprParser.cpp
+    ../grammars/build/Pre/PreExprListener.cpp
+    ../grammars/build/Pre/PreExprVisitor.cpp
     )
 
 set (INCLUDE_FILES
@@ -36,12 +43,19 @@ set (INCLUDE_FILES
     ./precompiler.h
     ./sar.h
 
-    ../grammars/build/Pre/PreParserBaseListener.h
-    ../grammars/build/Pre/PreParserBaseVisitor.h
+    ../grammars/build/Pre/PreBaseListener.h
+    ../grammars/build/Pre/PreBaseVisitor.h
     ../grammars/build/Pre/PreParser.h
-    ../grammars/build/Pre/PreParserListener.h
-    ../grammars/build/Pre/PreParserVisitor.h
+    ../grammars/build/Pre/PreListener.h
+    ../grammars/build/Pre/PreVisitor.h
     ../grammars/build/Pre/PreLexer.h
+
+    ../grammars/build/Pre/PreExprBaseListener.h
+    ../grammars/build/Pre/PreExprBaseVisitor.h
+    ../grammars/build/Pre/PreExprLexer.h
+    ../grammars/build/Pre/PreExprParser.h
+    ../grammars/build/Pre/PreExprListener.h
+    ../grammars/build/Pre/PreExprVisitor.h
     )
 
 list (APPEND LINK_LIBS

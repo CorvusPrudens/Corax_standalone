@@ -59,75 +59,118 @@ void ProcessedCode::removeMacro(string name)
   macros.erase(name);
 }
 
-antlrcpp::Any Evaluator::visitDirName(PreParser::DirNameContext* ctx)
+// Don't forget to make recursive
+string Expander::expand(string text, ProcessedCode* code_)
 {
-  string name = ctx->ID()->getText();
-  string expansion;
-  try
-  {
-    string macro = code->getMacro(name);
-    // do recursive thing here
-    string expansion = expandMacros(macro);
+  code = code_;
 
-    return expansion;
-  }
-  catch (int e)
-  {
-    return name;
-  }
-}
-
-antlrcpp::Any Evaluator::visitDirAny(PreParser::DirAnyContext* ctx)
-{
-  return ctx->getText();
-}
-
-// We'll need to fix this later
-antlrcpp::Any Evaluator::visitDirHash(PreParser::DirHashContext* ctx)
-{
-  return ctx->getText();
-}
-
-// We'll need to fix this later
-antlrcpp::Any Evaluator::visitDirDHash(PreParser::DirDHashContext* ctx)
-{
-  return ctx->getText();
-}
-
-string Evaluator::expandMacros(string name)
-{
   string output = "";
 
-  ANTLRInputStream input(name);
+  ANTLRInputStream input(text);
   PreLexer lexer(&input);
-  CommonTokenStream tokens(&lexer);
-  PreParser parser(&tokens);
+  CommonTokenStream tokens_(&lexer);
+  tokens = &tokens_;
+  PreParser parser(tokens);
 
-  PreParser::Anything_elseContext *ctx = parser.anything_else();
+  PreParser::Anything_exprContext *ctx = parser.anything_expr();
   // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
-  string expansion = visitChildren(ctx).as<string>();
+  if (visitChildren(ctx).isNull())
+    std::cout << "NULL\n";
+  else
+    std::cout << "NOT NULL\n";
+  // string expansion = visitChildren(ctx).as<string>();
 
-  return expansion;
+  return nullptr;
 }
 
-Expression Evaluator::eval(string expression)
+antlrcpp::Any Expander::visitAnyName(PreParser::AnyNameContext* ctx)
 {
-
-  string expr = expandMacros(expression);
-
-  std::cout << "Expanded expression: " << expr << "\n";
-
-  ANTLRInputStream input(expr);
-  PreLexer lexer(&input);
-  CommonTokenStream tokens(&lexer);
-  PreParser parser(&tokens);
-
-  PreParser::ExpressionContext *ctx = parser.expression();
-  // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
-  visitChildren(ctx);
-
-  return expr_vals.get(ctx);
+  string text(tokens->getText(ctx));
+  std::cout << "NAME: " << text << "\n";
+  antlrcpp::Any any(text);
+  return any;
 }
+
+antlrcpp::Any Expander::visitAnyPass(PreParser::AnyPassContext* ctx)
+{
+  string text = tokens->getText(ctx);
+  std::cout << "ANY: " << text << "\n";
+  antlrcpp::Any any(text);
+
+  std::cout << "ANY: " << any.as<string>() << "\n";
+
+  return any;
+}
+
+// antlrcpp::Any Evaluator::visitDirName(PreParser::DirNameContext* ctx)
+// {
+//   string name = ctx->ID()->getText();
+//   string expansion;
+//   try
+//   {
+//     string macro = code->getMacro(name);
+//     // do recursive thing here
+//     string expansion = expandMacros(macro);
+
+//     return expansion;
+//   }
+//   catch (int e)
+//   {
+//     return name;
+//   }
+// }
+
+// antlrcpp::Any Evaluator::visitDirAny(PreParser::DirAnyContext* ctx)
+// {
+//   return ctx->getText();
+// }
+
+// // We'll need to fix this later
+// antlrcpp::Any Evaluator::visitDirHash(PreParser::DirHashContext* ctx)
+// {
+//   return ctx->getText();
+// }
+
+// // We'll need to fix this later
+// antlrcpp::Any Evaluator::visitDirDHash(PreParser::DirDHashContext* ctx)
+// {
+//   return ctx->getText();
+// }
+
+// string Evaluator::expandMacros(string name)
+// {
+//   string output = "";
+
+//   ANTLRInputStream input(name);
+//   PreLexer lexer(&input);
+//   CommonTokenStream tokens(&lexer);
+//   PreParser parser(&tokens);
+
+//   PreParser::Anything_elseContext *ctx = parser.anything_else();
+//   // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
+//   string expansion = visitChildren(ctx).as<string>();
+
+//   return expansion;
+// }
+
+// Expression Evaluator::eval(string expression)
+// {
+
+//   string expr = expandMacros(expression);
+
+//   std::cout << "Expanded expression: " << expr << "\n";
+
+//   ANTLRInputStream input(expr);
+//   PreLexer lexer(&input);
+//   CommonTokenStream tokens(&lexer);
+//   PreParser parser(&tokens);
+
+//   PreParser::ExpressionContext *ctx = parser.expression();
+//   // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
+//   visitChildren(ctx);
+
+//   return expr_vals.get(ctx);
+// }
 
 regex Precompiler::id("\\b[A-Za-z_][A-Za-z_0-9]*\\b");
 
@@ -194,12 +237,13 @@ antlrcpp::Any Precompiler::visitTopDirective(PreParser::TopDirectiveContext* ctx
 antlrcpp::Any Precompiler::visitIf(PreParser::IfContext* ctx)
 {
   // return visitChildren(ctx);
-  string expr = tokens->getText(ctx->if_()->expression());
+  string expr = tokens->getText(ctx->if_()->anything_expr());
 
   std::cout << "If: " << expr << "\n";
-  Evaluator eval(output);
+  // Evaluator eval(output);
+  Expander expand;
 
-  Expression result = eval.eval(expr);
+  string out = expand.expand(expr, output);
 
   return nullptr;
 }

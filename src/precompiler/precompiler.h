@@ -8,8 +8,13 @@
 #include "antlr4-runtime.h"
 #include "PreLexer.h"
 #include "PreParser.h"
-#include "PreParserVisitor.h"
-#include "PreParserBaseVisitor.h"
+#include "PreVisitor.h"
+#include "PreBaseVisitor.h"
+
+#include "PreExprLexer.h"
+#include "PreExprParser.h"
+#include "PreExprVisitor.h"
+#include "PreExprBaseVisitor.h"
 
 #include "error.h"
 
@@ -99,33 +104,61 @@ struct Expression {
   double fvalue;
 };
 
-class Evaluator : PreParserBaseVisitor {
-  public:
-    Evaluator(ProcessedCode* code_) {
-      code = code_;
-    }
-    ~Evaluator() {}
+// class Evaluator : PreExprBaseVisitor {
+//   public:
+//     Evaluator(ProcessedCode* code_) {
+//       code = code_;
+//     }
+//     ~Evaluator() {}
 
-    Expression eval(string expression);
-    string     expandMacros(string name);
+//     Expression eval(string expression);
+//     string     expandMacros(string name);
+
+//   private:
+//     tree::ParseTreeProperty<Expression> expr_vals;
+//     tree::ParseTreeProperty<string> macro_strings;
+//     ProcessedCode* code;
+    
+//     antlrcpp::Any visitDirName(PreParser::DirNameContext* ctx) override;
+//     antlrcpp::Any visitDirAny(PreParser::DirAnyContext* ctx) override;
+//     antlrcpp::Any visitDirHash(PreParser::DirHashContext* ctx) override;
+//     antlrcpp::Any visitDirDHash(PreParser::DirDHashContext* ctx) override;
+// };
+
+class Expander : PreBaseVisitor {
+  public:
+    Expander() {}
+    ~Expander() {}
+
+    string expand(string text, ProcessedCode* code_);
 
   private:
     tree::ParseTreeProperty<Expression> expr_vals;
     tree::ParseTreeProperty<string> macro_strings;
     ProcessedCode* code;
+    CommonTokenStream* tokens;
     
-    antlrcpp::Any visitDirName(PreParser::DirNameContext* ctx) override;
-    antlrcpp::Any visitDirAny(PreParser::DirAnyContext* ctx) override;
-    antlrcpp::Any visitDirHash(PreParser::DirHashContext* ctx) override;
-    antlrcpp::Any visitDirDHash(PreParser::DirDHashContext* ctx) override;
+    antlrcpp::Any visitAnyName(PreParser::AnyNameContext* ctx) override;
+    antlrcpp::Any visitAnyPass(PreParser::AnyPassContext* ctx) override;
+    antlrcpp::Any defaultResult() {
+      string temp = "";
+      antlrcpp::Any any(temp);
+      return any;
+    }
+    antlrcpp::Any aggregateResult(antlrcpp::Any left, const antlrcpp::Any &nextResult) {
+      string s1 = left.as<string>();
+      string s2 = nextResult.as<string>();
+      string concat(s1 + s2);
+      antlrcpp::Any any(concat);
+      return any;
+    }
 };
 
-class Precompiler : PreParserBaseVisitor {
+class Precompiler : PreBaseVisitor {
 
   public:
 
     Precompiler(ProcessedCode* processed, path file_, Error* err_)
-    : evaluator(processed)
     { 
       output = processed;
       file = file_;
@@ -147,7 +180,6 @@ class Precompiler : PreParserBaseVisitor {
 
     void addText(string text, int line_number);
 
-    Evaluator evaluator;
     ProcessedCode* output;
     path file;
 
