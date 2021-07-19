@@ -35,6 +35,11 @@ int main(int argc, const char* argv[])
 
   std::cout << code.code;
 
+  for (auto name : code.macros)
+  {
+    std::cout << name.first << ", " << name.second << "\n";
+  }
+
 
 
   // std::cout << prepped;

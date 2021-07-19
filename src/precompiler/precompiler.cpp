@@ -556,7 +556,7 @@ Any Precompiler::visitLibrary(PreParser::LibraryContext* ctx)
   new_file = file.parent_path() / new_file;
 
   Precompiler pre(output, new_file, err);
-  pre.Process();
+  pre.Process(depth + 1);
 
   return nullptr;
 }
@@ -570,7 +570,7 @@ Any Precompiler::visitString(PreParser::StringContext* ctx)
   new_file = file.parent_path() / new_file;
 
   Precompiler pre(output, new_file, err);
-  pre.Process();
+  pre.Process(depth + 1);
 
   return nullptr;
 }
@@ -838,25 +838,12 @@ Any Precompiler::visitDirective(PreParser::DirectiveContext* ctx)
 }
 
 // NOTE -- this is where the line adding happens
-// TODO -- ensure whitespace is preserved to column-specific errors can be addressed
+// TODO -- the current whitespace solution is a bit of a hack and
+// can result in erroneous messages! (single line comment eats newline)
 Any Precompiler::visitAnyNewline(PreParser::AnyNewlineContext* ctx)
 {
   visitChildren(ctx);
-  string line = tokens->getText(ctx->getSourceInterval());
-  string whitespace = "";
-  auto toks = tokens->getHiddenTokensToLeft(ctx->getStart()->getTokenIndex());
-  for (auto tok : toks)
-  {
-    whitespace += tok->getText();
-  }
-  output->addLine(ctx->start->getLine(), file.native(), line + whitespace);
-  return nullptr;
-}
-
-Any Precompiler::visitAnyEof(PreParser::AnyEofContext* ctx)
-{
-  visitChildren(ctx);
-  string line = tokens->getText(ctx->getSourceInterval()) + "\n";
+  string line = rewriter->getText(ctx->getSourceInterval());
   string whitespace = "";
   auto toks = tokens->getHiddenTokensToLeft(ctx->getStart()->getTokenIndex());
   for (auto tok : toks)
@@ -867,8 +854,29 @@ Any Precompiler::visitAnyEof(PreParser::AnyEofContext* ctx)
   return nullptr;
 }
 
-void Precompiler::Process()
+Any Precompiler::visitAnyEof(PreParser::AnyEofContext* ctx)
 {
+  visitChildren(ctx);
+  string line = rewriter->getText(ctx->getSourceInterval()) + "\n";
+  string whitespace = "";
+  auto toks = tokens->getHiddenTokensToLeft(ctx->getStart()->getTokenIndex());
+  for (auto tok : toks)
+  {
+    whitespace += tok->getText();
+  }
+  output->addLine(ctx->start->getLine(), file.native(), whitespace + line);
+  return nullptr;
+}
+
+void Precompiler::Process(int depth_)
+{
+  depth = depth_;
+  if (depth > max_include_depth)
+  {
+    // TODO -- make proper error
+    std::cout << "Import depth exceeded " << max_include_depth << ". Possible recursive imports.\n";
+    exit(1);
+  }
   std::ifstream stream;
   stream.open(file.native());
   ANTLRInputStream input(stream);
@@ -885,5 +893,4 @@ void Precompiler::Process()
   tree::ParseTree *tree = parser.parse();
   // tree::ParseTreeWalker::DEFAULT.visit(this, tree);
   visit(tree);
-  
 }

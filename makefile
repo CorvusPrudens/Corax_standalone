@@ -29,7 +29,7 @@ test_expr: expr_java_build expr_java_test
 
 grammar: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}Parser.g4 clean
 	$(info Building main compiler...)
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -Dlanguage=Cpp -o build/${POST} ${POST}.g4;
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -visitor -Dlanguage=Cpp -o build/${POST} ${POST}.g4;
 	$(info Building pre-compiler...)
 	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -visitor -Dlanguage=Cpp -o build/${PRE} ${PRE}.g4;
 	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -visitor -Dlanguage=Cpp -o build/${PRE} ${PRE}Expr.g4;

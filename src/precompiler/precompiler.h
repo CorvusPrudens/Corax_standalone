@@ -195,7 +195,7 @@ class Precompiler : PreBaseVisitor {
 
     ~Precompiler() {}
 
-    void Process();
+    void Process(int depth_ = 0);
 
   private:
 
@@ -206,6 +206,7 @@ class Precompiler : PreBaseVisitor {
     tree::ParseTreeProperty<Expression> vals;
 
     static constexpr int max_expansion = 32;
+    static constexpr int max_include_depth = 32;
     string expandMacro(string name, int depth=0);
     
     Expression evaluateExpr(string expr);
@@ -217,6 +218,8 @@ class Precompiler : PreBaseVisitor {
 
     static regex id;
     Error* err;
+
+    int depth = 0;
 
     string expandExpr(PreParser::Anything_exprContext* ctx);
 
