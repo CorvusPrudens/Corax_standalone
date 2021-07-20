@@ -23,7 +23,9 @@ test: post_java_build post_java_test
 
 test_pre: pre_java_build pre_java_test
 
-test_expr: expr_java_build expr_java_test
+test_expr_pre: pre_expr_java_build pre_expr_java_test
+
+test_expr_post: post_expr_java_build post_expr_java_test
 
 .PHONY: all test clean build_cpp build_java parse_python test_java build_compiler update grammar
 
@@ -75,15 +77,25 @@ pre_java_test: ${SRC}/${EXAMPLE}
 	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${PRE}_java; \
 	${GRUN} ${PRE} parse ../../.${EXAMPLE} -gui
 
-expr_java_build: ${SRC}/${GRAMMARS}/${PRE}Expr.g4
+pre_expr_java_build: ${SRC}/${GRAMMARS}/${PRE}Expr.g4
 	$(info Building pre-compiler expression parser...)
 	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${PRE}Expr_java ${PRE}Expr.g4; \
 	cd ${JAVA_PATH}/${PRE}Expr_java; javac ${PRE}Expr*.java
 
-expr_java_test: ${SRC}/${EXAMPLE}
+pre_expr_java_test: ${SRC}/${EXAMPLE}
 	$(info Executing pre-compiler expression parse tree...)
 	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${PRE}Expr_java; \
 	${GRUN} ${PRE}Expr statement ../../../examples/expr.txt -gui
+
+post_expr_java_build: ${SRC}/${GRAMMARS}/CoraxExpr.g4
+	$(info Building pre-compiler expression parser...)
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/CoraxExpr_java CoraxExpr.g4; \
+	cd ${JAVA_PATH}/CoraxExpr_java; javac CoraxExpr*.java
+
+post_expr_java_test: ${SRC}/${EXAMPLE}
+	$(info Executing pre-compiler expression parse tree...)
+	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/CoraxExpr_java; \
+	${GRUN} CoraxExpr expression ../../../examples/pexpr.txt -gui
 
 clean:
 	@ if [ -d "${SRC}/${GRAMMARS}/build" ]; then rm -r ${SRC}/${GRAMMARS}/build; fi
