@@ -4,10 +4,13 @@ grammar CoraxExpr;
 // TODO -- this needs to be consolidated as much as possible to avoid
 // ridiculously long trees
               // Primary
-expr_primary  : IDENTIFIER                   # identifier
-              | NUMBER                       # const
-              | STRING                       # string
-              | '(' expression ')'           # group
+expr_primary  : IDENTIFIER                         # identifier
+              | NUMBER                             # const
+              | STRING                             # string
+              | '(' expression ')'                 # group
+              // TODO -- actually, postfix needs to be separated from
+              // unary, because something like this "func++()" could be
+              // interpreted as a call
               // POSTFIX
               | expr_primary '[' expression ']'    # indexing
               | expr_primary '(' arg_expr_list ')' # call // (go to page 70)
@@ -16,16 +19,16 @@ expr_primary  : IDENTIFIER                   # identifier
               | expr_primary '++'                  # incrementPost
               | expr_primary '--'                  # decrementPost
               // UNARY
-              | '++' expr_primary              # incrementUnary
-              | '--' expr_primary              # decrementUnary
-              | '&' expr_cast               # address
-              | '*' expr_cast               # dereference
-              | '+' expr_cast               # positive 
-              | '-' expr_cast               # negative
-              | '~' expr_cast               # not
-              | '!' expr_cast               # negation
-              | 'sizeof' expr_primary          # sizeof
-              | 'sizeof' '(' typename ')'    # sizeofType
+              | '++' expr_primary                  # incrementUnary
+              | '--' expr_primary                  # decrementUnary
+              | '&' expr_cast                      # address
+              | '*' expr_cast                      # dereference
+              | '+' expr_cast                      # positive 
+              | '-' expr_cast                      # negative
+              | '~' expr_cast                      # not
+              | '!' expr_cast                      # negation
+              | 'sizeof' expr_primary              # sizeof
+              | 'sizeof' '(' typename ')'          # sizeofType
               ;
 
               // postfix
@@ -66,16 +69,16 @@ expr_arith    : expr_cast                    # exprMulti
               | expr_arith '/' expr_arith    # div
               | expr_arith '%' expr_arith    # mod
               // Aditive
-              | expr_arith '+' expr_arith      # plus
-              | expr_arith '-' expr_arith      # minus
+              | expr_arith '+' expr_arith    # plus
+              | expr_arith '-' expr_arith    # minus
               // Bitwise shift
               | expr_arith '<<' expr_arith   # shiftLeft
               | expr_arith '>>' expr_arith   # shiftRight
               // Relational
-              | expr_arith '<' expr_arith  # less
-              | expr_arith '>' expr_arith  # greater
-              | expr_arith '<=' expr_arith # less_equal
-              | expr_arith '>=' expr_arith # greater_equal
+              | expr_arith '<' expr_arith    # less
+              | expr_arith '>' expr_arith    # greater
+              | expr_arith '<=' expr_arith   # less_equal
+              | expr_arith '>=' expr_arith   # greater_equal
               // Equality
               | expr_arith '==' expr_arith   # equal
               | expr_arith '!=' expr_arith   # notEqual
@@ -89,11 +92,11 @@ expr_arith    : expr_cast                    # exprMulti
               ;
 
               // Ternary
-expr_tern     : expr_arith                     # exprTern
+expr_tern     : expr_arith                              # exprTern
               | expr_arith '?' expression ':' expr_tern # ternary
               ;
 
-expr_assi     : expr_tern                   # exprAssi
+expr_assi     : expr_tern                     # exprAssi
               | expr_primary '=' expr_assi    # assignment
               | expr_primary '*=' expr_assi   # assignmentMult
               | expr_primary '/=' expr_assi   # assignmentDiv
@@ -107,7 +110,7 @@ expr_assi     : expr_tern                   # exprAssi
               | expr_primary '|=' expr_assi   # assignmentBitOr
               ;
 
-arg_expr_list : expr_assi                   # exprList
+arg_expr_list : expr_assi                       # exprList
               | arg_expr_list ',' arg_expr_list # arglist
               ;
 

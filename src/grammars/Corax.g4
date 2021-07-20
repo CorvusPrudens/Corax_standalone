@@ -8,16 +8,19 @@ import CoraxExpr;
 parse       : extern_decl+;
 
 // TODO -- ensure this is all refactored into antlr-idiomatic code
-declaration : decl_spec (init_decl init_decl_list?)? ';';
+// NOTE -- the rule says init_decl is optional, but that doesn't make sense to me
+declaration : decl_spec init_decl init_decl_list? ';';
 
 init_decl_list : (',' init_decl)+ ','?;
 
 // Declaration specifiers
-decl_spec   : storage_spec decl_spec?
-            | type_spec decl_spec?
-            | type_qual decl_spec?
-            | func_spec decl_spec?
-            ;
+decl_spec   : decl_spec_item+;
+
+decl_spec_item : storage_spec # storageSpecifier
+               | type_spec    # typeSpecifier
+               | type_qual    # typeQualifier
+               | func_spec    # funcSpecifier
+               ;
 
 init_decl   : declarator
             | declarator '=' initializer
@@ -148,43 +151,75 @@ designator    : '[' expr_const ']'
               | '.' IDENTIFIER
               ;
 
-statement     : stat_labeled
-              | stat_compound
-              | stat_expr
-              | stat_select
-              | stat_iter
-              | stat_jump
-              ;
-
-stat_labeled  : IDENTIFIER ':' statement
-              | 'case' expr_const ':' statement
-              | 'default' ':' statement
-              ;
-
-stat_compound : '{' block_item* '}';
+// TODO -- this should probably go into one big rule with labels
+// statement     : stat_labeled
+//               | stat_compound
+//               | stat_expr
+//               | stat_select
+//               | stat_iter
+//               | stat_jump
+//               ;
 
 block_item    : declaration
               | statement
               ;
 
-stat_expr     : expression? ';';
-
-stat_select   : 'if' '(' expression ')' statement
+// TODO -- label these
+                // Labeled statement
+statement     : IDENTIFIER ':' statement
+              | 'case' expr_const ':' statement
+              | 'default' ':' statement
+              // Compound statement
+              | stat_compound
+              // Expression statement
+              | expression? ';'
+              // Selection statement
+              | 'if' '(' expression ')' statement
               | 'if' '(' expression ')' statement 'else' statement
               | 'switch' '(' expression ')' statement
-              ;
-
-stat_iter     : 'while' '(' expression ')' statement
+              // Iteration statement
+              | 'while' '(' expression ')' statement
               | 'do' statement 'while' '(' expression ')' ';'
               | 'for' '(' expression? ';' expression? ';' expression? ')' statement
               | 'for' '(' declaration expression? ';' expression? ')' statement
-              ;
-
-stat_jump     : 'goto' IDENTIFIER ';'
+              // Jump statement
+              | 'goto' IDENTIFIER ';'
               | 'continue' ';'
               | 'break' ';'
               | 'return' expression? ';'
               ;
+
+stat_compound : '{' block_item* '}';
+
+// stat_labeled  : IDENTIFIER ':' statement
+//               | 'case' expr_const ':' statement
+//               | 'default' ':' statement
+//               ;
+
+// stat_compound : '{' block_item* '}';
+
+// block_item    : declaration
+//               | statement
+//               ;
+
+// stat_expr     : expression? ';';
+
+// stat_select   : 'if' '(' expression ')' statement
+//               | 'if' '(' expression ')' statement 'else' statement
+//               | 'switch' '(' expression ')' statement
+//               ;
+
+// stat_iter     : 'while' '(' expression ')' statement
+//               | 'do' statement 'while' '(' expression ')' ';'
+//               | 'for' '(' expression? ';' expression? ';' expression? ')' statement
+//               | 'for' '(' declaration expression? ';' expression? ')' statement
+//               ;
+
+// stat_jump     : 'goto' IDENTIFIER ';'
+//               | 'continue' ';'
+//               | 'break' ';'
+//               | 'return' expression? ';'
+        //       ;
 
 extern_decl   : func_def | declaration;
 

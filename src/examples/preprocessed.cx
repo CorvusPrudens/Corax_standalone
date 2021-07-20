@@ -8,7 +8,7 @@ void uart(int val)
 
 void orphan()
 {
-  int a;
+  unsigned int a;
   a = 1;
 }
 
