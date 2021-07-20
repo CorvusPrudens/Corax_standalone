@@ -1,0 +1,24 @@
+
+int global = 100;
+
+void uart(int val)
+{
+  // how to interface with hardware? inlining?
+}
+
+void orphan()
+{
+  int a;
+  a = 1;
+}
+
+void loop()
+{
+
+  int start = global;
+
+  start = add(start, 1) * 2;
+
+  uart(start);
+
+}

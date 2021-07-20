@@ -8,7 +8,9 @@ import CoraxExpr;
 parse       : extern_decl+;
 
 // TODO -- ensure this is all refactored into antlr-idiomatic code
-declaration : decl_spec (init_decl (',' init_decl)* ',')? ';';
+declaration : decl_spec (init_decl init_decl_list?)? ';';
+
+init_decl_list : (',' init_decl)+ ','?;
 
 // Declaration specifiers
 decl_spec   : storage_spec decl_spec?
@@ -109,14 +111,29 @@ typename      : spec_qual_list abstract_decl?;
 //               | pointer? direct_abstr
 //               ;
 
+// abstract_decl : pointer
+//               | pointer abstract_decl
+//               | '(' abstract_decl ')'
+//               | abstract_single+
+//               ;
+
+// abstract_single : '[' type_qual* expr_assi? ']'
+//                 | '[' 'static' type_qual* expr_assi ']'
+//                 | '[' type_qual* 'static' expr_assi ']'
+//                 | '[' '*' ']'
+//                 | '(' param_type_list ')'
+//                 ;
+
+// NOTE -- this may not totally capture the
+// rules, since they tend towards mutual left-recursion
 abstract_decl : pointer
-              | pointer? abstract_decl
+              | pointer abstract_decl
               | '(' abstract_decl ')' 
-              | abstract_decl? '[' type_qual* expr_assi? ']'
-              | abstract_decl? '[' 'static' type_qual* expr_assi ']'
-              | abstract_decl? '[' type_qual* 'static' expr_assi ']'
-              | abstract_decl? '[' '*' ']'
-              | abstract_decl? '(' param_type_list ')'
+              | abstract_decl '[' type_qual* expr_assi? ']'
+              | abstract_decl '[' 'static' type_qual* expr_assi ']'
+              | abstract_decl '[' type_qual* 'static' expr_assi ']'
+              | abstract_decl '[' '*' ']'
+              | abstract_decl '(' param_type_list ')'
               ;
 
 initializer   : expr_assi
@@ -144,7 +161,7 @@ stat_labeled  : IDENTIFIER ':' statement
               | 'default' ':' statement
               ;
 
-stat_compound : '{' block_item+ '}';
+stat_compound : '{' block_item* '}';
 
 block_item    : declaration
               | statement

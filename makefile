@@ -65,7 +65,7 @@ post_java_build: ${SRC}/${GRAMMARS}/${POST}.g4
 post_java_test: ${SRC}/${EXAMPLE}
 	$(info Executing main compiler parse tree...)
 	@ cd ${SRC}/${GRAMMARS}/${JAVA_PATH}/${POST}_java; \
-	${GRUN} ${POST} parse ../../.${EXAMPLE} -gui
+	${GRUN} ${POST} parse ../../../examples/preprocessed.cx -gui
 
 pre_java_build: ${SRC}/${GRAMMARS}/${PRE}.g4
 	$(info Building pre-compiler parser...)
