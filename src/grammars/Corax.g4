@@ -9,7 +9,7 @@ parse       : extern_decl+;
 
 // TODO -- ensure this is all refactored into antlr-idiomatic code
 // NOTE -- the rule says init_decl is optional, but that doesn't make sense to me
-declaration : decl_spec init_decl init_decl_list? ';';
+declaration    : decl_spec init_decl init_decl_list? ';';
 
 init_decl_list : (',' init_decl)+ ','?;
 
@@ -19,7 +19,7 @@ decl_spec   : decl_spec_item+;
 decl_spec_item : storage_spec # storageSpecifier
                | type_spec    # typeSpecifier
                | type_qual    # typeQualifier
-               | func_spec    # funcSpecifier
+               | 'inline'     # funcSpecifier
                ;
 
 init_decl   : declarator
@@ -80,9 +80,6 @@ type_qual    : 'const'
              | 'restrict'
              | 'volatile'
              ;
-
-// can probably be factored out
-func_spec    : 'inline';
 
 declarator   : pointer? direct_decl;
 

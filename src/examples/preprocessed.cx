@@ -1,6 +1,13 @@
 
 int global = 100;
 
+// Pointer to const integer
+const int* ptr1;
+// const pointer to integer
+int* const ptr2;
+
+int* ptr = (int*) 0x05;
+
 void uart(int val)
 {
   // how to interface with hardware? inlining?
@@ -9,7 +16,10 @@ void uart(int val)
 void orphan()
 {
   unsigned int a;
-  a = 1;
+  int b = 20;
+  a = 1 + 2 * b;
+
+  a = 1 + 2 * *ptr;
 }
 
 void loop()

@@ -1,22 +1,50 @@
 
+#include "type.h"
 #include <string>
+
+using std::string;
 
 class Variable {
 
   public:
-    Variable(std::string t, std::string n, std::string a = "") {
+
+    enum Initializer {
+      NONE = 0,
+      CONST,
+      VARIABLE,
+    };
+
+    Variable(Type t, string n) {
       name = n;
       type = t;
-      assignment = a;
-      initialized = a != "";
+      init = Initializer::NONE;
     }
     ~Variable() {}
 
-    bool initialized;
+    // A string represents the const initialization so we can
+    // convert it later to its numeric representation without a 
+    // loss of information
+    void setInitializer(string s)
+    {
+      constInit = s;
+      init = Initializer::CONST;
+    }
 
-    std::string name;
-    std::string type;
-    std::string assignment;
+    void setInitializer(Variable v)
+    {
+      assignment = v;
+      init = Initializer::VARIABLE;
+    }
+
+    bool isConst()
+    {
+      return type.isConst();
+    }
+
+    string name;
+    Type type;
+    string constInit;
+    Variable assignment;
 
   private:
 
