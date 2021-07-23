@@ -99,8 +99,8 @@ pointer : pointer_item+
 
 pointer_item : '*' type_qual*;
 
-param_type_list: param_list ','? 
-               | param_list ',' '...'
+param_type_list: param_list ','?       # paramList
+               | param_list ',' '...'  # paramListElipse
                ;
 
 param_list: param_decl (',' param_decl)*;
@@ -161,33 +161,33 @@ designator    : '[' expr_const ']'
 //               | stat_jump
 //               ;
 
-block_item    : declaration
-              | statement
+block_item    : declaration # blockDecl
+              | statement   # blockStat
               ;
 
 // TODO -- label these
                 // Labeled statement
-statement     : IDENTIFIER ':' statement
-              | 'case' expr_const ':' statement
-              | 'default' ':' statement
+statement     : IDENTIFIER ':' statement                                              # statLabeled
+              | 'case' expr_const ':' statement                                       # statCase
+              | 'default' ':' statement                                               # statDefault
               // Compound statement
-              | stat_compound
+              | stat_compound                                                         # statCompound
               // Expression statement
-              | expression? ';'
+              | expression? ';'                                                       # statExpr
               // Selection statement
-              | 'if' '(' expression ')' statement
-              | 'if' '(' expression ')' statement 'else' statement
-              | 'switch' '(' expression ')' statement
+              | 'if' '(' expression ')' statement                                     # statIf
+              | 'if' '(' expression ')' statement 'else' statement                    # statIfElse
+              | 'switch' '(' expression ')' statement                                 # statSwitch
               // Iteration statement
-              | 'while' '(' expression ')' statement
-              | 'do' statement 'while' '(' expression ')' ';'
-              | 'for' '(' expression? ';' expression? ';' expression? ')' statement
-              | 'for' '(' declaration expression? ';' expression? ')' statement
+              | 'while' '(' expression ')' statement                                  # statWhile
+              | 'do' statement 'while' '(' expression ')' ';'                         # statDoWhile
+              | 'for' '(' expression? ';' expression? ';' expression? ')' statement   # statFor
+              | 'for' '(' declaration expression? ';' expression? ')' statement       # statFor2
               // Jump statement
-              | 'goto' IDENTIFIER ';'
-              | 'continue' ';'
-              | 'break' ';'
-              | 'return' expression? ';'
+              | 'goto' IDENTIFIER ';'                                                 # statGoto
+              | 'continue' ';'                                                        # statContinue
+              | 'break' ';'                                                           # statBreak
+              | 'return' expression? ';'                                              # statReturn
               ;
 
 stat_compound : '{' block_item* '}';

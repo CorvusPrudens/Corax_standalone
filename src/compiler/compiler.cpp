@@ -24,6 +24,13 @@ Any Compiler::visitParse(PostParser::ParseContext* ctx)
   globalTable = new SymbolTable(nullptr, SymbolTable::Scope::GLOBAL);
   currentScope = globalTable;
   visitChildren(ctx);
+
+  for (auto id : globalTable->symbols)
+  {
+    std::cout << id.name << "\n";
+  }
+
+  return nullptr;
 }
 
 Any Compiler::visitTopDecl(PostParser::TopDeclContext* ctx)
@@ -31,52 +38,122 @@ Any Compiler::visitTopDecl(PostParser::TopDeclContext* ctx)
   // TODO -- things like type specifiers need a simple key-value type 
   // so they can be added to the correct part of the declaration!!
   // (this can be a parse tree property)
-  currentId = new Identifier;
-  currentType = new Type;
+  auto tempid = new Identifier;
+  currentId.push_back(tempid);
   visitChildren(ctx);
-  currentScope->AddSymbol(currentId->copy());
+  currentScope->AddSymbol(tempid->copy());
+  currentId.pop_back();
+
+  return nullptr;
 }
+
+// ignoring declarations after parameter list for now
+Any Compiler::visitTopFunc(PostParser::TopFuncContext* ctx)
+{
+  auto tempid = new Identifier;
+  currentId.push_back(tempid);
+
+  currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
+  
+  visit(ctx->func_def()->decl_spec());
+  visit(ctx->func_def()->declarator());
+
+  tempid->type = Identifier::IdType::FUNCTION;
+  globalTable->AddSymbol(tempid->copy());
+  currentId.pop_back();
+
+  visit(ctx->func_def()->stat_compound());
+
+  currentScope = currentScope->parent;
+
+  return nullptr;
+}
+
+Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
+{
+  auto list = ctx->param_list()->param_decl();
+  for (auto item : list)
+  {
+    auto ti = new Identifier;
+    currentId.push_back(ti);
+
+    visit(item);
+
+    currentScope->AddSymbol(ti->copy());
+    currentId.pop_back();
+  }
+  return nullptr;
+}
+
+Any Compiler::visitBlockDecl(PostParser::BlockDeclContext* ctx)
+{
+  auto ti = new Identifier;
+  currentId.push_back(ti);
+
+  visitChildren(ctx);
+
+  currentScope->AddSymbol(ti->copy());
+  currentId.pop_back();
+  return nullptr;
+}
+
+Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
+{
+  currentScope = new SymbolTable(currentScope, SymbolTable::Scope::LOCAL);
+  visitChildren(ctx);
+  currentScope = currentScope->parent;
+  return nullptr;
+}
+
+// Any Compiler::visitBlockStat(PostParser::BlockStatContext* ctx)
+// {
+//   currentScope = new SymbolTable(currentScope, SymbolTable::Scope::LOCAL);
+//   visitChildren(ctx);
+//   currentScope = currentScope->parent;
+// }
 
 Any Compiler::visitTypeStd(PostParser::TypeStdContext* ctx)
 {
-  currentType->type_specifiers.push_back(ctx->getText());
+  currentId.back()->dataType.type_specifiers.push_back(ctx->getText());
   return nullptr;
 }
 
 Any Compiler::visitTypeStructUnion(PostParser::TypeStructUnionContext* ctx)
 {
   // currentId.type = Identifier::IdType::
-  visitChildren(ctx);
+  return visitChildren(ctx);
 }
 
 Any Compiler::visitTypeEnum(PostParser::TypeEnumContext* ctx)
 {
-  visitChildren(ctx);
+  return visitChildren(ctx);
 }
 
 Any Compiler::visitTypeTypedef(PostParser::TypeTypedefContext* ctx)
 {
-  currentType->name = ctx->IDENTIFIER()->getText();
+  currentId.back()->dataType.name = ctx->IDENTIFIER()->getText();
   return nullptr;
 }
 
 Any Compiler::visitFuncSpecifier(PostParser::FuncSpecifierContext* ctx)
 {
-  currentType->function = Type::FunctionSpecifier::INLINE;
+  currentId.back()->dataType.function = Type::FunctionSpecifier::INLINE;
   return nullptr;
 }
 
 Any Compiler::visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx)
 {
-  if (currentType->storageSet) {
+  if (currentId.back()->dataType.storageSet) {
     // TODO -- put error here
   }
-  currentType->setStorage(ctx->getText());
+  currentId.back()->dataType.setStorage(ctx->getText());
+
+  return nullptr;
 }
 
 Any Compiler::visitDirId(PostParser::DirIdContext* ctx)
 {
-  currentId->name = ctx->getText();
+  currentId.back()->name = ctx->getText();
   return nullptr;
 }
 
@@ -87,7 +164,9 @@ Any Compiler::visitPointer_item(PostParser::Pointer_itemContext* ctx)
   {
     p.setQualifier(qual->getText());
   }
-  currentType->pointers.push_back(p);
+  currentId.back()->dataType.pointers.push_back(p);
+
+  return nullptr;
 }
 
 // void CompilerListener::Process(ANTLRInputStream* stream)

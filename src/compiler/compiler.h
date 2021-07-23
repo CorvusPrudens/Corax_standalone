@@ -31,13 +31,15 @@ class Compiler : PostBaseVisitor {
     ProcessedCode* code;
     SymbolTable* globalTable;
     SymbolTable* currentScope;
-    Identifier* currentId;
-    Type* currentType;
+    std::vector<Identifier*> currentId;
 
     Any visitParse(PostParser::ParseContext* ctx) override;
     Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
     Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
-    Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
+    Any visitBlockDecl(PostParser::BlockDeclContext* ctx) override;
+    // Any visitBlockStat(PostParser::BlockStatContext* ctx) override;
+    Any visitStat_compound(PostParser::Stat_compoundContext* ctx) override;
+    Any visitParamList(PostParser::ParamListContext* ctx) override;
     Any visitTypeStd(PostParser::TypeStdContext* ctx) override;
     Any visitTypeStructUnion(PostParser::TypeStructUnionContext* ctx) override;
     Any visitTypeEnum(PostParser::TypeEnumContext* ctx) override;

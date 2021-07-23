@@ -102,11 +102,11 @@ bool MatchingVector(std::vector<T> v1, std::vector<T> v2)
     return false;
   
   int matched[s1];
-  for (int i = 0; i < size; i++)
+  for (int i = 0; i < s1; i++)
   {
     T item = v1[i];
     bool unique = true;
-    for (int j = 0; j < size; j++)
+    for (int j = 0; j < s1; j++)
     {
       if (item == v2[j])
       {
@@ -123,6 +123,20 @@ bool MatchingVector(std::vector<T> v1, std::vector<T> v2)
       }
     }
     if (!unique)
+      return false;
+  }
+  return true;
+}
+
+template<typename T>
+bool EqualVectors(std::vector<T> v1, std::vector<T> v2)
+{
+  if (v1.size() != v2.size())
+    return false;
+  
+  for (int i = 0; i < v1.size(); i++)
+  {
+    if (v1[i] != v2[i])
       return false;
   }
   return true;

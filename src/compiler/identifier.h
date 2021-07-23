@@ -1,3 +1,6 @@
+#ifndef IDENTIFIER_H
+#define IDENTIFIER_H
+
 #include "type.h"
 
 #include <string>
@@ -26,23 +29,14 @@ class Identifier {
     Identifier() {}
     ~Identifier() {}
 
-    bool operator==(Identifier other)
+    bool operator==(Identifier& other)
     {
-      switch(type)
-      {
-        case IdType::FUNCTION:
-          return (other.type == IdType::FUNCTION && function_ == other.function_);
-        case IdType::STRUCT:
-          return (other.type == IdType::STRUCT && struct_ == other.struct_);
-        case IdType::UNION:
-          return (other.type == IdType::UNION && union_ == other.union_);
-        case IdType::VARIABLE:
-          return (other.type == IdType::VARIABLE && variable_ == other.variable_);
-        case IdType::ARRAY:
-          return (other.type == IdType::ARRAY && array_ == other.array_);
-        default:
-          return false;
-      }
+      return equal(other);
+    }
+
+    bool operator!=(Identifier& other)
+    {
+      return !equal(other);
     }
 
     Identifier copy()
@@ -50,38 +44,106 @@ class Identifier {
       Identifier newid;
       newid.type = type;
       newid.name = name;
-      switch(type)
-      {
-        case IdType::FUNCTION:
-          newid.function_ = function_;
-          break;
-        case IdType::STRUCT:
-          newid.struct_ = struct_;
-          break;
-        case IdType::UNION:
-          newid.union_ = union_;
-          break;
-        case IdType::VARIABLE:
-          newid.variable_ = variable_;
-          break;
-        case IdType::ARRAY:
-          newid.array_ = array_;
-          break;
-        default:
-          newid.variable_ = variable_;
-          break;
-      }
+      // We can optimize this later
+      newid.dataType = dataType;
+      newid.returnType = returnType;
+      newid.initialized = initialized;
+      newid.members = members;
+      newid.initializers = initializers;
+      // switch(type)
+      // {
+      //   case IdType::FUNCTION:
+      //     newid.function_ = function_;
+      //     break;
+      //   case IdType::STRUCT:
+      //     newid.struct_ = struct_;
+      //     break;
+      //   case IdType::UNION:
+      //     newid.union_ = union_;
+      //     break;
+      //   case IdType::VARIABLE:
+      //     newid.variable_ = variable_;
+      //     break;
+      //   case IdType::ARRAY:
+      //     newid.array_ = array_;
+      //     break;
+      //   default:
+      //     newid.variable_ = variable_;
+      //     break;
+      // }
       return newid;
     }
 
     IdType type;
     string name;
 
-    Function function_;
-    Struct   struct_;
-    Union    union_;
-    Variable variable_;
-    Array    array_;
+    Type dataType;
+    Type returnType;
+    bool initialized;
+
+    // For struct / union / function
+    std::vector<Identifier> members;
+
+    // For array
+    std::vector<string> initializers;
+
+    // for variable
+    string assignment;
+
+    private:
+
+      bool equal(Identifier& other)
+      {
+        switch(type)
+        {
+          case IdType::FUNCTION:
+            {
+              bool equal = other.type == IdType::FUNCTION;
+              equal = equal && other.dataType == dataType;
+              equal = equal && other.returnType == returnType;
+              equal = equal && EqualVectors(other.members, members);
+              return equal;
+            }
+          case IdType::STRUCT:
+            {
+              bool equal = other.type == IdType::STRUCT;
+              equal = equal && other.dataType == dataType;
+              equal = equal && EqualVectors(other.members, members);
+              return equal;
+            }
+          case IdType::UNION:
+            {
+              bool equal = other.type == IdType::UNION;
+              equal = equal && other.dataType == dataType;
+              equal = equal && EqualVectors(other.members, members);
+              return equal;
+            }
+          case IdType::VARIABLE:
+            {
+              bool equal = other.type == IdType::VARIABLE;
+              equal = equal && other.dataType == dataType;
+              equal = equal && other.assignment == assignment;
+              return equal;
+            }
+          case IdType::ARRAY:
+            {
+              bool equal = other.type == IdType::FUNCTION;
+              equal = equal && other.dataType == dataType;
+              equal = equal && other.returnType == returnType;
+              equal = equal && EqualVectors(other.members, members);
+              return equal;
+            }
+          default:
+            return false;
+        }
+      }
+
+
+    // Function function_;
+    // Struct   struct_;
+    // Union    union_;
+    // Variable variable_;
+    // Array    array_;
 
     // Type dataType;
     // Type returnType;
@@ -93,212 +155,214 @@ class Identifier {
     // std::vector<Identifier> args;
 };
 
-class Struct {
+// class Struct {
 
-  public:
+//   public:
 
-    // Struct(Type t, string n) {
-    //   name = n;
-    //   type = t;
-    //   initialized = false;
-    // }
-    Struct() {}
-    ~Struct() {}
+//     // Struct(Type t, string n) {
+//     //   name = n;
+//     //   type = t;
+//     //   initialized = false;
+//     // }
+//     Struct() {}
+//     ~Struct() {}
 
-    bool isConst()
-    {
-      return type.isConst();
-    }
+//     bool isConst()
+//     {
+//       return type.isConst();
+//     }
 
-    void setMembers(std::vector<Identifier> m) {
-      members = m;
-      initialized = true;
-    }
+//     void setMembers(std::vector<Identifier> m) {
+//       members = m;
+//       initialized = true;
+//     }
 
-    bool operator==(Struct& other) {
-      return type == other.type && MatchingVector(members, other.members);
-    }
+//     bool operator==(Struct& other) {
+//       return type == other.type && MatchingVector(members, other.members);
+//     }
 
-    string name;
-    Type type;
-    std::vector<Identifier> members;
-    bool initialized;
+//     string name;
+//     Type type;
+//     std::vector<Identifier> members;
+//     bool initialized;
 
-  private:
+//   private:
 
-};
+// };
 
-class Union {
+// class Union {
 
-  public:
+//   public:
 
-    // Union(Type t, string n) {
-    //   name = n;
-    //   type = t;
-    //   initialized = false;
-    // }
-    Union() {}
-    ~Union() {}
+//     // Union(Type t, string n) {
+//     //   name = n;
+//     //   type = t;
+//     //   initialized = false;
+//     // }
+//     Union() {}
+//     ~Union() {}
 
-    bool isConst()
-    {
-      return type.isConst();
-    }
+//     bool isConst()
+//     {
+//       return type.isConst();
+//     }
 
-    void setMembers(std::vector<Identifier> m) {
-      members = m;
-      initialized = true;
-    }
+//     void setMembers(std::vector<Identifier> m) {
+//       members = m;
+//       initialized = true;
+//     }
 
-    bool operator==(Union& other) {
-      return type == other.type && MatchingVector(members, other.members);
-    }
+//     bool operator==(Union& other) {
+//       return type == other.type && MatchingVector(members, other.members);
+//     }
 
-    string name;
-    Type type;
-    std::vector<Identifier> members;
-    bool initialized;
+//     string name;
+//     Type type;
+//     std::vector<Identifier> members;
+//     bool initialized;
 
-  private:
+//   private:
 
-};
+// };
 
-class Variable {
+// class Variable {
 
-  public:
+//   public:
 
-    enum Initializer {
-      NONE = 0,
-      CONST,
-      VARIABLE,
-    };
+//     enum Initializer {
+//       NONE = 0,
+//       CONST,
+//       VARIABLE,
+//     };
 
-    // Variable(Type t, string n) {
-    //   name = n;
-    //   type = t;
-    //   init = Initializer::NONE;
-    // }
-    Variable() {}
-    ~Variable() {}
+//     // Variable(Type t, string n) {
+//     //   name = n;
+//     //   type = t;
+//     //   init = Initializer::NONE;
+//     // }
+//     Variable() {}
+//     ~Variable() {}
 
-    // A string represents the const initializer so we can
-    // convert it later to its numeric representation without a 
-    // loss of information
-    void setInitializer(string s)
-    {
-      constInit = s;
-      init = Initializer::CONST;
-    }
+//     // A string represents the const initializer so we can
+//     // convert it later to its numeric representation without a 
+//     // loss of information
+//     void setInitializer(string s)
+//     {
+//       constInit = s;
+//       init = Initializer::CONST;
+//     }
 
-    void setInitializer(Variable v)
-    {
-      assignment = v;
-      init = Initializer::VARIABLE;
-    }
+//     void setInitializer(Variable v)
+//     {
+//       assignment = v;
+//       init = Initializer::VARIABLE;
+//     }
 
-    bool isConst()
-    {
-      return type.isConst();
-    }
+//     bool isConst()
+//     {
+//       return type.isConst();
+//     }
 
-    bool operator==(Variable& other) {
-      switch (init)
-      {
-        case Initializer::NONE:
-          return other.init == init && other.type == type;
-        case Initializer::CONST:
-          return other.init == init && other.type == type && other.constInit == constInit;
-        case Initializer::VARIABLE:
-          return other.init == init && other.type == type && other.assignment == assignment;
-        default:
-          return false;
-      }
-    }
+//     bool operator==(Variable& other) {
+//       switch (init)
+//       {
+//         case Initializer::NONE:
+//           return other.init == init && other.type == type;
+//         case Initializer::CONST:
+//           return other.init == init && other.type == type && other.constInit == constInit;
+//         case Initializer::VARIABLE:
+//           return other.init == init && other.type == type && other.assignment == assignment;
+//         default:
+//           return false;
+//       }
+//     }
 
-    string name;
-    Type type;
-    string constInit;
-    Variable assignment;
-    Initializer init;
+//     string name;
+//     Type type;
+//     string constInit;
+//     Variable assignment;
+//     Initializer init;
 
-  private:
+//   private:
 
-};
+// };
 
-class Array {
+// class Array {
 
-  public:
+//   public:
 
-    // size of -1 indicates variably sized!
-    // Array(Type t, string n, int s) {
-    //   name = n;
-    //   type = t;
-    //   size = s;
-    //   initialized = false;
-    // }
-    Array() {}
-    ~Array() {}
+//     // size of -1 indicates variably sized!
+//     // Array(Type t, string n, int s) {
+//     //   name = n;
+//     //   type = t;
+//     //   size = s;
+//     //   initialized = false;
+//     // }
+//     Array() {}
+//     ~Array() {}
 
-    bool isConst()
-    {
-      return type.isConst();
-    }
+//     bool isConst()
+//     {
+//       return type.isConst();
+//     }
 
-    void setMembers(std::vector<string> i) {
-      initializers = i;
-      initialized = true;
-    }
+//     void setMembers(std::vector<string> i) {
+//       initializers = i;
+//       initialized = true;
+//     }
 
-    bool operator==(Array& other) {
-      // TODO -- matching vector func is not appropriate for array!!
-      return type == other.type && MatchingVector(initializers, other.initializers);
-    }
+//     bool operator==(Array& other) {
+//       // TODO -- matching vector func is not appropriate for array!!
+//       return type == other.type && MatchingVector(initializers, other.initializers);
+//     }
 
-    string name;
-    Type type;
-    std::vector<int> dimensions;
-    std::vector<string> initializers;
-    // TODO -- figure out way to represent either literals or variables
-    // std::vector<Identifier*> dimensions;
-    bool initialized;
+//     string name;
+//     Type type;
+//     std::vector<int> dimensions;
+//     std::vector<string> initializers;
+//     // TODO -- figure out way to represent either literals or variables
+//     // std::vector<Identifier*> dimensions;
+//     bool initialized;
 
-  private:
+//   private:
 
-};
+// };
 
-class Function {
-  public:
+// class Function {
+//   public:
 
-    // Function(Type t, Type rt, string n) {
-    //   name = n;
-    //   type = t;
-    //   returnType = rt;
-    // }
-    Function() {}
-    ~Function() {}
+//     // Function(Type t, Type rt, string n) {
+//     //   name = n;
+//     //   type = t;
+//     //   returnType = rt;
+//     // }
+//     Function() {}
+//     ~Function() {}
 
-    // A string represents the const initializer so we can
-    // convert it later to its numeric representation without a 
-    // loss of information
-    void setArgs(std::vector<Identifier> i)
-    {
-      args = i;
-    }
+//     // A string represents the const initializer so we can
+//     // convert it later to its numeric representation without a 
+//     // loss of information
+//     void setArgs(std::vector<Identifier> i)
+//     {
+//       args = i;
+//     }
 
-    bool isConst()
-    {
-      return type.isConst();
-    }
+//     bool isConst()
+//     {
+//       return type.isConst();
+//     }
 
-    bool operator==(Function& other) {
-      // TODO -- matching vector func is not appropriate for function!!
-      return type == other.type && returnType == other.returnType && MatchingVector(args, other.args);
-    }
+//     bool operator==(Function& other) {
+//       // TODO -- matching vector func is not appropriate for function!!
+//       return type == other.type && returnType == other.returnType && MatchingVector(args, other.args);
+//     }
 
-    string name;
-    Type type;
-    Type returnType;
-    std::vector<Identifier> args;
-    // string constInit;
-    // Variable assignment;
-}
+//     string name;
+//     Type type;
+//     Type returnType;
+//     std::vector<Identifier> args;
+//     // string constInit;
+//     // Variable assignment;
+// }
+
+#endif

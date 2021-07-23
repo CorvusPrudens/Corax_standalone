@@ -10,7 +10,7 @@
 
 using std::filesystem::path;
 
-CompilerListener comp;
+Compiler comp;
 Error err;
 
 int main(int argc, const char* argv[])
@@ -40,7 +40,7 @@ int main(int argc, const char* argv[])
     std::cout << name.first << ", " << name.second << "\n";
   }
 
-
+  comp.Process(&code);
 
   // std::cout << prepped;
 

@@ -42,7 +42,7 @@ struct TypeDescriptor {
 
 };
 
-std::vector<TypeDescriptor> StandardTypes;
+// std::vector<TypeDescriptor> StandardTypes;
 
 class Pointer {
   public:
@@ -127,7 +127,11 @@ struct Type {
 
   Type copy()
   {
-    Type newtype(name, storage, qualifiers);
+    // Type newtype(name, storage, qualifiers);
+    Type newtype;
+    newtype.storageSet = storageSet;
+    newtype.storage = storage;
+    newtype.qualifiers = qualifiers;
     newtype.type_specifiers = type_specifiers;
     newtype.function = function;
     newtype.pointers = pointers;
@@ -150,7 +154,7 @@ struct Type {
       throw(1);
     
     Type pointed = copy();
-    pointed.pointers.erase(0);
+    pointed.pointers.erase(pointed.pointers.begin());
     return pointed;
   }
 
