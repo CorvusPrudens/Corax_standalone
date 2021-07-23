@@ -28,7 +28,7 @@ expr_primary  : IDENTIFIER                         # identifier
               | '~' expr_cast                      # not
               | '!' expr_cast                      # negation
               | 'sizeof' expr_primary              # sizeof
-              | 'sizeof' '(' typename ')'          # sizeofType
+              | 'sizeof' '(' type_name ')'          # sizeofType
               ;
 
               // postfix
@@ -59,7 +59,7 @@ expr_primary  : IDENTIFIER                         # identifier
 //               ;
 
 expr_cast     : expr_primary                 # exprCast
-              | '(' typename ')' expr_cast   # cast
+              | '(' type_name ')' expr_cast   # cast
               ;
 
               // ARITHMETIC
@@ -121,7 +121,7 @@ expression    : expr_assi                    # exprExpression
 
 expr_const    : expr_tern;
 
-typename      : IDENTIFIER+;
+type_name      : IDENTIFIER+;
 
 STRING        : '"' (~["\r\n] | '""' | '\\"')* '"';
 NUMBER        : [1-9][0-9_]* | '0';

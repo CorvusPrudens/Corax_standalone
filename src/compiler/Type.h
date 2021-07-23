@@ -1,3 +1,6 @@
+#ifndef TYPE_H
+#define TYPE_H
+
 #include "utils.h"
 
 #include <unordered_map>
@@ -43,19 +46,44 @@ std::vector<TypeDescriptor> StandardTypes;
 
 class Pointer {
   public:
-    Pointer(int l = 0, int q = Qualifier::NONE) {
-      level = l;
+    Pointer(int q = Qualifier::NONE) {
       qualifiers = q;
     }
     ~Pointer() {}
 
+    void setQualifier(string q) 
+    {
+      int temp = qualifiers;
+      if (q == "const") {
+        temp |= Qualifier::CONST;
+      } else if (q == "restrict") {
+        temp |= Qualifier::RESTRICT;
+      } else if (q == "volatile") {
+        temp |= Qualifier::VOLATILE;
+      }
+      qualifiers = temp;
+    }
+
+    void setQualifiers(std::vector<string> quals)
+    {
+      int temp = qualifiers;
+      for (auto q : quals) {
+        if (q == "const") {
+          temp |= Qualifier::CONST;
+        } else if (q == "restrict") {
+          temp |= Qualifier::RESTRICT;
+        } else if (q == "volatile") {
+          temp |= Qualifier::VOLATILE;
+        }
+      }
+      qualifiers = temp;
+    }
+
     bool operator==(Pointer other) {
-      return qualifiers == other.qualifiers && level == other.level;
+      return qualifiers == other.qualifiers;
     }
 
     int qualifiers;
-    // Zero indicates no pointer present
-    int level;
     // Pointers will always be one word for my cpu
     static constexpr int words = 1;
 };
@@ -75,11 +103,15 @@ struct Type {
     INLINE = 1,
   };
 
-  Type(string n, StorageClass s = StorageClass::AUTO, int q = Qualifier::NONE) {
-    name = n;
-    storage = s;
-    qualifiers = q;
+  Type() {
+    storageSet = false;
   }
+
+  // Type(string n, StorageClass s = StorageClass::AUTO, int q = Qualifier::NONE) {
+  //   name = n;
+  //   storage = s;
+  //   qualifiers = q;
+  // }
 
   bool operator==(Type other) {
     bool matching = true;
@@ -122,13 +154,32 @@ struct Type {
     return pointed;
   }
 
+  void setStorage(string s)
+  {
+    if (s == "typedef") {
+      storage = StorageClass::TYPEDEF;
+    } else if (s == "auto") {
+      storage = StorageClass::AUTO;
+    } else if (s == "static") {
+      storage = StorageClass::STATIC;
+    } else if (s == "extern") {
+      storage = StorageClass::EXTERN;
+    } else if (s == "register") {
+      storage = StorageClass::REGISTER;
+    }
+    storageSet = true;
+  }
+
   string name;
   std::vector<string> type_specifiers;
   int qualifiers;
   StorageClass storage;
   FunctionSpecifier function;
+  bool storageSet;
   // each star can have its own type qualifiers
   std::vector<Pointer> pointers;
 };
+
+#endif
 
 // TODO -- now we need struct, array, and union classes

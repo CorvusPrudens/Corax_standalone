@@ -9,6 +9,7 @@ parse       : extern_decl+;
 
 // TODO -- ensure this is all refactored into antlr-idiomatic code
 // NOTE -- the rule says init_decl is optional, but that doesn't make sense to me
+// NOTE -- this ^ is because structs and such can have an optional name after the {}!!!
 declaration    : decl_spec init_decl init_decl_list? ';';
 
 init_decl_list : (',' init_decl)+ ','?;
@@ -22,8 +23,8 @@ decl_spec_item : storage_spec # storageSpecifier
                | 'inline'     # funcSpecifier
                ;
 
-init_decl   : declarator
-            | declarator '=' initializer
+init_decl   : declarator                  # initDeclUnassigned
+            | declarator '=' initializer  # initDeclAssigned
             ;
 
 storage_spec : 'typedef'
@@ -34,27 +35,26 @@ storage_spec : 'typedef'
              ;
 
 // this kind of stuff should (probably?) be done with semantics
-type_spec    : 'void'
-             | 'char'
-             | 'short'
-             | 'int'
-             | 'long'
-             | 'float'
-             | 'double'
-             | 'signed'
-             | 'unsigned'
-             | '_Bool'
-             | '_Complex'
-             | struct_union
-             | enum_spec
-             | IDENTIFIER
+type_spec    : 'void'        # typeStd
+             | 'char'        # typeStd
+             | 'short'       # typeStd
+             | 'int'         # typeStd
+             | 'long'        # typeStd
+             | 'float'       # typeStd
+             | 'double'      # typeStd
+             | 'signed'      # typeStd
+             | 'unsigned'    # typeStd
+             | '_Bool'       # typeStd
+             | '_Complex'    # typeStd
+             | struct_union  # typeStructUnion
+             | enum_spec     # typeEnum
+             | IDENTIFIER    # typeTypedef
              ;
 
-// Is the difference between struct and union significant??
-struct_union : 'struct' IDENTIFIER? '{' struct_decl '}'
-             | 'struct' IDENTIFIER
-             | 'union' IDENTIFIER? '{' struct_decl '}'
-             | 'union' IDENTIFIER
+struct_union : 'struct' IDENTIFIER? '{' struct_decl '}' # structDefined
+             | 'struct' IDENTIFIER                      # structDeclared
+             | 'union' IDENTIFIER? '{' struct_decl '}'  # unionDefined
+             | 'union' IDENTIFIER                       # unionDeclared
              ;
 
 struct_decl_list : struct_decl | struct_decl_list struct_decl;
@@ -67,37 +67,41 @@ struct_declr_list : struct_declr | struct_declr_list ',' struct_declr;
 
 struct_declr : declarator | declarator? ':' expr_const;
 
-enum_spec    : 'enum' IDENTIFIER? '{' enumerator (',' enumerator)* ','? '}'
-             | 'enum' IDENTIFIER
+enum_spec    : 'enum' IDENTIFIER? '{' enumerator (',' enumerator)* ','? '}' # enumDefined
+             | 'enum' IDENTIFIER                                            # enumDeclared
              ;
 
 // is enum_const just an identifier??
-enumerator   : IDENTIFIER
+enumerator   : IDENTIFIER                 
              | IDENTIFIER '=' expr_const
              ;
 
-type_qual    : 'const'
-             | 'restrict'
-             | 'volatile'
+type_qual    : 'const'    # qualConst
+             | 'restrict' # qualRestrict
+             | 'volatile' # qualVolatile
              ;
 
 declarator   : pointer? direct_decl;
 
-direct_decl  : IDENTIFIER
-             | '(' declarator ')'
-             | direct_decl '[' type_qual* expr_assi? ']'
-             | direct_decl '[' 'static' type_qual* expr_assi ']'
-             | direct_decl '[' type_qual+ 'static' expr_assi ']'
-             | direct_decl '[' type_qual* '*' ']'
-             | direct_decl '(' param_type_list ')'
-             | direct_decl '(' (IDENTIFIER (',' IDENTIFIER)* ','?)? ')'
+direct_decl  : IDENTIFIER                                              # dirId
+             | '(' declarator ')'                                      # dirParen // I don't know what this means
+             | direct_decl '[' type_qual* expr_assi? ']'               # dirDim
+             | direct_decl '[' 'static' type_qual* expr_assi ']'       # dirDimStatic
+             | direct_decl '[' type_qual+ 'static' expr_assi ']'       # dirDimStatic
+             | direct_decl '[' type_qual* '*' ']'                      # dirDimVar
+             | direct_decl '(' param_type_list ')'                     # dirFuncParam
+             | direct_decl '(' (IDENTIFIER (',' IDENTIFIER)* ','?)? ')'# dirFunc
              ;
 
-pointer : ('*' type_qual*)+
+pointer : pointer_item+
         // | '*' type_qual* pointer
         ;
 
-param_type_list: param_list ','? | param_list ',' '...';
+pointer_item : '*' type_qual*;
+
+param_type_list: param_list ','? 
+               | param_list ',' '...'
+               ;
 
 param_list: param_decl (',' param_decl)*;
 
@@ -105,7 +109,7 @@ param_decl : decl_spec declarator
            | decl_spec abstract_decl?
            ;
 
-typename      : spec_qual_list abstract_decl?;
+type_name      : spec_qual_list abstract_decl?;
 
 // abstract_decl : pointer 
 //               | pointer? direct_abstr
@@ -218,7 +222,9 @@ stat_compound : '{' block_item* '}';
 //               | 'return' expression? ';'
         //       ;
 
-extern_decl   : func_def | declaration;
+extern_decl   : func_def     # topFunc
+              | declaration  # topDecl
+              ;
 
 func_def      : decl_spec declarator declaration* stat_compound;
 

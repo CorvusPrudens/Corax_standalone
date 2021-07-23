@@ -50,12 +50,9 @@ set (SOURCE_FILES
 
     ./compiler/compiler.cpp
     ./compiler/asm.cpp
-    ./compiler/for.cpp
-    ./compiler/function.cpp
-    ./compiler/label.cpp
-    ./compiler/scope.cpp
-    ./compiler/variable.cpp
-    ./compiler/while.cpp
+    ./compiler/identifier.cpp
+    ./compiler/stable.cpp
+    ./compiler/type.cpp
 
     ./grammars/build/Post/PostParser.cpp
     ./grammars/build/Post/PostBaseListener.cpp
@@ -90,12 +87,9 @@ set (INCLUDE_FILES
     ./grammars/build/Pre/PreExprVisitor.h
 
     ./compiler/asm.h
-    ./compiler/for.h
-    ./compiler/function.h
-    ./compiler/label.h
-    ./compiler/scope.h
-    ./compiler/variable.h
-    ./compiler/while.h
+    ./compiler/identifier.h
+    ./compiler/stable.h
+    ./compiler/type.h
 
     ./grammars/build/Post/PostBaseListener.h
     ./grammars/build/Post/PostLexer.h

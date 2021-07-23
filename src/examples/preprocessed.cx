@@ -6,7 +6,7 @@ const int* ptr1;
 // const pointer to integer
 int* const ptr2;
 
-int* ptr = (int*) 0x05;
+int* ptr = (int*) 5;
 
 void uart(int val)
 {

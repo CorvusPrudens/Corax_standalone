@@ -8,41 +8,62 @@
 #include "PostBaseVisitor.h"
 #include "PostBaseListener.h"
 
-#include "variable.h"
+#include "identifier.h"
+#include "stable.h"
 
 #include "utils.h"
 
 using namespace antlr4;
+using antlrcpp::Any;
 
-class CompilerVisitor : PostBaseVisitor {
+class Compiler : PostBaseVisitor {
 
   public:
-    CompilerVisitor() {}
-    ~CompilerVisitor() {}
+    Compiler() {}
+    ~Compiler() {}
 
     void Process(ProcessedCode* code_);
 
   private:
 
+    tree::ParseTreeProperty<string> storage;
+
     ProcessedCode* code;
+    SymbolTable* globalTable;
+    SymbolTable* currentScope;
+    Identifier* currentId;
+    Type* currentType;
+
+    Any visitParse(PostParser::ParseContext* ctx) override;
+    Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
+    Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
+    Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
+    Any visitTypeStd(PostParser::TypeStdContext* ctx) override;
+    Any visitTypeStructUnion(PostParser::TypeStructUnionContext* ctx) override;
+    Any visitTypeEnum(PostParser::TypeEnumContext* ctx) override;
+    Any visitTypeTypedef(PostParser::TypeTypedefContext* ctx) override;
+    Any visitFuncSpecifier(PostParser::FuncSpecifierContext* ctx) override;
+    Any visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx) override;
+    Any visitDirId(PostParser::DirIdContext* ctx) override;
+    Any visitPointer_item(PostParser::Pointer_itemContext* ctx) override;
 
 
 };
 
-class CompilerListener : PostBaseListener {
+// class CompilerListener : PostBaseListener {
 
-  public:
-    CompilerListener() {}
-    ~CompilerListener() {}
+//   public:
+//     CompilerListener() {}
+//     ~CompilerListener() {}
 
-    void Process(ANTLRInputStream* stream);
+//     void Process(ANTLRInputStream* stream);
 
-    void enterParse(PostParser::ParseContext* ctx) override;
-    void enterVariable_init(PostParser::Variable_initContext* ctx) override;
+//     void enterParse(PostParser::ParseContext* ctx) override;
+//     void enterVariable_init(PostParser::Variable_initContext* ctx) override;
 
-  private:
+//   private:
 
-    std::vector<Variable> globals;
-    PostParser* parse;
+//     std::vector<Variable> globals;
+//     PostParser* parse;
 
-};
+// };
