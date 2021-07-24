@@ -89,8 +89,8 @@ direct_decl  : IDENTIFIER                                              # dirId
              | direct_decl '[' 'static' type_qual* expr_assi ']'       # dirDimStatic
              | direct_decl '[' type_qual+ 'static' expr_assi ']'       # dirDimStatic
              | direct_decl '[' type_qual* '*' ']'                      # dirDimVar
-             | direct_decl '(' param_type_list ')'                     # dirFuncParam
-             | direct_decl '(' (IDENTIFIER (',' IDENTIFIER)* ','?)? ')'# dirFunc
+             | direct_decl '(' param_type_list? ')'                     # dirFunc
+             | direct_decl '(' IDENTIFIER (',' IDENTIFIER)* ','? ')'# dirFuncID
              ;
 
 pointer : pointer_item+
@@ -161,8 +161,12 @@ designator    : '[' expr_const ']'
 //               | stat_jump
 //               ;
 
-block_item    : declaration # blockDecl
-              | statement   # blockStat
+// TODO -- an item like:
+// uart(arg);
+// Can be seen as a declaration or expression. 
+// This needs to be resolved properly!!
+block_item    : statement   # blockStat
+              | declaration # blockDecl
               ;
 
 // TODO -- label these

@@ -106,3 +106,6 @@ reset: clean
 
 run: ${SRC}/build/corax
 	${SRC}/build/corax ${SRC}/examples/test.cx
+
+graph: ${SRC}/build/corax
+	${SRC}/build/corax ${SRC}/examples/test.cx --graph | dot -Tpng -Gdpi=300 -o graph.png

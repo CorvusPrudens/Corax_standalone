@@ -17,6 +17,7 @@ void Compiler::Process(ProcessedCode* code_)
 
   tree::ParseTree *tree = parser.parse();
   visit(tree);
+  if (graphing) graph.Print();
 }
 
 Any Compiler::visitParse(PostParser::ParseContext* ctx)
@@ -25,10 +26,10 @@ Any Compiler::visitParse(PostParser::ParseContext* ctx)
   currentScope = globalTable;
   visitChildren(ctx);
 
-  for (auto id : globalTable->symbols)
-  {
-    std::cout << id.name << "\n";
-  }
+  // for (auto id : globalTable->symbols)
+  // {
+  //   std::cout << id.name << "\n";
+  // }
 
   return nullptr;
 }
@@ -57,6 +58,8 @@ Any Compiler::visitTopFunc(PostParser::TopFuncContext* ctx)
   
   visit(ctx->func_def()->decl_spec());
   visit(ctx->func_def()->declarator());
+
+  if (graphing) graph.Addf(tempid->name);
 
   tempid->type = Identifier::IdType::FUNCTION;
   globalTable->AddSymbol(tempid->copy());
@@ -171,6 +174,30 @@ Any Compiler::visitPointer_item(PostParser::Pointer_itemContext* ctx)
     }
   }
   currentId.back()->dataType.pointers.push_back(p);
+
+  return nullptr;
+}
+
+Any Compiler::visitCall(PostParser::CallContext* ctx)
+{
+  if (graphing) graph.Addc(ctx->expr_primary()->getText());
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
+{
+  currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
+  
+  visitChildren(ctx);
+  // visit(ctx->direct_decl());
+  // if (ctx->param_type_list() != nullptr)
+  //   visit(ctx->param_type_list());
+
+  if (graphing) graph.Addf(currentId.back()->name);
+
+  currentId.back()->type = Identifier::IdType::FUNCTION;
+
+  currentScope = currentScope->parent;
 
   return nullptr;
 }

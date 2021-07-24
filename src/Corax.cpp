@@ -22,6 +22,8 @@ int main(int argc, const char* argv[])
   app.add_option("file", filename, "File name")
     ->required()
     ->check(CLI::ExistingFile);
+  bool graph = false;
+  app.add_flag("--graph", graph, "Enable function call graphing");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -33,13 +35,10 @@ int main(int argc, const char* argv[])
 
   pre.Process();
 
-  std::cout << code.code;
+  if (!graph)
+    std::cout << code.code;
 
-  for (auto name : code.macros)
-  {
-    std::cout << name.first << ", " << name.second << "\n";
-  }
-
+  comp.EnableGraph(graph);
   comp.Process(&code);
 
   // std::cout << prepped;

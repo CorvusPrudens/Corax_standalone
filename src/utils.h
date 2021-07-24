@@ -2,6 +2,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -11,8 +12,31 @@
 #include <unordered_map>
 
 using std::string;
+using std::cout;
 
 string file_string(string filename);
+
+class Graph {
+  public:
+    Graph() {}
+    ~Graph() {}
+
+    struct Call {
+      int caller;
+      int called;
+    };
+
+    void Addf(string func);
+    void Addc(string call);
+    void Print();
+
+  private:
+    int GetIdx(string name);
+    string GetName(int idx);
+    std::vector<string> functions;
+    std::vector<Call> calls;
+    string currentFunc;
+};
 
 class Macro {
 

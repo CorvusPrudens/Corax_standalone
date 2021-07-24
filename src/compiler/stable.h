@@ -20,6 +20,9 @@ struct SymbolTable {
     scope = s;
   }
 
+  // TODO -- this needs to check if the symbol already exists. 
+  // If it's a defined function or a declared variable, then
+  // add an error or throw an exception or something
   void AddSymbol(Identifier id) { symbols.push_back(id); }
 
   SymbolTable* parent;

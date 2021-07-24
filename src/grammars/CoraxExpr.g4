@@ -13,7 +13,7 @@ expr_primary  : IDENTIFIER                         # identifier
               // interpreted as a call
               // POSTFIX
               | expr_primary '[' expression ']'    # indexing
-              | expr_primary '(' arg_expr_list ')' # call // (go to page 70)
+              | expr_primary '(' arg_expr_list? ')' # call // (go to page 70)
               | expr_primary '.' IDENTIFIER        # member
               | expr_primary '->' IDENTIFIER       # indirectMember
               | expr_primary '++'                  # incrementPost

@@ -23,6 +23,7 @@ class Compiler : PostBaseVisitor {
     ~Compiler() {}
 
     void Process(ProcessedCode* code_);
+    void EnableGraph(bool enable) { graphing = enable; }
 
   private:
 
@@ -32,6 +33,9 @@ class Compiler : PostBaseVisitor {
     SymbolTable* globalTable;
     SymbolTable* currentScope;
     std::vector<Identifier*> currentId;
+
+    Graph graph;
+    bool graphing = false;
 
     Any visitParse(PostParser::ParseContext* ctx) override;
     Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
@@ -48,6 +52,12 @@ class Compiler : PostBaseVisitor {
     Any visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx) override;
     Any visitDirId(PostParser::DirIdContext* ctx) override;
     Any visitPointer_item(PostParser::Pointer_itemContext* ctx) override;
+
+    // Declarations
+    Any visitDirFunc(PostParser::DirFuncContext* ctx) override;
+
+    // Expressions
+    Any visitCall(PostParser::CallContext* ctx) override;
 
 
 };

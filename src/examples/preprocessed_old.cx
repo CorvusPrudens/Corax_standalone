@@ -1,29 +1,25 @@
 
-int add(int a, int b)
-{
-  int temp = a + b;
-  return temp;
-}
-
 int global = 100;
+
+// Pointer to const integer
+const int* ptr1;
+// const pointer to integer
+int* const ptr2;
+
+int* ptr = (int*) 5;
 
 void uart(int val)
 {
   // how to interface with hardware? inlining?
 }
 
-void orphan2();
-
 void orphan()
 {
-  int a;
-  a = 1;
-  orphan2();
-}
+  unsigned int a;
+  int b = 20;
+  a = 1 + 2 * b;
 
-void orphan2()
-{
-  orphan();
+  a = 1 + 2 * *ptr;
 }
 
 void loop()

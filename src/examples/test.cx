@@ -10,10 +10,19 @@ void uart(int val)
   // how to interface with hardware? inlining?
 }
 
+void orphan2();
+
 void orphan()
 {
   int a;
   a = 1;
+  orphan2();
+}
+
+void orphan2()
+{
+  orphan();
+  uart(1);
 }
 
 void loop()
