@@ -162,7 +162,13 @@ Any Compiler::visitPointer_item(PostParser::Pointer_itemContext* ctx)
   Pointer p;
   for (auto qual : ctx->type_qual())
   {
-    p.setQualifier(qual->getText());
+    try{
+      p.setQualifier(qual->getText());
+    }
+    catch (int e)
+    {
+      // insert error here
+    }
   }
   currentId.back()->dataType.pointers.push_back(p);
 

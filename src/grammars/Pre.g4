@@ -85,8 +85,8 @@ NEWLINE       : '\r'? '\n';
 
 STRING        : '"' (~["\r\n] | '""' | '\\"')* '"';
 LIBRARY       : '<' [a-zA-Z_0-9./\-]+ '>';
-COMMENT       : '//' ~[\n\r]* [\n\r] -> skip;
-COMMENT_BLOCK : '/*' .*? '*/' -> skip;
+COMMENT       : '//' ~[\n\r]* [\n\r] -> channel(HIDDEN);
+COMMENT_BLOCK : '/*' .*? '*/' -> channel(HIDDEN);
 TEST_BLOCK    : '$' .*? '$end' -> skip;
 
 INCLUDE       : '#include';

@@ -69,10 +69,13 @@ class Pointer {
       int temp = qualifiers;
       for (auto q : quals) {
         if (q == "const") {
+          if (temp & (int) Qualifier::CONST) throw 1;
           temp |= Qualifier::CONST;
         } else if (q == "restrict") {
+          if (temp & (int) Qualifier::RESTRICT) throw 1;
           temp |= Qualifier::RESTRICT;
         } else if (q == "volatile") {
+          if (temp & (int) Qualifier::VOLATILE) throw 1;
           temp |= Qualifier::VOLATILE;
         }
       }
