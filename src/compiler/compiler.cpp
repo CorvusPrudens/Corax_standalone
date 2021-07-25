@@ -6,9 +6,10 @@
 
 using antlrcpp::Any;
 
-void Compiler::Process(ProcessedCode* code_)
+void Compiler::Process(ProcessedCode* code_, Error* err_)
 {
   code = code_;
+  err = err_;
 
   ANTLRInputStream stream(code->code);
   PostLexer lexer(&stream);
@@ -17,7 +18,19 @@ void Compiler::Process(ProcessedCode* code_)
 
   tree::ParseTree *tree = parser.parse();
   visit(tree);
+
   if (graphing) graph.Print();
+  else err->Report();
+}
+
+void Compiler::addRuleErr(ParserRuleContext* rule, string errmess)
+{
+  int outline = rule->start->getLine() - 1; // zero-indexed
+  int cols = rule->start->getCharPositionInLine();
+  int cole = cols + rule->start->getStopIndex() - rule->start->getStartIndex();
+  int line = code->lines.getLine(outline);
+  string file = code->lines.getFile(outline);
+  err->AddError(errmess, line, file, 1, cols, cole);
 }
 
 Any Compiler::visitParse(PostParser::ParseContext* ctx)
@@ -36,9 +49,6 @@ Any Compiler::visitParse(PostParser::ParseContext* ctx)
 
 Any Compiler::visitTopDecl(PostParser::TopDeclContext* ctx)
 {
-  // TODO -- things like type specifiers need a simple key-value type 
-  // so they can be added to the correct part of the declaration!!
-  // (this can be a parse tree property)
   auto tempid = new Identifier;
   currentId.push_back(tempid);
   visitChildren(ctx);
@@ -147,9 +157,11 @@ Any Compiler::visitFuncSpecifier(PostParser::FuncSpecifierContext* ctx)
 Any Compiler::visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx)
 {
   if (currentId.back()->dataType.storageSet) {
-    // TODO -- put error here
+    string errmess = "identifier cannot have more than one storage specifier";
+    addRuleErr(ctx, errmess);
   }
-  currentId.back()->dataType.setStorage(ctx->getText());
+  else
+    currentId.back()->dataType.setStorage(ctx->getText());
 
   return nullptr;
 }
@@ -171,6 +183,9 @@ Any Compiler::visitPointer_item(PostParser::Pointer_itemContext* ctx)
     catch (int e)
     {
       // insert error here
+      // NOTE -- actually this can't occur, there would be a syntax error (right?)
+      string errmess = "unexpected type qualifier " + qual->getText();
+      addRuleErr(qual, errmess);
     }
   }
   currentId.back()->dataType.pointers.push_back(p);

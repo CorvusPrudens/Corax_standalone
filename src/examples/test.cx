@@ -4,6 +4,7 @@
 #define START 100
 
 int global = START;
+static extern int global = 42;
 
 void uart(int val)
 {
@@ -22,7 +23,11 @@ void orphan()
 void orphan2()
 {
   orphan();
-  uart(1);
+}
+
+void recurs()
+{
+  recurs();
 }
 
 void loop()

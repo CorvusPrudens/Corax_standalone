@@ -18,10 +18,21 @@ class Error {
       int line;
       string file;
       int code;
+      int colstart;
+      int colend;
     };
 
-    void AddError(string message, int line, string file, int code, bool fatal = false);
-    void AddWarning(string message, int line, string file, int code);
+    void AddError(
+      string message, int line, 
+      string file, int code = 1, 
+      int colstart = -1, int colend = -1, 
+      bool fatal = false
+    );
+    void AddWarning(
+      string message, int line, 
+      string file, int code = 2, 
+      int colstart = -1, int colend = -1
+    );
 
     void Report();
 

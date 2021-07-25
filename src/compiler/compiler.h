@@ -12,6 +12,7 @@
 #include "stable.h"
 
 #include "utils.h"
+#include "error.h"
 
 using namespace antlr4;
 using antlrcpp::Any;
@@ -22,7 +23,7 @@ class Compiler : PostBaseVisitor {
     Compiler() {}
     ~Compiler() {}
 
-    void Process(ProcessedCode* code_);
+    void Process(ProcessedCode* code_, Error* err_);
     void EnableGraph(bool enable) { graphing = enable; }
 
   private:
@@ -30,12 +31,15 @@ class Compiler : PostBaseVisitor {
     tree::ParseTreeProperty<string> storage;
 
     ProcessedCode* code;
+    Error* err;
     SymbolTable* globalTable;
     SymbolTable* currentScope;
     std::vector<Identifier*> currentId;
 
     Graph graph;
     bool graphing = false;
+
+    void addRuleErr(ParserRuleContext* rule, string errmess);
 
     Any visitParse(PostParser::ParseContext* ctx) override;
     Any visitTopDecl(PostParser::TopDeclContext* ctx) override;

@@ -850,7 +850,33 @@ Any Precompiler::visitAnyNewline(PreParser::AnyNewlineContext* ctx)
   {
     whitespace += tok->getText();
   }
-  output->addLine(ctx->start->getLine(), file.native(), whitespace + line);
+
+  // This is a bit complicated, but we're just seeing if the hidden tokens
+  // themselves have newlines, winding back the line number to add the 
+  // correct lines, then only adding the whitespace that's left to the
+  // actual line we're adding. This is to preserve the whitespace position
+  // of the actual line 
+  // (TODO -- just make it rewind to a newline instead of
+  // all hidden tokens)
+  int real_line = ctx->start->getLine();
+  for (int i = 0; i < whitespace.length(); i++)
+  {
+    if (whitespace[i] == '\n')
+    {
+      real_line--;
+    }
+  }
+  int prevnew = 0;
+  for (int i = 0; i < whitespace.length(); i++)
+  {
+    if (whitespace[i] == '\n')
+    {
+      output->addLine(real_line++, file.native(), whitespace.substr(prevnew, i + 1 - prevnew));
+      prevnew = i + 1;
+    }
+  }
+
+  output->addLine(ctx->start->getLine(), file.native(), whitespace.substr(prevnew) + line);
   return nullptr;
 }
 
@@ -864,7 +890,26 @@ Any Precompiler::visitAnyEof(PreParser::AnyEofContext* ctx)
   {
     whitespace += tok->getText();
   }
-  output->addLine(ctx->start->getLine(), file.native(), whitespace + line);
+
+  int real_line = ctx->start->getLine();
+  for (int i = 0; i < whitespace.length(); i++)
+  {
+    if (whitespace[i] == '\n')
+    {
+      real_line--;
+    }
+  }
+  int prevnew = 0;
+  for (int i = 0; i < whitespace.length(); i++)
+  {
+    if (whitespace[i] == '\n')
+    {
+      output->addLine(real_line++, file.native(), whitespace.substr(prevnew, i + 1 - prevnew));
+      prevnew = i + 1;
+    }
+  }
+
+  output->addLine(ctx->start->getLine(), file.native(), whitespace.substr(prevnew) + line);
   return nullptr;
 }
 

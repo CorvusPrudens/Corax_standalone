@@ -11,7 +11,7 @@ using std::string;
 string get_line(string filename, int line)
 {
   std::ifstream file(filename);
-  int i = 0;
+  int i = 1; // lines are not zero-indexed
   char c;
   while (i < line) {
     file.read(&c, 1);
@@ -24,20 +24,20 @@ string get_line(string filename, int line)
   string out;
   std::getline(file, out);
 
-  return out;
+  return out + "\n";
 }
 
-void Error::AddError(string message, int line, string file, int code, bool fatal)
+void Error::AddError(string message, int line, string file, int code, int colstart, int colend, bool fatal)
 {
-  item e {message, line, file, code};
+  item e {message, line, file, code, colstart, colend};
   errors.push_back(e);
   if (fatal || errors.size() > max_errors)
     Report();
 }
 
-void Error::AddWarning(string message, int line, string file, int code)
+void Error::AddWarning(string message, int line, string file, int code, int colstart, int colend)
 {
-  item w {message, line, file, code};
+  item w {message, line, file, code, colstart, colend};
   warnings.push_back(w);
 }
 
@@ -46,24 +46,30 @@ void Error::Report()
   int num_errors = errors.size();
   int num_warnings = warnings.size();
 
-  if (num_errors > 0)
+  if (num_errors > 0 || num_warnings > 0)
+  {
+    std::cout << "\n";
+
+    if (num_errors > 0)
     PrintErrors();
   
-  if (num_warnings > 0)
-    PrintWarnings();
+    if (num_warnings > 0)
+      PrintWarnings();
+    
+    string ess = num_errors == 1 ? "" : "s";
+    std::cout << num_errors << Colors::Red << " error" << ess << Colors::Stop << ", ";
+    
+    ess = num_warnings == 1 ? "" : "s";
+    std::cout << num_warnings << Colors::Blue << " warning" << ess << Colors::Stop;
 
-  string ess = num_errors == 1 ? "s, " : ", ";
-  std::cout << num_errors << Colors::Red << " error" << ess << Colors::Stop;
-  
-  ess = num_warnings == 1 ? "s" : "";
-  std::cout << num_warnings << Colors::Blue << " warning" << ess << Colors::Stop;
-
-  if (num_errors > 0)
-  {
-    std::cout << ", exiting...\n";
-    exit(1);
+    if (num_errors > 0)
+    {
+      std::cout << ", exiting...\n";
+      exit(1);
+    }
+    std::cout << "\n";
   }
-  std::cout << "\n";
+  
 }
 
 void Error::PrintErrors()
@@ -77,13 +83,27 @@ void Error::PrintErrors()
       std::cout << "at line " << e.line << ":\n";
 
       string line = get_line(e.file, e.line);
-      std::cout << Colors::Purple << line << Colors::Stop;
-      std::cout << Colors::Green << "  -> " << Colors::Stop << e.message << "\n";
+      std::cout << Colors::Gray << line << Colors::Stop;
+      if (e.colstart != -1)
+      {
+        string underline = "";
+        for (int i = 0; i < e.colstart; i++)
+        {
+          underline += " ";
+        }
+        underline += Colors::Red;
+        for (int i = e.colstart; i < e.colend + 1; i++)
+        {
+          underline += "^";
+        }
+        std::cout << underline << Colors::Stop << "\n";
+      }
+      std::cout << Colors::Gray << "  -> " << Colors::Stop << e.message << "\n\n";
     }
     else
     {
       std::cout << Colors::Red << "Error: \n" << Colors::Stop;
-      std::cout << Colors::Green << "  -> " << Colors::Stop << e.message << "\n";
+      std::cout << Colors::Gray << "  -> " << Colors::Stop << e.message << "\n\n";
     }
   }
 }
@@ -99,13 +119,27 @@ void Error::PrintWarnings()
       std::cout << "at line " << w.line << ":\n";
 
       string line = get_line(w.file, w.line);
-      std::cout << Colors::Purple << line << Colors::Stop;
-      std::cout << Colors::Green << "  -> " << Colors::Stop << w.message << "\n";
+      std::cout << Colors::Gray << line << Colors::Stop;
+      if (w.colstart != -1)
+      {
+        string underline = "";
+        for (int i = 0; i < w.colstart; i++)
+        {
+          underline += " ";
+        }
+        underline += Colors::Red;
+        for (int i = w.colstart; i < w.colend + 1; i++)
+        {
+          underline += "^";
+        }
+        std::cout << underline << Colors::Stop << "\n";
+      }
+      std::cout << Colors::Gray << "  -> " << Colors::Stop << w.message << "\n\n";
     }
     else
     {
       std::cout << Colors::Red << "Error: \n" << Colors::Stop;
-      std::cout << Colors::Green << "  -> " << Colors::Stop << w.message << "\n";
+      std::cout << Colors::Green << "  -> " << Colors::Stop << w.message << "\n\n";
     }
   }
 }

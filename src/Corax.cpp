@@ -35,11 +35,28 @@ int main(int argc, const char* argv[])
 
   pre.Process();
 
-  if (!graph)
-    std::cout << code.code;
+  int prevnew = 0;
+  int curLine = 0;
+  // if (!graph)
+  // {
+  //   std::cout << curLine + 1 << ", " << code.lines.getLine(curLine) << ": ";
+  //   curLine++;
+  //   for (int i = 0; i < code.code.length(); i++)
+  //   {
+  //     if (code.code[i] == '\n')
+  //     {
+  //       std::cout << code.code.substr(prevnew, i + 1 - prevnew);
+  //       prevnew = i + 1;
+  //       std::cout << curLine + 1 << ", " << code.lines.getLine(curLine) << ": ";
+  //       curLine++;
+  //     }
+  //   }
+    
+  // }
+  // std::cout << code.code;
 
   comp.EnableGraph(graph);
-  comp.Process(&code);
+  comp.Process(&code, &err);
 
   // std::cout << prepped;
 

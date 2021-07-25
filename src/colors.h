@@ -20,6 +20,8 @@ struct Colors {
   inline static string Cyan="\033[0;36m";        // Cyan
   inline static string White="\033[0;37m";       // White
 
+  inline static string Gray="\033[0;2m";
+
   // Bold
   inline static string BBlack="\033[1;30m";      // Black
   inline static string BRed="\033[1;31m";        // Red
