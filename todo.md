@@ -10,4 +10,9 @@ file "./src/main.cpp" line 72 `a += 2;
 
 # July 22, 2021
 
-- The compiler needs an identifier 'stack' of some sort so multiple definitions can be handled at once (for example, function arguments or struct members)
+- ~~The compiler needs an identifier 'stack' of some sort so multiple definitions can be handled at once (for example, function arguments or struct members)~~
+- The symbol table adding needs to be totally redone. It doesn't work with multiple identifiers in a single line:
+~~~ c
+int a, b, c;
+~~~
+- To accomplish this, the declarator rule is where we'll add a dummy identifier to store the current type, and for each init_decl, we'll add a symbol.

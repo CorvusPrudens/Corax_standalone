@@ -23,7 +23,17 @@ struct SymbolTable {
   // TODO -- this needs to check if the symbol already exists. 
   // If it's a defined function or a declared variable, then
   // add an error or throw an exception or something
-  void AddSymbol(Identifier id) { symbols.push_back(id); }
+  void AddSymbol(Identifier id);
+
+  /** Find a local symbol with the identifier `name`
+   * 
+   */
+  Identifier GetLocalSymbol(string name);
+
+  /** Search the symbol table tree for a symbol with the identifier `name`
+   * 
+   */
+  Identifier GetSymbol(string name);
 
   SymbolTable* parent;
   // Doesn't need to know child, since we only

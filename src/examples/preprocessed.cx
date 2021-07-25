@@ -6,6 +6,7 @@ int add(int a, int b)
 }
 
 int global = 100;
+extern static int global = 42;
 
 void uart(int val)
 {
@@ -26,10 +27,15 @@ void orphan2()
   orphan();
 }
 
+void recurs()
+{
+  recurs();
+}
+
 void loop()
 {
 
-  int start = global;
+  int start = global, start;
 
   start = add(start, 1) * 2;
 

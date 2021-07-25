@@ -4,7 +4,7 @@
 #define START 100
 
 int global = START;
-static extern int global = 42;
+extern static int global = 42;
 
 void uart(int val)
 {
@@ -33,7 +33,7 @@ void recurs()
 void loop()
 {
 
-  int start = global;
+  int start = global, start;
 
   start = add(start, 1) * 2;
 

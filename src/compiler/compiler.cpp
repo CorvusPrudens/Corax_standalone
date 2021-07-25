@@ -27,7 +27,7 @@ void Compiler::addRuleErr(ParserRuleContext* rule, string errmess)
 {
   int outline = rule->start->getLine() - 1; // zero-indexed
   int cols = rule->start->getCharPositionInLine();
-  int cole = cols + rule->start->getStopIndex() - rule->start->getStartIndex();
+  int cole = cols + rule->stop->getStopIndex() - rule->start->getStartIndex();
   int line = code->lines.getLine(outline);
   string file = code->lines.getFile(outline);
   err->AddError(errmess, line, file, 1, cols, cole);
@@ -52,7 +52,13 @@ Any Compiler::visitTopDecl(PostParser::TopDeclContext* ctx)
   auto tempid = new Identifier;
   currentId.push_back(tempid);
   visitChildren(ctx);
-  currentScope->AddSymbol(tempid->copy());
+  try {
+    currentScope->AddSymbol(tempid->copy());
+  } catch (int e) {
+    string errmess = "redefinition of identifier ";
+    addRuleErr(ctx, errmess + "\"" + tempid->name + "\"");
+  }
+  
   currentId.pop_back();
 
   return nullptr;
@@ -72,7 +78,25 @@ Any Compiler::visitTopFunc(PostParser::TopFuncContext* ctx)
   if (graphing) graph.Addf(tempid->name);
 
   tempid->type = Identifier::IdType::FUNCTION;
-  globalTable->AddSymbol(tempid->copy());
+  try {
+    globalTable->AddSymbol(tempid->copy());
+  } catch (int e) {
+    string errmess;
+    switch (e)
+    {
+      default:
+      case 2:
+        errmess = "redefinition of function ";
+        break;
+      case 3:
+        errmess = "function definition does not match prototype ";
+        break;
+    }
+    addRuleErr(ctx->func_def()->declarator(), errmess + "\"" + tempid->name + "\"");
+    currentId.pop_back();
+    currentScope = currentScope->parent;
+    return nullptr;
+  }
   currentId.pop_back();
 
   visit(ctx->func_def()->stat_compound());
@@ -105,7 +129,13 @@ Any Compiler::visitBlockDecl(PostParser::BlockDeclContext* ctx)
 
   visitChildren(ctx);
 
-  currentScope->AddSymbol(ti->copy());
+  try {
+    currentScope->AddSymbol(ti->copy());
+  } catch (int e) {
+    string errmess = "redefinition of identifier ";
+    addRuleErr(ctx, errmess + "\"" + ti->name + "\"");
+  }
+
   currentId.pop_back();
   return nullptr;
 }
@@ -157,7 +187,7 @@ Any Compiler::visitFuncSpecifier(PostParser::FuncSpecifierContext* ctx)
 Any Compiler::visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx)
 {
   if (currentId.back()->dataType.storageSet) {
-    string errmess = "identifier cannot have more than one storage specifier";
+    string errmess = "identifier cannot have more than one storage class";
     addRuleErr(ctx, errmess);
   }
   else

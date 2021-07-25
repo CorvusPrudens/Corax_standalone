@@ -101,6 +101,9 @@ class Identifier {
               bool equal = other.type == IdType::FUNCTION;
               equal = equal && other.dataType == dataType;
               equal = equal && other.returnType == returnType;
+              // TODO -- this needs expansion:
+              // it needs to check if the parameter order and 
+              // types are the same, not names etc.
               equal = equal && EqualVectors(other.members, members);
               return equal;
             }

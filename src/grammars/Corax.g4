@@ -89,8 +89,8 @@ direct_decl  : IDENTIFIER                                              # dirId
              | direct_decl '[' 'static' type_qual* expr_assi ']'       # dirDimStatic
              | direct_decl '[' type_qual+ 'static' expr_assi ']'       # dirDimStatic
              | direct_decl '[' type_qual* '*' ']'                      # dirDimVar
-             | direct_decl '(' param_type_list? ')'                     # dirFunc
-             | direct_decl '(' IDENTIFIER (',' IDENTIFIER)* ','? ')'# dirFuncID
+             | direct_decl '(' param_type_list? ')'                    # dirFunc
+             | direct_decl '(' IDENTIFIER (',' IDENTIFIER)* ','? ')'   # dirFuncID
              ;
 
 pointer : pointer_item+
