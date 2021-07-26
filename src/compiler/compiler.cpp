@@ -140,25 +140,25 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
   if (graphing) graph.Addf(tempid->name);
 
   // tempid->type = Identifier::IdType::FUNCTION; // note -- already happens in declarator()
-  try {
-    globalTable->AddSymbol(tempid->copy());
-  } catch (int e) {
-    string errmess;
-    switch (e)
-    {
-      default:
-      case 2:
-        errmess = "redefinition of function ";
-        break;
-      case 3:
-        errmess = "function definition does not match prototype ";
-        break;
-    }
-    addRuleErr(ctx->declarator(), errmess + "\"" + tempid->name + "\"");
-    currentId.pop_back();
-    currentScope = currentScope->parent;
-    return nullptr;
-  }
+  // try {
+  //   globalTable->AddSymbol(tempid->copy());
+  // } catch (int e) {
+  //   string errmess;
+  //   switch (e)
+  //   {
+  //     default:
+  //     case 2:
+  //       errmess = "redefinition of function ";
+  //       break;
+  //     case 3:
+  //       errmess = "function definition does not match prototype ";
+  //       break;
+  //   }
+  //   addRuleErr(ctx->declarator(), errmess + "\"" + tempid->name + "\"");
+  //   currentId.pop_back();
+  //   currentScope = currentScope->parent;
+  //   return nullptr;
+  // }
   currentId.pop_back();
   currentType.pop_back();
 
@@ -218,10 +218,32 @@ Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
   {
     auto ti = new Identifier;
     currentId.push_back(ti);
+    auto tt = new Type;
+    currentType.push_back(tt);
 
     visit(item);
 
-    currentScope->AddSymbol(ti->copy());
+    ti->dataType = *currentType.back();
+    try {
+      currentScope->AddSymbol(ti->copy());
+    } catch (int e) {
+      string errmess;
+      switch (e)
+      {
+        default:
+        case 1:
+          errmess = "redefinition of identifier ";
+          break;
+        case 2:
+          errmess = "redefinition of function ";
+          break;
+        case 3:
+          errmess = "function definition does not match prototype ";
+          break;
+      }
+      addRuleErr(item, errmess + "\"" + ti->name + "\"");
+    }
+    currentType.pop_back();
     currentId.pop_back();
   }
   return nullptr;
