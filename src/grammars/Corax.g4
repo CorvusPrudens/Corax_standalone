@@ -10,9 +10,10 @@ parse       : extern_decl+;
 // TODO -- ensure this is all refactored into antlr-idiomatic code
 // NOTE -- the rule says init_decl is optional, but that doesn't make sense to me
 // NOTE -- this ^ is because structs and such can have an optional name after the {}!!!
-declaration    : decl_spec init_decl init_decl_list? ';';
+// TODO -- add predicate or something to make this work (probably to decl_spec)
+declaration    : decl_spec init_decl_list ';';
 
-init_decl_list : (',' init_decl)+ ','?;
+init_decl_list : init_decl (',' init_decl)* ','?;
 
 // Declaration specifiers
 decl_spec   : decl_spec_item+;
@@ -57,21 +58,22 @@ struct_union : 'struct' IDENTIFIER? '{' struct_decl '}' # structDefined
              | 'union' IDENTIFIER                       # unionDeclared
              ;
 
-struct_decl_list : struct_decl | struct_decl_list struct_decl;
+struct_decl : spec_qual_list struct_declr_list ';';
 
-struct_decl : spec_qual_list struct_decl_list ';';
+// spec_qual_list : type_spec spec_qual_list? | type_qual spec_qual_list?;
+spec_qual_list : (type_spec | type_qual)+;
 
-spec_qual_list : type_spec spec_qual_list? | type_qual spec_qual_list?;
+// struct_declr_list : struct_declr | struct_declr_list ',' struct_declr;
+struct_declr_list : struct_declr (',' struct_decl)* ','?;
 
-struct_declr_list : struct_declr | struct_declr_list ',' struct_declr;
-
-struct_declr : declarator | declarator? ':' expr_const;
+struct_declr : declarator 
+             | declarator? ':' expr_const
+             ;
 
 enum_spec    : 'enum' IDENTIFIER? '{' enumerator (',' enumerator)* ','? '}' # enumDefined
              | 'enum' IDENTIFIER                                            # enumDeclared
              ;
 
-// is enum_const just an identifier??
 enumerator   : IDENTIFIER                 
              | IDENTIFIER '=' expr_const
              ;

@@ -6,6 +6,18 @@
 int global = START;
 extern static int global = 42;
 
+typedef struct {
+    float a;
+    float b;
+} complex;
+
+struct named {
+    int width, height;
+    int arr[32];
+};
+
+void func1(), func2(int arg), func3(int arg1, int arg2);
+
 void uart(int val)
 {
   // how to interface with hardware? inlining?

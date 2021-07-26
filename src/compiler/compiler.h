@@ -35,6 +35,7 @@ class Compiler : PostBaseVisitor {
     SymbolTable* globalTable;
     SymbolTable* currentScope;
     std::vector<Identifier*> currentId;
+    std::vector<Type*> currentType;
 
     Graph graph;
     bool graphing = false;
@@ -42,9 +43,9 @@ class Compiler : PostBaseVisitor {
     void addRuleErr(ParserRuleContext* rule, string errmess);
 
     Any visitParse(PostParser::ParseContext* ctx) override;
-    Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
-    Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
-    Any visitBlockDecl(PostParser::BlockDeclContext* ctx) override;
+    // Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
+    // Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
+    // Any visitBlockDecl(PostParser::BlockDeclContext* ctx) override;
     // Any visitBlockStat(PostParser::BlockStatContext* ctx) override;
     Any visitStat_compound(PostParser::Stat_compoundContext* ctx) override;
     Any visitParamList(PostParser::ParamListContext* ctx) override;
@@ -58,7 +59,10 @@ class Compiler : PostBaseVisitor {
     Any visitPointer_item(PostParser::Pointer_itemContext* ctx) override;
 
     // Declarations
+    Any visitDeclaration(PostParser::DeclarationContext* ctx) override;
+    Any visitDeclarator(PostParser::DeclaratorContext* ctx) override;
     Any visitDirFunc(PostParser::DirFuncContext* ctx) override;
+    Any visitFunc_def(PostParser::Func_defContext* ctx) override;
 
     // Expressions
     Any visitCall(PostParser::CallContext* ctx) override;
