@@ -86,6 +86,10 @@ class Pointer {
       return qualifiers == other.qualifiers;
     }
 
+    bool operator!=(Pointer other) {
+      return qualifiers != other.qualifiers;
+    }
+
     int qualifiers;
     // Pointers will always be one word for my cpu
     static constexpr int words = 1;
@@ -108,6 +112,10 @@ struct Type {
 
   Type() {
     storageSet = false;
+    name = "";
+    storage = StorageClass::AUTO;
+    function = FunctionSpecifier::NONE;
+    qualifiers = 0;
   }
 
   // Type(string n, StorageClass s = StorageClass::AUTO, int q = Qualifier::NONE) {
@@ -116,16 +124,12 @@ struct Type {
   //   qualifiers = q;
   // }
 
-  bool operator==(Type other) {
-    bool matching = true;
-    if (!MatchingVector(type_specifiers, other.type_specifiers))
-      return false;
-    if (qualifiers != other.qualifiers || storage != other.storage || function != other.function)
-      return false;
-    if (!MatchingVector(pointers, other.pointers))
-      return false;
-    
-    return true;
+  bool operator==(Type& other) {
+    return equal(other);
+  }
+
+  bool operator!=(Type& other) {
+    return !equal(other);
   }
 
   Type copy()
@@ -185,6 +189,21 @@ struct Type {
   bool storageSet;
   // each star can have its own type qualifiers
   std::vector<Pointer> pointers;
+
+  private:
+    bool equal(Type& other)
+    {
+      bool matching = true;
+      if (!MatchingVector(type_specifiers, other.type_specifiers))
+        return false;
+      if (qualifiers != other.qualifiers || storage != other.storage || function != other.function)
+        return false;
+      if (!EqualVectors(pointers, other.pointers))
+        return false;
+      
+      return true;
+    }
+
 };
 
 #endif

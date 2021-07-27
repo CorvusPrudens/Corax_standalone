@@ -26,7 +26,12 @@ class Identifier {
     //   name = n;
     //   type = t;
     // }
-    Identifier() {}
+    Identifier() {
+      name = "";
+      type = IdType::VARIABLE;
+      initialized = false;
+      assignment = "";
+    }
     ~Identifier() {}
 
     bool operator==(Identifier& other)
@@ -104,7 +109,12 @@ class Identifier {
               // TODO -- this needs expansion:
               // it needs to check if the parameter order and 
               // types are the same, not names etc.
-              equal = equal && EqualVectors(other.members, members);
+              if (members.size() != other.members.size()) return false;
+              for (int i = 0; i < members.size(); i++)
+              {
+                if (members[i].dataType != other.members[i].dataType)
+                  return false;
+              }
               return equal;
             }
           case IdType::STRUCT:

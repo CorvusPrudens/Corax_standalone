@@ -39,10 +39,13 @@ Any Compiler::visitParse(PostParser::ParseContext* ctx)
   currentScope = globalTable;
   visitChildren(ctx);
 
-  // for (auto id : globalTable->symbols)
-  // {
-  //   std::cout << id.name << "\n";
-  // }
+  for (auto id : globalTable->symbols)
+  {
+    std::cout << id.name << "\n";
+    if (id.members.size() > 0)
+      for (auto mem : id.members)
+        std::cout << "- " << mem.name << "\n";
+  }
 
   return nullptr;
 }
@@ -84,7 +87,7 @@ Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
   currentId.push_back(tempid);
   visitChildren(ctx); // this adds pointers too!
   try {
-    globalTable->AddSymbol(tempid->copy());
+    currentScope->AddSymbol(tempid->copy());
   } catch (int e) {
     string errmess;
     switch (e)
@@ -108,9 +111,15 @@ Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
 
 Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
 {
+  visit(ctx->direct_decl());
   currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
-  
-  visitChildren(ctx);
+  if (ctx->param_type_list() != nullptr)
+    visit(ctx->param_type_list());
+
+  for (auto arg : currentScope->symbols)
+    currentId.back()->members.push_back(arg);
+
+  currentScope = currentScope->parent;
   // visit(ctx->direct_decl());
   // if (ctx->param_type_list() != nullptr)
   //   visit(ctx->param_type_list());
@@ -119,7 +128,36 @@ Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
 
   currentId.back()->type = Identifier::IdType::FUNCTION;
 
-  currentScope = currentScope->parent;
+  return nullptr;
+}
+
+Any Compiler::visitParamDecl(PostParser::ParamDeclContext* ctx)
+{
+  auto tt = new Type;
+  currentType.push_back(tt);
+  visitChildren(ctx);
+  currentType.pop_back();
+
+  return nullptr;
+}
+
+Any Compiler::visitParamAbst(PostParser::ParamAbstContext* ctx)
+{
+  auto tt = new Type;
+  currentType.push_back(tt);
+  if (ctx->abstract_decl() == nullptr)
+  {
+    visit(ctx->decl_spec());
+    auto ti = new Identifier;
+    ti->dataType = *tt;
+    string name = "unnamed_" + std::to_string(unnamed_inc++);
+    ti->name = name;
+    // no need to catch error since this will never collide
+    currentScope->AddSymbol(ti->copy());
+  }
+  else
+    visitChildren(ctx);
+  currentType.pop_back();
 
   return nullptr;
 }
@@ -127,17 +165,17 @@ Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
 // ignoring declarations after parameter list for now
 Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
 {
-  auto tempid = new Identifier;
-  currentId.push_back(tempid);
+  // auto tempid = new Identifier;
+  // currentId.push_back(tempid);
   auto temptype = new Type;
   currentType.push_back(temptype);
 
-  currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
+  // currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
   
   visit(ctx->decl_spec());
   visit(ctx->declarator());
 
-  if (graphing) graph.Addf(tempid->name);
+  // if (graphing) graph.Addf(tempid->name);
 
   // tempid->type = Identifier::IdType::FUNCTION; // note -- already happens in declarator()
   // try {
@@ -159,12 +197,12 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
   //   currentScope = currentScope->parent;
   //   return nullptr;
   // }
-  currentId.pop_back();
+  // currentId.pop_back();
   currentType.pop_back();
 
   visit(ctx->stat_compound());
 
-  currentScope = currentScope->parent;
+  // currentScope = currentScope->parent;
 
   return nullptr;
 }
@@ -218,32 +256,29 @@ Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
   {
     auto ti = new Identifier;
     currentId.push_back(ti);
-    auto tt = new Type;
-    currentType.push_back(tt);
 
     visit(item);
 
-    ti->dataType = *currentType.back();
-    try {
-      currentScope->AddSymbol(ti->copy());
-    } catch (int e) {
-      string errmess;
-      switch (e)
-      {
-        default:
-        case 1:
-          errmess = "redefinition of identifier ";
-          break;
-        case 2:
-          errmess = "redefinition of function ";
-          break;
-        case 3:
-          errmess = "function definition does not match prototype ";
-          break;
-      }
-      addRuleErr(item, errmess + "\"" + ti->name + "\"");
-    }
-    currentType.pop_back();
+    // try {
+    //   currentScope->AddSymbol(ti->copy());
+    // } catch (int e) {
+    //   string errmess;
+    //   switch (e)
+    //   {
+    //     default:
+    //     case 1:
+    //       errmess = "redefinition of identifier ";
+    //       break;
+    //     case 2:
+    //       errmess = "redefinition of function ";
+    //       break;
+    //     case 3:
+    //       errmess = "function definition does not match prototype ";
+    //       break;
+    //   }
+    //   addRuleErr(item, errmess + "\"" + ti->name + "\"");
+    // }
+    // currentType.pop_back();
     currentId.pop_back();
   }
   return nullptr;

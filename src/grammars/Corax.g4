@@ -103,12 +103,13 @@ pointer_item : '*' type_qual*;
 
 param_type_list: param_list ','?       # paramList
                | param_list ',' '...'  # paramListElipse
+               | 'void'                # ParamListEmpty
                ;
 
 param_list: param_decl (',' param_decl)*;
 
-param_decl : decl_spec declarator
-           | decl_spec abstract_decl?
+param_decl : decl_spec declarator     # paramDecl
+           | decl_spec abstract_decl? # paramAbst
            ;
 
 type_name      : spec_qual_list abstract_decl?;

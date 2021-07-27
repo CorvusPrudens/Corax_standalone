@@ -39,6 +39,7 @@ class Compiler : PostBaseVisitor {
 
     Graph graph;
     bool graphing = false;
+    int unnamed_inc = 0;
 
     void addRuleErr(ParserRuleContext* rule, string errmess);
 
@@ -63,6 +64,8 @@ class Compiler : PostBaseVisitor {
     Any visitDeclarator(PostParser::DeclaratorContext* ctx) override;
     Any visitDirFunc(PostParser::DirFuncContext* ctx) override;
     Any visitFunc_def(PostParser::Func_defContext* ctx) override;
+    Any visitParamDecl(PostParser::ParamDeclContext* ctx) override;
+    Any visitParamAbst(PostParser::ParamAbstContext* ctx) override;
 
     // Expressions
     Any visitCall(PostParser::CallContext* ctx) override;
