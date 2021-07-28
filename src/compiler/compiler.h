@@ -39,6 +39,7 @@ class Compiler : PostBaseVisitor {
 
     Graph graph;
     bool graphing = false;
+    bool func_decl_err;
     int unnamed_inc = 0;
 
     void addRuleErr(ParserRuleContext* rule, string errmess);

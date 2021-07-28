@@ -98,9 +98,11 @@ Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
         break;
       case 2:
         errmess = "redefinition of function ";
+        func_decl_err = true;
         break;
       case 3:
         errmess = "function definition does not match prototype ";
+        func_decl_err = true;
         break;
     }
     addRuleErr(ctx, errmess + "\"" + tempid->name + "\"");
@@ -170,6 +172,9 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
   auto temptype = new Type;
   currentType.push_back(temptype);
 
+  // Maybe a bit hacky, but we'll skip compiling the function if its definition had an error
+  func_decl_err = false;
+
   // currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
   
   visit(ctx->decl_spec());
@@ -200,9 +205,16 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
   // currentId.pop_back();
   currentType.pop_back();
 
-  visit(ctx->stat_compound());
-
-  // currentScope = currentScope->parent;
+  if (!func_decl_err)
+  {
+    // construct new scope from args
+    currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
+    // the last identifier added to the parent scope is the function
+    for (auto arg : currentScope->parent->symbols.back().members)
+      currentScope->AddSymbol(arg);
+    visit(ctx->stat_compound());
+    currentScope = currentScope->parent;
+  }
 
   return nullptr;
 }
@@ -383,12 +395,6 @@ Any Compiler::visitPointer_item(PostParser::Pointer_itemContext* ctx)
   currentId.back()->dataType.pointers.push_back(p);
 
   return nullptr;
-}
-
-Any Compiler::visitCall(PostParser::CallContext* ctx)
-{
-  if (graphing) graph.Addc(ctx->expr_primary()->getText());
-  return visitChildren(ctx);
 }
 
 // void CompilerListener::Process(ANTLRInputStream* stream)

@@ -49,6 +49,7 @@ set (SOURCE_FILES
     ./grammars/build/Pre/PreExprVisitor.cpp
 
     ./compiler/compiler.cpp
+    ./compiler/expressions.cpp
     ./compiler/asm.cpp
     ./compiler/identifier.cpp
     ./compiler/stable.cpp
