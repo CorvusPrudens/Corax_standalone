@@ -17,7 +17,7 @@
             "intelliSenseMode": "linux-clang-x64"
         },
         {
-            "name": "Macos",
+            "name": "macOS",
             "includePath": [
                 "${workspaceFolder}/src/grammars/build/**",
                 "${workspaceFolder}/src/compiler",

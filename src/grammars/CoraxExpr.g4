@@ -5,7 +5,8 @@ grammar CoraxExpr;
 // ridiculously long trees
               // Primary
 expr_primary  : IDENTIFIER                         # identifier
-              | NUMBER                             # const
+              | INT                                # constInt
+              | FLT                                # constFlt
               | STRING                             # string
               | '(' expression ')'                 # group
               // TODO -- actually, postfix needs to be separated from
@@ -13,7 +14,7 @@ expr_primary  : IDENTIFIER                         # identifier
               // interpreted as a call
               // POSTFIX
               | expr_primary '[' expression ']'    # indexing
-              | expr_primary '(' arg_expr_list? ')' # call // (go to page 70)
+              | expr_primary '(' arg_expr_list? ')'# call // (go to page 70)
               | expr_primary '.' IDENTIFIER        # member
               | expr_primary '->' IDENTIFIER       # indirectMember
               | expr_primary '++'                  # incrementPost
@@ -28,7 +29,7 @@ expr_primary  : IDENTIFIER                         # identifier
               | '~' expr_cast                      # not
               | '!' expr_cast                      # negation
               | 'sizeof' expr_primary              # sizeof
-              | 'sizeof' '(' type_name ')'          # sizeofType
+              | 'sizeof' '(' type_name ')'         # sizeofType
               ;
 
               // postfix
@@ -58,7 +59,7 @@ expr_primary  : IDENTIFIER                         # identifier
 //               | 'sizeof' '(' typename ')'    # sizeofType
 //               ;
 
-expr_cast     : expr_primary                 # exprCast
+expr_cast     : expr_primary                  # exprCast
               | '(' type_name ')' expr_cast   # cast
               ;
 
@@ -124,5 +125,6 @@ expr_const    : expr_tern;
 type_name      : IDENTIFIER+;
 
 STRING        : '"' (~["\r\n] | '""' | '\\"')* '"';
-NUMBER        : [1-9][0-9_]* | '0';
+INT           : [1-9][0-9_]* | '0';
+FLT           : ([1-9][0-9_]* | '0') '.' ([1-9][0-9_]* | '0');
 IDENTIFIER    : [a-zA-Z_][a-zA-Z_0-9]*;

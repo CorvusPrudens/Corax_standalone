@@ -33,6 +33,16 @@ void Compiler::addRuleErr(ParserRuleContext* rule, string errmess)
   err->AddError(errmess, line, file, 1, cols, cole);
 }
 
+void Compiler::addRuleWarn(ParserRuleContext* rule, string warnmess)
+{
+  int outline = rule->start->getLine() - 1; // zero-indexed
+  int cols = rule->start->getCharPositionInLine();
+  int cole = cols + rule->stop->getStopIndex() - rule->start->getStartIndex();
+  int line = code->lines.getLine(outline);
+  string file = code->lines.getFile(outline);
+  err->AddWarning(warnmess, line, file, 1, cols, cole);
+}
+
 Any Compiler::visitParse(PostParser::ParseContext* ctx)
 {
   globalTable = new SymbolTable(nullptr, SymbolTable::Scope::GLOBAL);

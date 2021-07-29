@@ -29,6 +29,7 @@ class Compiler : PostBaseVisitor {
   private:
 
     tree::ParseTreeProperty<string> storage;
+    tree::ParseTreeProperty<Result> results;
 
     ProcessedCode* code;
     Error* err;
@@ -41,8 +42,10 @@ class Compiler : PostBaseVisitor {
     bool graphing = false;
     bool func_decl_err;
     int unnamed_inc = 0;
+    int temp_vars = 0;
 
     void addRuleErr(ParserRuleContext* rule, string errmess);
+    void addRuleWarn(ParserRuleContext* rule, string warnmess);
 
     Any visitParse(PostParser::ParseContext* ctx) override;
     // Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
@@ -69,8 +72,67 @@ class Compiler : PostBaseVisitor {
     Any visitParamAbst(PostParser::ParamAbstContext* ctx) override;
 
     // Expressions
-    Any visitCall(PostParser::CallContext* ctx) override;
-
+    Any visitDereference(PostParser::DereferenceContext *ctx) override;
+    Any visitIdentifier(PostParser::IdentifierContext *ctx) override;
+    Any visitNegation(PostParser::NegationContext *ctx) override;
+    Any visitIncrementUnary(PostParser::IncrementUnaryContext *ctx) override;
+    Any visitAddress(PostParser::AddressContext *ctx) override;
+    Any visitConstInt(PostParser::ConstIntContext *ctx) override;
+    Any visitConstFlt(PostParser::ConstFltContext *ctx) override;
+    Any visitString(PostParser::StringContext *ctx) override;
+    Any visitIndexing(PostParser::IndexingContext *ctx) override;
+    Any visitIncrementPost(PostParser::IncrementPostContext *ctx) override;
+    Any visitSizeof(PostParser::SizeofContext *ctx) override;
+    Any visitPositive(PostParser::PositiveContext *ctx) override;
+    Any visitDecrementPost(PostParser::DecrementPostContext *ctx) override;
+    Any visitDecrementUnary(PostParser::DecrementUnaryContext *ctx) override;
+    Any visitCall(PostParser::CallContext *ctx) override;
+    Any visitSizeofType(PostParser::SizeofTypeContext *ctx) override;
+    Any visitIndirectMember(PostParser::IndirectMemberContext *ctx) override;
+    Any visitNegative(PostParser::NegativeContext *ctx) override;
+    Any visitNot(PostParser::NotContext *ctx) override;
+    Any visitMember(PostParser::MemberContext *ctx) override;
+    Any visitGroup(PostParser::GroupContext *ctx) override;
+    Any visitExprCast(PostParser::ExprCastContext *ctx) override;
+    Any visitCast(PostParser::CastContext *ctx) override;
+    Any visitMinus(PostParser::MinusContext *ctx) override;
+    Any visitMult(PostParser::MultContext *ctx) override;
+    Any visitMod(PostParser::ModContext *ctx) override;
+    Any visitOr(PostParser::OrContext *ctx) override;
+    Any visitExprMulti(PostParser::ExprMultiContext *ctx) override;
+    Any visitNotEqual(PostParser::NotEqualContext *ctx) override;
+    Any visitLess(PostParser::LessContext *ctx) override;
+    Any visitBit_or(PostParser::Bit_orContext *ctx) override;
+    Any visitPlus(PostParser::PlusContext *ctx) override;
+    Any visitGreater_equal(PostParser::Greater_equalContext *ctx) override;
+    Any visitDiv(PostParser::DivContext *ctx) override;
+    Any visitEqual(PostParser::EqualContext *ctx) override;
+    Any visitShiftLeft(PostParser::ShiftLeftContext *ctx) override;
+    Any visitShiftRight(PostParser::ShiftRightContext *ctx) override;
+    Any visitBit_xor(PostParser::Bit_xorContext *ctx) override;
+    Any visitAnd(PostParser::AndContext *ctx) override;
+    Any visitBit_and(PostParser::Bit_andContext *ctx) override;
+    Any visitGreater(PostParser::GreaterContext *ctx) override;
+    Any visitLess_equal(PostParser::Less_equalContext *ctx) override;
+    Any visitExprTern(PostParser::ExprTernContext *ctx) override;
+    Any visitTernary(PostParser::TernaryContext *ctx) override;
+    Any visitExprAssi(PostParser::ExprAssiContext *ctx) override;
+    Any visitAssignment(PostParser::AssignmentContext *ctx) override;
+    Any visitAssignmentMult(PostParser::AssignmentMultContext *ctx) override;
+    Any visitAssignmentDiv(PostParser::AssignmentDivContext *ctx) override;
+    Any visitAssignmentMod(PostParser::AssignmentModContext *ctx) override;
+    Any visitAssignmentPlus(PostParser::AssignmentPlusContext *ctx) override;
+    Any visitAssignmentMinus(PostParser::AssignmentMinusContext *ctx) override;
+    Any visitAssignmentShiftLeft(PostParser::AssignmentShiftLeftContext *ctx) override;
+    Any visitAssignmentShiftRight(PostParser::AssignmentShiftRightContext *ctx) override;
+    Any visitAssignmentBitAnd(PostParser::AssignmentBitAndContext *ctx) override;
+    Any visitAssignmentBitXor(PostParser::AssignmentBitXorContext *ctx) override;
+    Any visitAssignmentBitOr(PostParser::AssignmentBitOrContext *ctx) override;
+    Any visitArglist(PostParser::ArglistContext *ctx) override;
+    Any visitExprList(PostParser::ExprListContext *ctx) override;
+    Any visitComma(PostParser::CommaContext *ctx) override;
+    Any visitExprExpression(PostParser::ExprExpressionContext *ctx) override;
+    Any visitExpr_const(PostParser::Expr_constContext *ctx) override;
 
 };
 

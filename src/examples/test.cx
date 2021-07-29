@@ -47,7 +47,8 @@ void loop()
 
   int start = global, start;
 
-  start = add(start, 1) * 2;
+  // start = add(start, 1) * 2;
+  start = 1 * 2 * start;
 
   uart(start);
 

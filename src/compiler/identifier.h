@@ -168,6 +168,115 @@ class Identifier {
     // std::vector<Identifier> args;
 };
 
+class Result {
+
+  public:
+
+    static constexpr size_t buff_size = 8;
+
+    union Value {
+      uint8_t buff[buff_size];
+      Identifier id;
+      Value () {
+        for (int i = 0; i < buff_size; i++)
+          buff[i] = 0;
+      }
+      ~Value() {}
+
+      private:
+        Value(const Value& other);
+    };
+
+    enum Kind {
+      VOID = 0,
+      ID,
+      // Right now it's only really practical to have 3 types
+      FLOAT,
+      INT,
+      S_INT,
+    };
+
+    Result() {}
+    ~Result() {}
+
+    // copy constructor
+    Result(const Result& other)
+    {
+      if (other.kind == Kind::ID)
+        value.id = other.value.id;
+      else
+      {
+        for (int i = 0; i < buff_size; i++)
+          value.buff[i] = other.value.buff[i];
+      }
+      kind = other.kind;
+    }
+
+    Kind kind = Kind::VOID;
+    Value value;
+
+    bool isConst()
+    {
+      return kind != Kind::ID;
+    }
+
+    void setValue(Identifier id)
+    {
+      kind = Kind::ID;
+      value.id = id;
+    }
+
+    void setValue(float val)
+    {
+      kind = Kind::FLOAT;
+      float* ptr = (float*) value.buff;
+      *ptr = val;
+    }
+
+    void setValue(int val)
+    {
+      kind = Kind::S_INT;
+      int* ptr = (int*) value.buff;
+      *ptr = val;
+    }
+
+    void setValue(unsigned int val)
+    {
+      kind = Kind::INT;
+      unsigned int* ptr = (unsigned int*) value.buff;
+      *ptr = val;
+    }
+
+    template<typename T>
+    T as()
+    {
+      switch (kind) {
+        case Kind::FLOAT:
+        {
+          float* orig = (float*) value.buff;
+          T val = (T) *orig;
+          return val;
+        }
+        case Kind::INT:
+        {
+          unsigned int* orig = (unsigned int*) value.buff;
+          T val = (T) *orig;
+          return val;
+        }
+        case Kind::S_INT:
+        {
+          int* orig = (int*) value.buff;
+          T val = (T) *orig;
+          return val;
+        }
+        default:
+          return (T) 0;
+      }
+    }
+
+    
+};
+
 // class Struct {
 
 //   public:
