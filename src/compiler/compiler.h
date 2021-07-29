@@ -35,11 +35,13 @@ class Compiler : PostBaseVisitor {
     Error* err;
     SymbolTable* globalTable;
     SymbolTable* currentScope;
+    // TODO -- This should probably be refactored later to not suck
     std::vector<Identifier*> currentId;
     std::vector<Type*> currentType;
 
     Graph graph;
     bool graphing = false;
+    bool inherit = false;
     bool func_decl_err;
     int unnamed_inc = 0;
     int temp_vars = 0;

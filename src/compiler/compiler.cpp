@@ -219,6 +219,7 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
   {
     // construct new scope from args
     currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
+    inherit = true;
     // the last identifier added to the parent scope is the function
     for (auto arg : currentScope->parent->symbols.back().members)
       currentScope->AddSymbol(arg);
@@ -326,9 +327,18 @@ Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
 
 Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
 {
-  currentScope = new SymbolTable(currentScope, SymbolTable::Scope::LOCAL);
-  visitChildren(ctx);
-  currentScope = currentScope->parent;
+  if (inherit)
+  {
+    inherit = false;
+    visitChildren(ctx);
+  }
+  else
+  {
+    currentScope = new SymbolTable(currentScope, SymbolTable::Scope::LOCAL);
+    visitChildren(ctx);
+    currentScope = currentScope->parent;
+  }
+  
   return nullptr;
 }
 
