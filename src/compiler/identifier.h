@@ -228,6 +228,8 @@ class Result {
       return kind != Kind::ID;
     }
 
+    string to_string();
+
     void setValue(Identifier new_id)
     {
       kind = Kind::ID;
@@ -271,7 +273,7 @@ class Result {
           T val = (T) *orig;
           return val;
         }
-        case Kind::S_INT:
+        case Kind::S_INT:cout << "*" <<
         {
           int* orig = (int*) value;
           T val = (T) *orig;
@@ -316,31 +318,13 @@ class Instruction {
       LESS_EQUAL,
     };
 
-    Instruction(ParseTree* c, Abstr i, Result op1) {
-      ctx = c;
-      instr = i;
-      operand1 = op1;
-      single = true;
-    }
-    Instruction(ParseTree* c, Abstr i, Result op1, Result op2) {
-      ctx = c;
-      instr = i;
-      operand1 = op1;
-      operand2 = op2;
-      single = false;
-    }
-    Instruction(const Instruction& other) {
-      ctx = other.ctx;
-      instr = other.instr;
-      operand1 = other.operand1;
-      single = other.single;
-      condition = other.condition;
-      if (!single)
-        operand2 = other.operand2;
-    }
+    Instruction(ParseTree* c, Abstr i, Result op1);
+    Instruction(ParseTree* c, Abstr i, Result op1, Result op2);
+    Instruction(const Instruction& other);
     ~Instruction() {}
 
     void setCondition(Cond c) { condition = c; }
+    void debugPrint();
 
     Abstr instr;
     Cond condition;
