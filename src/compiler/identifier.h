@@ -7,6 +7,7 @@
 #include <vector>
 
 using std::string;
+using antlr4::tree::ParseTree;
 
 class Identifier {
 
@@ -100,6 +101,9 @@ class Identifier {
 
     // For struct / union / function
     std::vector<Identifier> members;
+
+    // For function
+    std::vector<Instruction> instructions;
 
     // For array
     std::vector<string> initializers;
@@ -279,6 +283,72 @@ class Result {
     }
 
     
+};
+
+class Instruction {
+
+  public:
+    enum Abstr {
+      DEREF = 0,
+      NOT,
+      NEGATE,
+      CONVERT,
+      ASSIGN,
+      ADD,
+      SUB,
+      MULT,
+      DIV,
+      MOD,
+      SHIFT_L,
+      SHIFT_R,
+      AND,
+      XOR,
+      OR,
+      CMP,
+    };
+
+    enum Cond {
+      EQUAL,
+      NOT_EQUAL,
+      GREATER,
+      LESS,
+      GREATER_EQUAL,
+      LESS_EQUAL,
+    };
+
+    Instruction(ParseTree* c, Abstr i, Result op1) {
+      ctx = c;
+      instr = i;
+      operand1 = op1;
+      single = true;
+    }
+    Instruction(ParseTree* c, Abstr i, Result op1, Result op2) {
+      ctx = c;
+      instr = i;
+      operand1 = op1;
+      operand2 = op2;
+      single = false;
+    }
+    Instruction(const Instruction& other) {
+      ctx = other.ctx;
+      instr = other.instr;
+      operand1 = other.operand1;
+      single = other.single;
+      condition = other.condition;
+      if (!single)
+        operand2 = other.operand2;
+    }
+    ~Instruction() {}
+
+    void setCondition(Cond c) { condition = c; }
+
+    Abstr instr;
+    Cond condition;
+    Result operand1;
+    Result operand2;
+    ParseTree* ctx; // for easy error reporting
+    bool single;
+
 };
 
 // class Struct {
