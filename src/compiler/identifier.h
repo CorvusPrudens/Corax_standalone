@@ -34,6 +34,18 @@ class Identifier {
     }
     ~Identifier() {}
 
+    Identifier(const Identifier& other)
+    {
+      type = other.type;
+      name = other.name;
+      // We can optimize this later
+      dataType = other.dataType;
+      returnType = other.returnType;
+      initialized = other.initialized;
+      members = other.members;
+      initializers = other.initializers;
+    }
+
     bool operator==(Identifier& other)
     {
       return equal(other);
@@ -174,18 +186,8 @@ class Result {
 
     static constexpr size_t buff_size = 8;
 
-    union Value {
-      uint8_t buff[buff_size];
-      Identifier id;
-      Value () {
-        for (int i = 0; i < buff_size; i++)
-          buff[i] = 0;
-      }
-      ~Value() {}
-
-      private:
-        Value(const Value& other);
-    };
+    uint8_t value[buff_size];
+    Identifier id;
 
     enum Kind {
       VOID = 0,
@@ -196,54 +198,56 @@ class Result {
       S_INT,
     };
 
-    Result() {}
+    Result() {
+      for (int i = 0; i < buff_size; i++)
+        value[i] = 0;
+    }
     ~Result() {}
 
     // copy constructor
     Result(const Result& other)
     {
       if (other.kind == Kind::ID)
-        value.id = other.value.id;
+        id = other.id;
       else
       {
         for (int i = 0; i < buff_size; i++)
-          value.buff[i] = other.value.buff[i];
+          value[i] = other.value[i];
       }
       kind = other.kind;
     }
 
     Kind kind = Kind::VOID;
-    Value value;
 
     bool isConst()
     {
       return kind != Kind::ID;
     }
 
-    void setValue(Identifier id)
+    void setValue(Identifier new_id)
     {
       kind = Kind::ID;
-      value.id = id;
+      id = new_id;
     }
 
     void setValue(float val)
     {
       kind = Kind::FLOAT;
-      float* ptr = (float*) value.buff;
+      float* ptr = (float*) value;
       *ptr = val;
     }
 
     void setValue(int val)
     {
       kind = Kind::S_INT;
-      int* ptr = (int*) value.buff;
+      int* ptr = (int*) value;
       *ptr = val;
     }
 
     void setValue(unsigned int val)
     {
       kind = Kind::INT;
-      unsigned int* ptr = (unsigned int*) value.buff;
+      unsigned int* ptr = (unsigned int*) value;
       *ptr = val;
     }
 
@@ -253,19 +257,19 @@ class Result {
       switch (kind) {
         case Kind::FLOAT:
         {
-          float* orig = (float*) value.buff;
+          float* orig = (float*) value;
           T val = (T) *orig;
           return val;
         }
         case Kind::INT:
         {
-          unsigned int* orig = (unsigned int*) value.buff;
+          unsigned int* orig = (unsigned int*) value;
           T val = (T) *orig;
           return val;
         }
         case Kind::S_INT:
         {
-          int* orig = (int*) value.buff;
+          int* orig = (int*) value;
           T val = (T) *orig;
           return val;
         }

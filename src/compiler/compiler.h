@@ -49,6 +49,8 @@ class Compiler : PostBaseVisitor {
     void addRuleErr(ParserRuleContext* rule, string errmess);
     void addRuleWarn(ParserRuleContext* rule, string warnmess);
 
+    void operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, Result (*fptr)(Result o1, Result o2));
+
     Any visitParse(PostParser::ParseContext* ctx) override;
     // Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
     // Any visitTopFunc(PostParser::TopFuncContext* ctx) override;

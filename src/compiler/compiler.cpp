@@ -49,13 +49,13 @@ Any Compiler::visitParse(PostParser::ParseContext* ctx)
   currentScope = globalTable;
   visitChildren(ctx);
 
-  for (auto id : globalTable->symbols)
-  {
-    std::cout << id.name << "\n";
-    if (id.members.size() > 0)
-      for (auto mem : id.members)
-        std::cout << "- " << mem.name << "\n";
-  }
+  // for (auto id : globalTable->symbols)
+  // {
+  //   std::cout << id.name << "\n";
+  //   if (id.members.size() > 0)
+  //     for (auto mem : id.members)
+  //       std::cout << "- " << mem.name << "\n";
+  // }
 
   return nullptr;
 }
@@ -226,6 +226,8 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
     visit(ctx->stat_compound());
     currentScope = currentScope->parent;
   }
+
+  temp_vars = 0;
 
   return nullptr;
 }

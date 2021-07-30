@@ -1,0 +1,55 @@
+
+#include "function.cx"
+
+#define START 100
+
+int global = START;
+extern static int global = 42;
+
+// typedef struct {
+//     float a;
+//     float b;
+// } complex;
+
+// struct named {
+//     int width, height;
+//     int arr[32];
+// };
+
+void func1(), func2(int arg), func3(int arg1, int arg2);
+
+void uart(int val)
+{
+  // how to interface with hardware? inlining?
+}
+
+void orphan2(unsigned int param);
+
+void orphan()
+{
+  int a;
+  a = 1;
+  orphan2(a);
+}
+
+void orphan2(int param)
+{
+  orphan();
+}
+
+void recurs()
+{
+  recurs();
+}
+
+void loop()
+{
+
+  int start = global, start;
+
+  // start = add(start, 1) * 2;
+  start = 1 * 2 * start;
+
+  uart(start);
+
+}

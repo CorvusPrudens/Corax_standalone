@@ -11,6 +11,81 @@ using std::string;
 // EXPRESSIONS
 ////////////////////////////////////////////////
 
+// NOTE -- this should accept a class instance that has a standard interface!!
+void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, Result (*fptr)(Result o1, Result o2))
+{
+  Result res;
+
+  // TODO -- create object with some kind of mechanism (method with function pointer?)
+  // that allows us to package all this up neatly instead of have 50 lines of code for
+  // all 60 expressions
+  if (op1.isConst() && op2.isConst()) {
+    if (op1.kind == Result::Kind::VOID || op2.kind == Result::Kind::VOID)
+    {
+      
+    }
+    else if (op1.kind == Result::Kind::FLOAT || op2.kind == Result::Kind::FLOAT)
+    {
+      float v1 = op1.as<float>();
+      float v2 = op2.as<float>();
+      res.setValue(v1 * v2);
+    }
+    else if (op1.kind == Result::Kind::INT)
+    {
+      // string warnmess = "operating on signed and unsigned int";
+      // addRuleWarn(ctx, warnmess);
+      int v1 = op1.as<unsigned int>();
+      int v2 = op2.as<unsigned int>();
+      res.setValue(v1 * v2);
+    }
+    else if (op1.kind == Result::Kind::S_INT)
+    {
+      // string warnmess = "operating on signed and unsigned int";
+      // addRuleWarn(ctx, warnmess);
+      int v1 = op1.as<int>();
+      int v2 = op2.as<int>();
+      res.setValue(v1 * v2);
+    }
+
+    results.put(ctx, res);
+    return nullptr;
+  }
+
+
+  string tempname = "temp_var_" + std::to_string(temp_vars++);
+  Identifier temp;
+  temp.name = tempname;
+  currentScope->AddSymbol(temp);
+  std::cout << tempname << " = "; // for testing
+
+  if (!op1.isConst()) {
+    if (op2.isConst()) {
+      // obviously we'll need to change how we treat the const op and how the temp
+      // variable is created / used
+      std::cout << op1.id.name << "*" << op2.as<float>() << "\n";
+    }
+    else
+    {
+      std::cout << op1.id.name << "*" << op2.id.name << "\n";
+    }
+  }
+  else if (!op2.isConst()) {
+    if (op1.isConst()) {
+      // obviously we'll need to change how we treat the const op and how the temp
+      // variable is created / used
+      std::cout << op2.id.name << "*" << op1.as<float>() << "\n";
+    }
+    else
+    {
+      std::cout << op2.id.name << "*" << op1.id.name << "\n";
+    }
+  }
+
+  // this method is less memory efficient, but it's quite easy!
+  res.setValue(temp);
+  results.put(ctx, res);
+}
+
 Any Compiler::visitCall(PostParser::CallContext* ctx)
 {
   if (graphing) graph.Addc(ctx->expr_primary()->getText());
@@ -170,23 +245,22 @@ Any Compiler::visitMult(PostParser::MultContext* ctx)
     if (op2.isConst()) {
       // obviously we'll need to change how we treat the const op and how the temp
       // variable is created / used
-      std::cout << op1.value.id.name << "*" << op2.as<float>() << "\n";
+      std::cout << op1.id.name << "*" << op2.as<float>() << "\n";
     }
     else
     {
-      std::cout << op1.value.id.name << "*" << op2.value.id.name << "\n";
+      std::cout << op1.id.name << "*" << op2.id.name << "\n";
     }
   }
-
-  if (!op2.isConst()) {
+  else if (!op2.isConst()) {
     if (op1.isConst()) {
       // obviously we'll need to change how we treat the const op and how the temp
       // variable is created / used
-      std::cout << op2.value.id.name << "*" << op1.as<float>() << "\n";
+      std::cout << op2.id.name << "*" << op1.as<float>() << "\n";
     }
     else
     {
-      std::cout << op2.value.id.name << "*" << op1.value.id.name << "\n";
+      std::cout << op2.id.name << "*" << op1.id.name << "\n";
     }
   }
 
@@ -211,15 +285,250 @@ Any Compiler::visitAssignment(PostParser::AssignmentContext* ctx)
     return nullptr;
   }
 
-  std::cout << op1.value.id.name << " = "; // for testing
+  std::cout << op1.id.name << " = "; // for testing
 
   if (op2.isConst()) {
     std::cout << op2.as<float>() << "\n";
   }
   else {
-    std::cout << op2.value.id.name << "\n";
+    std::cout << op2.id.name << "\n";
   }
 
   results.put(ctx, res); // what should be the result though??
   return nullptr;
+}
+
+Any Compiler::visitDereference(PostParser::DereferenceContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitNegation(PostParser::NegationContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitIncrementUnary(PostParser::IncrementUnaryContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAddress(PostParser::AddressContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitIndexing(PostParser::IndexingContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitIncrementPost(PostParser::IncrementPostContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitSizeof(PostParser::SizeofContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitPositive(PostParser::PositiveContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitDecrementPost(PostParser::DecrementPostContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitDecrementUnary(PostParser::DecrementUnaryContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitSizeofType(PostParser::SizeofTypeContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitIndirectMember(PostParser::IndirectMemberContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitNegative(PostParser::NegativeContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitNot(PostParser::NotContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitMember(PostParser::MemberContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitCast(PostParser::CastContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitMinus(PostParser::MinusContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitMod(PostParser::ModContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitOr(PostParser::OrContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitNotEqual(PostParser::NotEqualContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitLess(PostParser::LessContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitBit_or(PostParser::Bit_orContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitPlus(PostParser::PlusContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitGreater_equal(PostParser::Greater_equalContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitDiv(PostParser::DivContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitEqual(PostParser::EqualContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitShiftLeft(PostParser::ShiftLeftContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitShiftRight(PostParser::ShiftRightContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitBit_xor(PostParser::Bit_xorContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAnd(PostParser::AndContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitBit_and(PostParser::Bit_andContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitGreater(PostParser::GreaterContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitLess_equal(PostParser::Less_equalContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitTernary(PostParser::TernaryContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentMult(PostParser::AssignmentMultContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentDiv(PostParser::AssignmentDivContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentMod(PostParser::AssignmentModContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentPlus(PostParser::AssignmentPlusContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentMinus(PostParser::AssignmentMinusContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentShiftLeft(PostParser::AssignmentShiftLeftContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentShiftRight(PostParser::AssignmentShiftRightContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentBitAnd(PostParser::AssignmentBitAndContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentBitXor(PostParser::AssignmentBitXorContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitAssignmentBitOr(PostParser::AssignmentBitOrContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitArglist(PostParser::ArglistContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitComma(PostParser::CommaContext *ctx) 
+{
+  return visitChildren(ctx);
+}
+
+Any Compiler::visitExpr_const(PostParser::Expr_constContext *ctx) 
+{
+  return visitChildren(ctx);
 }
