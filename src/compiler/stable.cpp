@@ -3,6 +3,7 @@
 void SymbolTable::AddSymbol(Identifier id)
 { 
   Identifier other;
+  id.dataType.sortSpecifiers();
   try {
     // We only need to worry about colliding with local symbols
     other = GetLocalSymbol(id.name);

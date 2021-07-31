@@ -7,6 +7,18 @@ using antlr4::tree::ParseTree;
 using std::cout;
 using std::string;
 
+Result::Result(const Result& other)
+{
+  if (other.kind == Kind::ID)
+    id = other.id;
+  else
+  {
+    for (int i = 0; i < buff_size; i++)
+      value[i] = other.value[i];
+  }
+  kind = other.kind;
+}
+
 string Result::to_string()
 {
   switch (kind)
@@ -155,7 +167,6 @@ void Instruction::debugPrint() {
           cout << "error comparison" << "\n";
           break;
       }
-      
     }
     break;
   }

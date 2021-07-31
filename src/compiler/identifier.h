@@ -1,6 +1,7 @@
 #ifndef IDENTIFIER_H
 #define IDENTIFIER_H
 
+#include "antlr4-runtime.h"
 #include "type.h"
 
 #include <string>
@@ -188,7 +189,7 @@ class Result {
 
   public:
 
-    static constexpr size_t buff_size = 8;
+    static constexpr size_t buff_size = 16;
 
     uint8_t value[buff_size];
     Identifier id;
@@ -209,24 +210,11 @@ class Result {
     ~Result() {}
 
     // copy constructor
-    Result(const Result& other)
-    {
-      if (other.kind == Kind::ID)
-        id = other.id;
-      else
-      {
-        for (int i = 0; i < buff_size; i++)
-          value[i] = other.value[i];
-      }
-      kind = other.kind;
-    }
+    Result(const Result& other);
 
     Kind kind = Kind::VOID;
 
-    bool isConst()
-    {
-      return kind != Kind::ID;
-    }
+    bool isConst() { return kind != Kind::ID; }
 
     string to_string();
 

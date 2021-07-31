@@ -19,6 +19,7 @@
         {
             "name": "macOS",
             "includePath": [
+                "${workspaceFolder}/src",
                 "${workspaceFolder}/src/grammars/build/**",
                 "${workspaceFolder}/src/compiler",
                 "${workspaceFolder}/src/precompiler",

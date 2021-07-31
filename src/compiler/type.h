@@ -5,9 +5,12 @@
 
 #include <unordered_map>
 #include <vector>
+#include <array>
+#include <algorithm>
 #include <string>
 
 using std::string;
+using std::vector;
 // class Type {
 
 
@@ -21,28 +24,6 @@ enum Qualifier {
   RESTRICT = 2,
   VOLATILE = 4,
 };
-
-struct TypeDescriptor {
-
-  TypeDescriptor(std::vector<string> s, int w)
-  {
-    specifiers = s;
-    words = w;
-  }
-
-  std::vector<string> specifiers;
-  int words;
-
-  // NOTE -- it would almost certainly be more
-  // performant to organize the specifiers in a
-  // standard way, making checking much faster
-  bool operator==(TypeDescriptor other) {
-    return MatchingVector(specifiers, other.specifiers);
-  }
-
-};
-
-// std::vector<TypeDescriptor> StandardTypes;
 
 class Pointer {
   public:
@@ -64,7 +45,7 @@ class Pointer {
       qualifiers = temp;
     }
 
-    void setQualifiers(std::vector<string> quals)
+    void setQualifiers(vector<string> quals)
     {
       int temp = qualifiers;
       for (auto q : quals) {
@@ -118,6 +99,15 @@ struct Type {
     qualifiers = 0;
   }
 
+  Type(const Type& other) {
+    storageSet = other.storageSet;
+    storage = other.storage;
+    qualifiers = other.qualifiers;
+    type_specifiers = other.type_specifiers;
+    function = other.function;
+    pointers = other.pointers;
+  }
+
   // Type(string n, StorageClass s = StorageClass::AUTO, int q = Qualifier::NONE) {
   //   name = n;
   //   storage = s;
@@ -130,6 +120,14 @@ struct Type {
 
   bool operator!=(Type& other) {
     return !equal(other);
+  }
+
+  bool operator==(TypeDescriptor& other) {
+    for (int i = 0; i < other.specifiers.size(); i++)
+      if (EqualVectors(type_specifiers, other.specifiers[i]))
+        return true;
+    
+    return false;
   }
 
   Type copy()
@@ -181,14 +179,21 @@ struct Type {
     storageSet = true;
   }
 
+  void sortSpecifiers() {
+    if (type_specifiers.size() < 2)
+      return;
+    
+    std::sort(type_specifiers.begin(), type_specifiers.end());
+  }
+
   string name;
-  std::vector<string> type_specifiers;
+  vector<string> type_specifiers;
   int qualifiers;
   StorageClass storage;
   FunctionSpecifier function;
   bool storageSet;
   // each star can have its own type qualifiers
-  std::vector<Pointer> pointers;
+  vector<Pointer> pointers;
 
   private:
     bool equal(Type& other)
@@ -205,6 +210,58 @@ struct Type {
     }
 
 };
+
+struct TypeDescriptor {
+
+  TypeDescriptor(vector<vector<string>> s, unsigned int b)
+  {
+    specifiers = s;
+    bytes = b;
+  }
+
+  TypeDescriptor(const TypeDescriptor& other) 
+  {
+    specifiers = other.specifiers;
+    bytes = other.bytes;
+  }
+
+  vector<vector<string>> specifiers;
+  unsigned int bytes;
+
+  bool operator==(Type& other) {
+    for (int i = 0; i < specifiers.size(); i++)
+      if (EqualVectors(other.type_specifiers, specifiers[i]))
+        return true;
+    
+    return false;
+  }
+
+  bool operator==(TypeDescriptor& other) {
+    return equal(other);
+  }
+
+  bool operator!=(TypeDescriptor& other) {
+    return !equal(other);
+  }
+
+  private:
+    bool equal(TypeDescriptor& other) {
+      if (bytes != other.bytes || specifiers.size() != other.specifiers.size())
+        return false;
+      else
+      {
+        for (int i = 0; i < specifiers.size(); i++)
+        {
+          if (!EqualVectors(specifiers[i], other.specifiers[i]))
+            return false;
+        }
+      }
+      return true;
+    }
+
+};
+
+extern vector<TypeDescriptor> StandardTypes;
 
 #endif
 
