@@ -273,7 +273,7 @@ Any Compiler::visitGroup(PostParser::GroupContext* ctx)
 Any Compiler::visitMult(PostParser::MultContext* ctx)
 {
   visitChildren(ctx);
-  Mult oper(ctx, currentScope, currentFunction);
+  Mult oper(ctx, currentScope, currentFunction, this);
   operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
 
   return nullptr;
@@ -283,7 +283,7 @@ Any Compiler::visitMult(PostParser::MultContext* ctx)
 Any Compiler::visitAssignment(PostParser::AssignmentContext* ctx)
 {
   visitChildren(ctx);
-  Assign oper(ctx, currentScope, currentFunction);
+  Assign oper(ctx, currentScope, currentFunction, this);
   operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
 
   return nullptr;
@@ -296,12 +296,27 @@ Any Compiler::visitDereference(PostParser::DereferenceContext *ctx)
 
 Any Compiler::visitNegation(PostParser::NegationContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Negate oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_cast()), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitIncrementUnary(PostParser::IncrementUnaryContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  IncrPre oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_primary()), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "unary increment requires modifiable lvalue";
+    addRuleErr(ctx, errmess);
+
+    results.put(ctx, results.get(ctx->expr_primary()));
+  }
+
+  return nullptr;
 }
 
 Any Compiler::visitAddress(PostParser::AddressContext *ctx) 
@@ -316,7 +331,18 @@ Any Compiler::visitIndexing(PostParser::IndexingContext *ctx)
 
 Any Compiler::visitIncrementPost(PostParser::IncrementPostContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  IncrPost oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_primary()), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "postfix increment requires modifiable lvalue";
+    addRuleErr(ctx, errmess);
+
+    results.put(ctx, results.get(ctx->expr_primary()));
+  }
+
+  return nullptr;
 }
 
 Any Compiler::visitSizeof(PostParser::SizeofContext *ctx) 
@@ -326,17 +352,41 @@ Any Compiler::visitSizeof(PostParser::SizeofContext *ctx)
 
 Any Compiler::visitPositive(PostParser::PositiveContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  results.put(ctx, results.get(ctx->expr_cast()));
+  return nullptr;
 }
 
 Any Compiler::visitDecrementPost(PostParser::DecrementPostContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  DecrPost oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_primary()), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "postfix decrement requires modifiable lvalue";
+    addRuleErr(ctx, errmess);
+
+    results.put(ctx, results.get(ctx->expr_primary()));
+  }
+
+  return nullptr;
 }
 
 Any Compiler::visitDecrementUnary(PostParser::DecrementUnaryContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  DecrPre oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_primary()), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "unary decrement requires modifiable lvalue";
+    addRuleErr(ctx, errmess);
+
+    results.put(ctx, results.get(ctx->expr_primary()));
+  }
+
+  return nullptr;
 }
 
 Any Compiler::visitSizeofType(PostParser::SizeofTypeContext *ctx) 
@@ -351,12 +401,44 @@ Any Compiler::visitIndirectMember(PostParser::IndirectMemberContext *ctx)
 
 Any Compiler::visitNegative(PostParser::NegativeContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Negative oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_cast()), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "behavior undefined for unsigned type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+
+    results.put(ctx, results.get(ctx->expr_cast()));
+  } catch (Type e) {
+    string errmess = "behavior undefined for unsigned type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+
+    results.put(ctx, results.get(ctx->expr_cast()));
+  }
+
+  return nullptr;
 }
 
 Any Compiler::visitNot(PostParser::NotContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Not oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_cast()), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "behavior undefined for type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+
+    results.put(ctx, results.get(ctx->expr_cast()));
+  } catch (Type e) {
+    string errmess = "behavior undefined for type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+
+    results.put(ctx, results.get(ctx->expr_cast()));
+  }
+
+  return nullptr;
 }
 
 Any Compiler::visitMember(PostParser::MemberContext *ctx) 
@@ -372,7 +454,7 @@ Any Compiler::visitCast(PostParser::CastContext *ctx)
 Any Compiler::visitMinus(PostParser::MinusContext *ctx) 
 {
   visitChildren(ctx);
-  Sub oper(ctx, currentScope, currentFunction);
+  Sub oper(ctx, currentScope, currentFunction, this);
   operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
 
   return nullptr;
@@ -381,7 +463,7 @@ Any Compiler::visitMinus(PostParser::MinusContext *ctx)
 Any Compiler::visitMod(PostParser::ModContext *ctx) 
 {
   visitChildren(ctx);
-  Mod oper(ctx, currentScope, currentFunction);
+  Mod oper(ctx, currentScope, currentFunction, this);
   try {
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
   } catch (TypeDescriptor e) {
@@ -393,34 +475,65 @@ Any Compiler::visitMod(PostParser::ModContext *ctx)
     results.put(ctx, res);
   }
   
-
   return nullptr;
 }
 
 Any Compiler::visitOr(PostParser::OrContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Or oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitNotEqual(PostParser::NotEqualContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  NotEqual oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitLess(PostParser::LessContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Less oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitBit_or(PostParser::Bit_orContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  BitOr oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  } catch (Type e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  }
+  
+  return nullptr;
 }
 
 Any Compiler::visitPlus(PostParser::PlusContext *ctx) 
 {
   visitChildren(ctx);
-  Add oper(ctx, currentScope, currentFunction);
+  Add oper(ctx, currentScope, currentFunction, this);
   operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
 
   return nullptr;
@@ -428,13 +541,17 @@ Any Compiler::visitPlus(PostParser::PlusContext *ctx)
 
 Any Compiler::visitGreater_equal(PostParser::Greater_equalContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  GreaterEqual oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitDiv(PostParser::DivContext *ctx) 
 {
   visitChildren(ctx);
-  Div oper(ctx, currentScope, currentFunction);
+  Div oper(ctx, currentScope, currentFunction, this);
   operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
 
   return nullptr;
@@ -442,42 +559,138 @@ Any Compiler::visitDiv(PostParser::DivContext *ctx)
 
 Any Compiler::visitEqual(PostParser::EqualContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Equal oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitShiftLeft(PostParser::ShiftLeftContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Shiftl oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  } catch (Type e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  }
+  
+  return nullptr;
 }
 
 Any Compiler::visitShiftRight(PostParser::ShiftRightContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Shiftr oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  } catch (Type e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  }
+  
+  return nullptr;
 }
 
 Any Compiler::visitBit_xor(PostParser::Bit_xorContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  BitXor oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  } catch (Type e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  }
+  
+  return nullptr;
 }
 
 Any Compiler::visitAnd(PostParser::AndContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  And oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitBit_and(PostParser::Bit_andContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  BitAnd oper(ctx, currentScope, currentFunction, this);
+  try {
+    operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+  } catch (TypeDescriptor e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  } catch (Type e) {
+    string errmess = "operation undefined for operand of type \"" + e.to_string();
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  }
+  
+  return nullptr;
 }
 
 Any Compiler::visitGreater(PostParser::GreaterContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Greater oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitLess_equal(PostParser::Less_equalContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  LessEqual oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitTernary(PostParser::TernaryContext *ctx) 

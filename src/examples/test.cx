@@ -3,11 +3,23 @@ int expression(int a, int b)
 {
   int temp = 0;
 
-  temp = a + 2.5;
-  a = a * 4;
-  temp = 5 * 8 * 34.27 - 7 % 3.2;
-  a = 8 * b + 4 * 2;
-  return temp * a * b;
+  unsigned int uns;
+
+  // temp = -uns;
+
+  // temp = ++a + ~2.5;
+  temp = ++a + ~2;
+  temp  = ~a;
+  // a = --a * ++4;
+  a = --a;
+  // temp = 5 * 8++ * 34.27 - 7 % 3.2;
+  temp = 5 * 8 * 34.27 - 7 % 3;
+  a = 8 * b++ + 4 * 2;
+
+  int logic = !a && b + (200 | 27);
+
+  // return temp * a * b++ + b++;
+  return temp * a * b++ + b;
 }
 
 int global1 = 0;

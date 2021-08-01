@@ -194,18 +194,18 @@ struct Type {
   vector<Pointer> pointers;
 
   // private:
-    bool equal(Type& other)
-    {
-      bool matching = true;
-      if (!EqualVectors(type_specifiers, other.type_specifiers))
-        return false;
-      if (qualifiers != other.qualifiers || storage != other.storage || function != other.function)
-        return false;
-      if (!EqualVectors(pointers, other.pointers))
-        return false;
-      
-      return true;
-    }
+  bool equal(Type& other)
+  {
+    bool matching = true;
+    if (!EqualVectors(type_specifiers, other.type_specifiers))
+      return false;
+    if (qualifiers != other.qualifiers || storage != other.storage || function != other.function)
+      return false;
+    if (!EqualVectors(pointers, other.pointers))
+      return false;
+    
+    return true;
+  }
 
 };
 

@@ -57,10 +57,10 @@ void Error::Report()
       PrintWarnings();
     
     string ess = num_errors == 1 ? "" : "s";
-    std::cout << num_errors << Colors::Red << " error" << ess << Colors::Stop << ", ";
+    std::cout << num_errors << Colors::Redl << " error" << ess << Colors::Stop << ", ";
     
     ess = num_warnings == 1 ? "" : "s";
-    std::cout << num_warnings << Colors::Blue << " warning" << ess << Colors::Stop;
+    std::cout << num_warnings << Colors::Bluel << " warning" << ess << Colors::Stop;
 
     if (num_errors > 0)
     {
@@ -78,7 +78,7 @@ void Error::PrintErrors()
   {
     if (e.file != "-1" && e.line != -1)
     {
-      std::cout << Colors::Red << "Error " << Colors::Stop;
+      std::cout << Colors::Redl << "Error " << Colors::Stop;
       std::cout << "in file " << Colors::Green << "\"" << e.file << "\" " << Colors::Stop;
       std::cout << "at line " << e.line << ":\n";
 
@@ -91,7 +91,7 @@ void Error::PrintErrors()
         {
           underline += " ";
         }
-        underline += Colors::Red;
+        underline += Colors::Redl;
         for (int i = e.colstart; i < e.colend + 1; i++)
         {
           underline += "^";
@@ -114,7 +114,7 @@ void Error::PrintWarnings()
   {
     if (w.file != "-1" && w.line != -1)
     {
-      std::cout << Colors::Yellow << "Warning " << Colors::Stop;
+      std::cout << Colors::Bluel << "Warning " << Colors::Stop;
       std::cout << "in file " << Colors::Green << "\"" << w.file << "\" " << Colors::Stop;
       std::cout << "at line " << w.line << ":\n";
 
@@ -127,7 +127,7 @@ void Error::PrintWarnings()
         {
           underline += " ";
         }
-        underline += Colors::Red;
+        underline += Colors::Bluel;
         for (int i = w.colstart; i < w.colend + 1; i++)
         {
           underline += "^";
@@ -138,7 +138,7 @@ void Error::PrintWarnings()
     }
     else
     {
-      std::cout << Colors::Red << "Error: \n" << Colors::Stop;
+      std::cout << Colors::Redl << "Error: \n" << Colors::Stop;
       std::cout << Colors::Green << "  -> " << Colors::Stop << w.message << "\n\n";
     }
   }

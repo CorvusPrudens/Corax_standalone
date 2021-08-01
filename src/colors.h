@@ -13,9 +13,12 @@ struct Colors {
   // Regular Colors
   inline static string Black="\033[0;30m";       // Black
   inline static string Red="\033[0;31m";         // Red
+  inline static string Redl="\033[0;91m";        // Light red
   inline static string Green="\033[0;32m";       // Green
   inline static string Yellow="\033[0;33m";      // Yellow
+  inline static string Yellowl="\033[0;93m";     // Light yellow
   inline static string Blue="\033[0;34m";        // Blue
+  inline static string Bluel="\033[0;94m";       // Light blue
   inline static string Purple="\033[0;35m";      // Purple
   inline static string Cyan="\033[0;36m";        // Cyan
   inline static string White="\033[0;37m";       // White

@@ -354,12 +354,16 @@ Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
   return nullptr;
 }
 
-// Any Compiler::visitBlockStat(PostParser::BlockStatContext* ctx)
-// {
-//   currentScope = new SymbolTable(currentScope, SymbolTable::Scope::LOCAL);
-//   visitChildren(ctx);
-//   currentScope = currentScope->parent;
-// }
+Any Compiler::visitBlockStat(PostParser::BlockStatContext* ctx)
+{
+  visitChildren(ctx);
+  for (int i = 0; i < currentScope->postExpr.size(); i++) {
+    currentFunction->function.add(currentScope->postExpr[i]);
+  }
+  currentScope->postExpr.clear();
+  currentScope->temp_vars = 0;
+  return nullptr;
+}
 
 Any Compiler::visitTypeStd(PostParser::TypeStdContext* ctx)
 {

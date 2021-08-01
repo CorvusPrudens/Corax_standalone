@@ -20,17 +20,59 @@
 using namespace antlr4;
 using antlrcpp::Any;
 
+// forward declaration
+class Compiler;
+
 // this needs to be moved to its own file
 class OperatorBase {
   public:
 
-    OperatorBase(antlr4::tree::ParseTree* c, SymbolTable* t, Identifier* f) {
+    OperatorBase(ParserRuleContext* c, SymbolTable* t, Identifier* f, Compiler* co) {
       ctx = c;
       table = t;
       func = f;
+      comp = co;
     }
 
     virtual Instruction::Abstr getAbstr() { throw 1; } // this should always be overriden
+    virtual Instruction::Cond getCond() { return Instruction::Cond::EQUAL; } // this is only important for conditional expressions
+    virtual bool validType1(Type& t) { return true; }
+    virtual bool validType2(Type& t) { return true; }
+
+    // TODO this can be much improved -- currently it eats up any temp vars it passes while looking for matching ones
+    virtual Identifier manageTemps(Type& t) {
+      Identifier ass;
+      if (table->total_temps == 0) 
+      {
+        table->total_temps++;
+        string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
+        ass.name = tempname;
+        ass.dataType = t;
+        return ass;
+      }
+      else
+      {
+        for (int i = table->temp_vars + 1; i < table->total_temps; i++) {
+          string tempname = "__temp_var_" + std::to_string(table->temp_vars + i) + "__";
+
+          try {
+            Identifier ti = table->GetLocalSymbol(tempname);
+            if (ti.dataType == t) {
+              table->temp_vars = i;
+              return ti;
+            }
+          } catch (int e) {
+            // pass
+          }
+        }
+
+        string tempname = "__temp_var_" + std::to_string(table->total_temps - 1) + "__";
+        table->temp_vars = table->total_temps++;
+        ass.name = tempname;
+        ass.dataType = t;
+        return ass;
+      }
+    }
 
     /////////////////////////////////////////
     // Binary expressions
@@ -54,26 +96,32 @@ class OperatorBase {
     // constant is always converted to the lvalue's type (which may
     // not always be desirable?)
     virtual void perform(Identifier& id, Result& op2, Result& res) {
+
+      if (!validType1(id.dataType)) throw id.dataType;
+      if (!validType2(op2.type)) throw op2.type;
+
       int priority1 = fetchPriority(id.dataType);
       int priority2 = fetchPriority(op2.type);
 
       Result lhs;
       lhs.setValue(id);
 
-      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
+      // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
+      // Identifier ass;
+      // ass.name = tempname;
+
       Identifier ass;
-      ass.name = tempname;
 
       if (priority1 == priority2) {
-        ass.dataType = lhs.id.dataType;
+        ass = manageTemps(lhs.id.dataType);
         table->AddSymbol(ass);
-        func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
+        func->function.add(Instruction(ctx, getAbstr(), getCond(), lhs, op2, ass));
       }
       else {
         op2.to(id.dataType);
-        ass.dataType = lhs.id.dataType;
+        ass = manageTemps(lhs.id.dataType);
         table->AddSymbol(ass);
-        func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
+        func->function.add(Instruction(ctx, getAbstr(), getCond(), lhs, op2, ass));
       }
       // else if (priority1 < priority2) {
       //   op2.to(id.dataType);
@@ -93,26 +141,31 @@ class OperatorBase {
       res.setValue(ass);
     }
     virtual void perform(Result& op1, Identifier& id, Result& res) {
+
+      if (!validType1(op1.type)) throw op1.type;
+      if (!validType2(id.dataType)) throw id.dataType;
+
       int priority2 = fetchPriority(id.dataType);
       int priority1 = fetchPriority(op1.type);
 
       Result rhs;
       rhs.setValue(id);
 
-      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
+      // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
+      // Identifier ass;
+      // ass.name = tempname;
       Identifier ass;
-      ass.name = tempname;
 
       if (priority1 == priority2) {
-        ass.dataType = op1.type;
+        ass = manageTemps(rhs.id.dataType);
         table->AddSymbol(ass);
-        func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));        
+        func->function.add(Instruction(ctx, getAbstr(), getCond(), op1, rhs, ass));        
       }
       else {
         op1.to(id.dataType);
-        ass.dataType = rhs.id.dataType;
+        ass = manageTemps(rhs.id.dataType);
         table->AddSymbol(ass);
-        func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));
+        func->function.add(Instruction(ctx, getAbstr(), getCond(), op1, rhs, ass));
       }
       // else if (priority1 < priority2) {
 
@@ -133,6 +186,10 @@ class OperatorBase {
       res.setValue(ass);
     }
     virtual void perform(Identifier& id1, Identifier& id2, Result& res) {
+
+      if (!validType1(id1.dataType)) throw id1.dataType;
+      if (!validType2(id2.dataType)) throw id2.dataType;
+      
       int priority1 = fetchPriority(id1.dataType);
       int priority2 = fetchPriority(id2.dataType);
 
@@ -141,35 +198,39 @@ class OperatorBase {
       Result rhs;
       rhs.setValue(id2);
 
-      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
+      // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
+      // Identifier ass;
+      // ass.name = tempname;
       Identifier ass;
-      ass.name = tempname;
 
       if (priority1 == priority2)
       {
-        ass.dataType = id1.dataType;
+        // ass.dataType = id1.dataType;
+        ass = manageTemps(id1.dataType);
         table->AddSymbol(ass);
-        func->function.add(Instruction(ctx, getAbstr(), lhs, rhs, ass));
+        func->function.add(Instruction(ctx, getAbstr(), getCond(), lhs, rhs, ass));
       }
       else if (priority1 < priority2)
       {
-        ass.dataType = id1.dataType;
+        // ass.dataType = id1.dataType;
+        ass = manageTemps(id1.dataType);
         table->AddSymbol(ass);
         Result temp;
         temp.setValue(ass);
 
         func->function.add(Instruction(ctx, Instruction::Abstr::CONVERT, rhs, lhs, ass));
-        func->function.add(Instruction(ctx, getAbstr(), lhs, temp, ass));
+        func->function.add(Instruction(ctx, getAbstr(), getCond(), lhs, temp, ass));
       }
       else if (priority1 > priority2)
       {
-        ass.dataType = id2.dataType;
+        // ass.dataType = id2.dataType;
+        ass = manageTemps(id2.dataType);
         table->AddSymbol(ass);
         Result temp;
         temp.setValue(ass);
 
         func->function.add(Instruction(ctx, Instruction::Abstr::CONVERT, lhs, rhs, ass));
-        func->function.add(Instruction(ctx, getAbstr(), temp, rhs, ass));
+        func->function.add(Instruction(ctx, getAbstr(), getCond(), temp, rhs, ass));
       }
       res.setValue(ass);
     }
@@ -194,14 +255,17 @@ class OperatorBase {
 
     virtual void perform(Identifier& id, Result& res) {
 
+      if (!validType1(id.dataType)) throw id.dataType;
+
       Result lhs;
       lhs.setValue(id);
 
-      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
-      Identifier ass;
-      ass.name = tempname;
+      // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
+      // Identifier ass;
+      // ass.name = tempname;
 
-      ass.dataType = lhs.id.dataType;
+      // ass.dataType = lhs.id.dataType;
+      Identifier ass = manageTemps(lhs.id.dataType);
       table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), lhs, ass));
 
@@ -213,7 +277,9 @@ class OperatorBase {
     // will add the instruction to the current function
     Identifier* func;
     // Needs the parse tree node
-    antlr4::tree::ParseTree* ctx;
+    ParserRuleContext* ctx;
+    // Also needs pointer to the compiler object for easy error reporting
+    Compiler* comp;
 };
 
 class Compiler : PostBaseVisitor {
@@ -224,6 +290,9 @@ class Compiler : PostBaseVisitor {
 
     void Process(ProcessedCode* code_, Error* err_);
     void EnableGraph(bool enable) { graphing = enable; }
+
+    void addRuleErr(ParserRuleContext* rule, string errmess);
+    void addRuleWarn(ParserRuleContext* rule, string warnmess);
 
   private:
 
@@ -245,9 +314,6 @@ class Compiler : PostBaseVisitor {
     bool func_decl_err;
     int unnamed_inc = 0;
 
-    void addRuleErr(ParserRuleContext* rule, string errmess);
-    void addRuleWarn(ParserRuleContext* rule, string warnmess);
-
     void operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, OperatorBase& oper);
     // unary
     void operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase& oper);
@@ -256,7 +322,7 @@ class Compiler : PostBaseVisitor {
     // Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
     // Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
     // Any visitBlockDecl(PostParser::BlockDeclContext* ctx) override;
-    // Any visitBlockStat(PostParser::BlockStatContext* ctx) override;
+    Any visitBlockStat(PostParser::BlockStatContext* ctx) override;
     Any visitStat_compound(PostParser::Stat_compoundContext* ctx) override;
     Any visitParamList(PostParser::ParamListContext* ctx) override;
     Any visitTypeStd(PostParser::TypeStdContext* ctx) override;

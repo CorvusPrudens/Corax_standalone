@@ -8,7 +8,7 @@
 #include <vector>
 
 using std::string;
-using antlr4::tree::ParseTree;
+using antlr4::ParserRuleContext;
 using std::vector;
 
 class Instruction; // forward declaration
@@ -303,6 +303,7 @@ class Instruction {
       DEREF = 0,
       NOT,
       NEGATE,
+      NEGATIVE,
       CONVERT,
       ASSIGN,
       ADD,
@@ -312,8 +313,10 @@ class Instruction {
       MOD,
       SHIFT_L,
       SHIFT_R,
+      BIT_AND,
+      BIT_XOR,
+      BIT_OR,
       AND,
-      XOR,
       OR,
       CMP,
     };
@@ -327,8 +330,9 @@ class Instruction {
       LESS_EQUAL,
     };
 
-    Instruction(ParseTree* c, Abstr i, Result op1, Identifier& ass);
-    Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier& ass);
+    Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass);
+    Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass);
+    Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass);
     Instruction(const Instruction& other);
     ~Instruction() {}
 
@@ -340,7 +344,7 @@ class Instruction {
     Result operand1;
     Result operand2;
     Identifier assignment;
-    ParseTree* ctx; // for easy error reporting
+    ParserRuleContext* ctx; // for easy error reporting
     bool single;
 
 };

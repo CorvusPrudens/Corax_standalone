@@ -247,7 +247,7 @@ void Result::setValue(char val)
   *ptr = val;
 }
 
-Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Identifier& ass) {
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass) {
   ctx = c;
   instr = i;
   operand1 = op1;
@@ -255,9 +255,19 @@ Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Identifier& ass) {
   assignment = ass;
 }
 
-Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier& ass) {
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass) {
   ctx = c;
   instr = i;
+  operand1 = op1;
+  operand2 = op2;
+  single = false;
+  assignment = ass;
+}
+
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass) {
+  ctx = c;
+  instr = i;
+  condition = co;
   operand1 = op1;
   operand2 = op2;
   single = false;
@@ -294,6 +304,11 @@ string Instruction::to_string() {
     case NEGATE:
     {
       s +=  "!" + operand1.to_string();
+    }
+    break;
+    case NEGATIVE:
+    {
+      s +=  "-" + operand1.to_string();
     }
     break;
     case CONVERT:
@@ -349,19 +364,29 @@ string Instruction::to_string() {
       s +=  operand1.to_string() + " >> " + operand2.to_string();
     }
     break;
-    case AND:
+    case BIT_AND:
     {
       s +=  operand1.to_string() + " & " + operand2.to_string();
     }
     break;
-    case XOR:
+    case BIT_XOR:
     {
       s +=  operand1.to_string() + " ^ " + operand2.to_string();
     }
     break;
-    case OR:
+    case BIT_OR:
     {
       s +=  operand1.to_string() + " | " + operand2.to_string();
+    }
+    break;
+    case AND:
+    {
+      s +=  operand1.to_string() + " && " + operand2.to_string();
+    }
+    break;
+    case OR:
+    {
+      s +=  operand1.to_string() + " || " + operand2.to_string();
     }
     break;
     case CMP:
