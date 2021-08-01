@@ -5,6 +5,7 @@
 #include "compiler.h"
 
 using antlrcpp::Any;
+using std::cout;
 
 void Compiler::Process(ProcessedCode* code_, Error* err_)
 {
@@ -124,6 +125,7 @@ Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
 Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
 {
   visit(ctx->direct_decl());
+  currentId.back()->type = Identifier::IdType::FUNCTION;
   currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
   if (ctx->param_type_list() != nullptr)
     visit(ctx->param_type_list());
@@ -137,8 +139,6 @@ Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
   //   visit(ctx->param_type_list());
 
   if (graphing) graph.Addf(currentId.back()->name);
-
-  currentId.back()->type = Identifier::IdType::FUNCTION;
 
   return nullptr;
 }
@@ -220,12 +220,23 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
     // construct new scope from args
     currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
     inherit = true;
-    // the last identifier added to the parent scope is the function
-    currentFunction = &(*currentScope->parent->symbols.end()); // NOTE -- dangerous, this vector CANNOT be modified while using this pointer
+    // the last identifier added to the global scope _must_ be the function
+    currentFunction = &(*(globalTable->symbols.end() - 1)); // NOTE -- dangerous, this vector CANNOT be modified while using this pointer
     for (auto arg : currentScope->parent->symbols.back().members)
       currentScope->AddSymbol(arg);
     visit(ctx->stat_compound());
     currentScope = currentScope->parent;
+
+    // cout << currentFunction->function.to_string();
+    // cout << "\n";
+    cout << currentFunction->dataType.to_string() << " " << currentFunction->name << "(";
+    for (auto id : currentFunction->members) {
+      cout << id.dataType.to_string() << " " << id.name << ", ";
+    }
+    cout << ") {\n";
+    currentFunction->function.clean();
+    cout << currentFunction->function.to_string();
+    cout << "}\n";
   }
 
   return nullptr;

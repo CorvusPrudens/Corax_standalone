@@ -30,6 +30,8 @@ class OperatorBase {
       func = f;
     }
 
+    virtual Instruction::Abstr getAbstr() { throw 1; } // this should always be overriden
+
     /////////////////////////////////////////
     // Binary expressions
     /////////////////////////////////////////
@@ -48,6 +50,9 @@ class OperatorBase {
     virtual void perform(signed char v1, signed char v2, Result& res) {}
     virtual void perform(char v1, char v2, Result& res) {}
 
+    // Currently, in an operation between an lvalue and constant, the
+    // constant is always converted to the lvalue's type (which may
+    // not always be desirable?)
     virtual void perform(Identifier& id, Result& op2, Result& res) {
       int priority1 = fetchPriority(id.dataType);
       int priority2 = fetchPriority(op2.type);
@@ -62,23 +67,29 @@ class OperatorBase {
       if (priority1 == priority2) {
         ass.dataType = lhs.id.dataType;
         table->AddSymbol(ass);
-        func->instructions.push_back(Instruction(ctx, abstract, lhs, op2, ass));
+        func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
       }
-      else if (priority1 < priority2) {
+      else {
         op2.to(id.dataType);
         ass.dataType = lhs.id.dataType;
         table->AddSymbol(ass);
-        func->instructions.push_back(Instruction(ctx, abstract, lhs, op2, ass));
+        func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
       }
-      else
-      {
-        ass.dataType = op2.type;
-        Result temp;
-        temp.setValue(ass);
+      // else if (priority1 < priority2) {
+      //   op2.to(id.dataType);
+      //   ass.dataType = lhs.id.dataType;
+      //   table->AddSymbol(ass);
+      //   func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
+      // }
+      // else
+      // {
+      //   ass.dataType = op2.type;
+      //   Result temp;
+      //   temp.setValue(ass);
 
-        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, lhs, op2, ass));
-        func->instructions.push_back(Instruction(ctx, abstract, temp, op2, ass));
-      }
+      //   func->function.add(Instruction(ctx, Instruction::Abstr::CONVERT, lhs, op2, ass));
+      //   func->function.add(Instruction(ctx, getAbstr(), temp, op2, ass));
+      // }
       res.setValue(ass);
     }
     virtual void perform(Result& op1, Identifier& id, Result& res) {
@@ -95,24 +106,30 @@ class OperatorBase {
       if (priority1 == priority2) {
         ass.dataType = op1.type;
         table->AddSymbol(ass);
-        func->instructions.push_back(Instruction(ctx, abstract, op1, rhs, ass));        
+        func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));        
       }
-      else if (priority1 < priority2) {
-
-        ass.dataType = op1.type;
-        Result temp;
-        temp.setValue(ass);
-
-        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, rhs, op1, ass));
-        func->instructions.push_back(Instruction(ctx, abstract, op1, temp, ass));
-      }
-      else
-      {
+      else {
         op1.to(id.dataType);
         ass.dataType = rhs.id.dataType;
         table->AddSymbol(ass);
-        func->instructions.push_back(Instruction(ctx, abstract, op1, rhs, ass));
+        func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));
       }
+      // else if (priority1 < priority2) {
+
+      //   ass.dataType = op1.type;
+      //   Result temp;
+      //   temp.setValue(ass);
+
+      //   func->function.add(Instruction(ctx, Instruction::Abstr::CONVERT, rhs, op1, ass));
+      //   func->function.add(Instruction(ctx, getAbstr(), op1, temp, ass));
+      // }
+      // else
+      // {
+      //   op1.to(id.dataType);
+      //   ass.dataType = rhs.id.dataType;
+      //   table->AddSymbol(ass);
+      //   func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));
+      // }
       res.setValue(ass);
     }
     virtual void perform(Identifier& id1, Identifier& id2, Result& res) {
@@ -132,7 +149,7 @@ class OperatorBase {
       {
         ass.dataType = id1.dataType;
         table->AddSymbol(ass);
-        func->instructions.push_back(Instruction(ctx, abstract, lhs, rhs, ass));
+        func->function.add(Instruction(ctx, getAbstr(), lhs, rhs, ass));
       }
       else if (priority1 < priority2)
       {
@@ -141,8 +158,8 @@ class OperatorBase {
         Result temp;
         temp.setValue(ass);
 
-        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, rhs, lhs, ass));
-        func->instructions.push_back(Instruction(ctx, abstract, lhs, temp, ass));
+        func->function.add(Instruction(ctx, Instruction::Abstr::CONVERT, rhs, lhs, ass));
+        func->function.add(Instruction(ctx, getAbstr(), lhs, temp, ass));
       }
       else if (priority1 > priority2)
       {
@@ -151,8 +168,8 @@ class OperatorBase {
         Result temp;
         temp.setValue(ass);
 
-        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, lhs, rhs, ass));
-        func->instructions.push_back(Instruction(ctx, abstract, temp, rhs, ass));
+        func->function.add(Instruction(ctx, Instruction::Abstr::CONVERT, lhs, rhs, ass));
+        func->function.add(Instruction(ctx, getAbstr(), temp, rhs, ass));
       }
       res.setValue(ass);
     }
@@ -186,12 +203,11 @@ class OperatorBase {
 
       ass.dataType = lhs.id.dataType;
       table->AddSymbol(ass);
-      func->instructions.push_back(Instruction(ctx, abstract, lhs, ass));
+      func->function.add(Instruction(ctx, getAbstr(), lhs, ass));
 
       res.setValue(ass);
     }
 
-    Instruction::Abstr abstract;
     // needs access to the symbols table!
     SymbolTable* table;
     // will add the instruction to the current function

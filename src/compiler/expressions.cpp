@@ -272,117 +272,20 @@ Any Compiler::visitGroup(PostParser::GroupContext* ctx)
 // simple arithmetic
 Any Compiler::visitMult(PostParser::MultContext* ctx)
 {
-
   visitChildren(ctx);
-  Mult mult(ctx, currentScope, currentFunction);
-  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), mult);
+  Mult oper(ctx, currentScope, currentFunction);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
 
-  // Result op1 = results.get(ctx->expr_arith()[0]);
-  // Result op2 = results.get(ctx->expr_arith()[1]);
-  // Result res;
-
-  // // TODO -- create object with some kind of mechanism (method with function pointer?)
-  // // that allows us to package all this up neatly instead of have 50 lines of code for
-  // // all 60 expressions
-  // if (op1.isConst() && op2.isConst()) {
-  //   if (op1.kind == Result::Kind::VOID || op2.kind == Result::Kind::VOID)
-  //   {
-      
-  //   }
-  //   else if (op1.kind == Result::Kind::FLOAT || op2.kind == Result::Kind::FLOAT)
-  //   {
-  //     float v1 = op1.as<float>();
-  //     float v2 = op2.as<float>();
-  //     res.setValue(v1 * v2);
-  //   }
-  //   else if (op1.kind == Result::Kind::INT)
-  //   {
-  //     // string warnmess = "operating on signed and unsigned int";
-  //     // addRuleWarn(ctx, warnmess);
-  //     int v1 = op1.as<unsigned int>();
-  //     int v2 = op2.as<unsigned int>();
-  //     res.setValue(v1 * v2);
-  //   }
-  //   else if (op1.kind == Result::Kind::S_INT)
-  //   {
-  //     // string warnmess = "operating on signed and unsigned int";
-  //     // addRuleWarn(ctx, warnmess);
-  //     int v1 = op1.as<int>();
-  //     int v2 = op2.as<int>();
-  //     res.setValue(v1 * v2);
-  //   }
-
-  //   results.put(ctx, res);
-  //   return nullptr;
-  // }
-
-
-  // string tempname = "temp_var_" + std::to_string(temp_vars++);
-  // Identifier temp;
-  // temp.name = tempname;
-  // currentScope->AddSymbol(temp);
-  // std::cout << tempname << " = "; // for testing
-
-  // if (!op1.isConst()) {
-  //   if (op2.isConst()) {
-  //     // obviously we'll need to change how we treat the const op and how the temp
-  //     // variable is created / used
-  //     std::cout << op1.id.name << "*" << op2.as<float>() << "\n";
-  //   }
-  //   else
-  //   {
-  //     std::cout << op1.id.name << "*" << op2.id.name << "\n";
-  //   }
-  // }
-  // else if (!op2.isConst()) {
-  //   if (op1.isConst()) {
-  //     // obviously we'll need to change how we treat the const op and how the temp
-  //     // variable is created / used
-  //     std::cout << op2.id.name << "*" << op1.as<float>() << "\n";
-  //   }
-  //   else
-  //   {
-  //     std::cout << op2.id.name << "*" << op1.id.name << "\n";
-  //   }
-  // }
-
-  // // this method is less memory efficient, but it's quite easy!
-  // res.setValue(temp);
-  // results.put(ctx, res);
   return nullptr;
 }
 
 // Assignments
 Any Compiler::visitAssignment(PostParser::AssignmentContext* ctx)
 {
-  // visitChildren(ctx);
-  // Mult mult(ctx, currentScope, currentFunction);
-  // operation(ctx, results.get(ctx->expr_primary()[0]), mult);
-
   visitChildren(ctx);
-  Assign ass(ctx, currentScope, currentFunction);
-  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), ass);
+  Assign oper(ctx, currentScope, currentFunction);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
 
-  // Result op1 = results.get(ctx->expr_primary());
-  // Result op2 = results.get(ctx->expr_assi());
-  // Result res;
-
-  // if (op1.isConst()) {
-  //   addRuleErr(ctx, "left hand side must be a modifiable lvalue");
-  //   results.put(ctx, res);
-  //   return nullptr;
-  // }
-
-  // std::cout << op1.id.name << " = "; // for testing
-
-  // if (op2.isConst()) {
-  //   std::cout << op2.as<float>() << "\n";
-  // }
-  // else {
-  //   std::cout << op2.id.name << "\n";
-  // }
-
-  // results.put(ctx, res); // what should be the result though??
   return nullptr;
 }
 
@@ -468,12 +371,42 @@ Any Compiler::visitCast(PostParser::CastContext *ctx)
 
 Any Compiler::visitMinus(PostParser::MinusContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Sub oper(ctx, currentScope, currentFunction);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitMod(PostParser::ModContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Mod oper(ctx, currentScope, currentFunction);
+  try {
+    operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+  } catch (int e) {
+    string errmess = "modulo operator cannot accept operands of type \"";
+    switch (e) {
+      case 1:
+        errmess += "long double";
+        break;
+      case 2:
+        errmess += "double";
+        break;
+      default:
+      case 3:
+        errmess += "float";
+        break;
+    }
+    addRuleErr(ctx, errmess + "\"");
+    // we'll just put a const 0 for now in case of error
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  }
+  
+
+  return nullptr;
 }
 
 Any Compiler::visitOr(PostParser::OrContext *ctx) 
@@ -498,7 +431,11 @@ Any Compiler::visitBit_or(PostParser::Bit_orContext *ctx)
 
 Any Compiler::visitPlus(PostParser::PlusContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Add oper(ctx, currentScope, currentFunction);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitGreater_equal(PostParser::Greater_equalContext *ctx) 
@@ -508,7 +445,11 @@ Any Compiler::visitGreater_equal(PostParser::Greater_equalContext *ctx)
 
 Any Compiler::visitDiv(PostParser::DivContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Div oper(ctx, currentScope, currentFunction);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
+
+  return nullptr;
 }
 
 Any Compiler::visitEqual(PostParser::EqualContext *ctx) 

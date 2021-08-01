@@ -7,6 +7,42 @@ using antlr4::tree::ParseTree;
 using std::cout;
 using std::string;
 
+void FuncComp::add(Instruction inst)
+{
+  instructions.push_back(inst);
+}
+
+void FuncComp::clean()
+{
+  // Removing unnecessary temporary variables of the form
+  // temp = a * b
+  // a = temp
+  if (instructions.size() > 1)
+  {
+    for (int i = instructions.size() - 2; i > -1; i--)
+    {
+      if (
+        instructions[i + 1].instr == Instruction::Abstr::ASSIGN &&
+        instructions[i].assignment == instructions[i + 1].operand1.id
+      )
+      {
+        instructions[i].assignment = instructions[i + 1].assignment;
+        instructions.erase(instructions.begin() + i + 1);
+      }
+    }
+  }
+}
+
+string FuncComp::to_string()
+{
+  string s = "";
+  for (auto inst : instructions)
+  {
+    s += inst.to_string() + "\n";
+  }
+  return s;
+}
+
 Result::Result(const Result& other)
 {
   if (other.kind == Kind::ID)
@@ -15,6 +51,7 @@ Result::Result(const Result& other)
   {
     for (int i = 0; i < buff_size; i++)
       value[i] = other.value[i];
+    type = other.type;
   }
   kind = other.kind;
 }
@@ -76,39 +113,39 @@ string Result::to_string()
   if (kind == Kind::ID)
     s = id.name;
   else if (type == long_double_) {
-    s = as<long double>();
+    s = std::to_string(as<long double>());
   } else if (type == double_) {
-    s = as<double>();
+    s = std::to_string(as<double>());
   } else if (type == float_) {
-    s = as<float>();
+    s = std::to_string(as<float>());
   } else if (type == unsigned_long_long_) {
-    s = as<unsigned long long>();
+    s = std::to_string(as<unsigned long long>());
   } else if (type == long_long_) {
-    s = as<long long>();
+    s = std::to_string(as<long long>());
   } else if (type == unsigned_long_) {
-    s = as<unsigned long>();
+    s = std::to_string(as<unsigned long>());
   } else if (type == long_) {
-    s = as<long>();
+    s = std::to_string(as<long>());
   } else if (type == unsigned_) {
-    s = as<unsigned>();
+    s = std::to_string(as<unsigned>());
   } else if (type == int_) {
-    s = as<int>();
+    s = std::to_string(as<int>());
   } else if (type == unsigned_short_) {
-    s = as<unsigned short>();
+    s = std::to_string(as<unsigned short>());
   } else if (type == short_) {
-    s = as<short>();
+    s = std::to_string(as<short>());
   } else if (type == unsigned_char_) {
-    s = as<unsigned char>();
+    s = std::to_string(as<unsigned char>());
   } else if (type == signed_char_) {
-    s = as<signed char>();
+    s = std::to_string(as<signed char>());
   } else if (type == char_) {
-    s = as<char>();
+    s = std::to_string(as<char>());
   } else if (type == void_) {
     s = "void";
   } else {
     s = "<error-val>";
   }
-  return s + "\n";
+  return s;
 }
 
 void Result::setValue(long double val)
@@ -238,93 +275,93 @@ Instruction::Instruction(const Instruction& other) {
   assignment = other.assignment;
 }
 
-void Instruction::debugPrint() {
-  cout << assignment.name << " = ";
+string Instruction::to_string() {
+  string s = assignment.name + " = ";
   switch (instr) {
     case DEREF:
     {
       if (single)
-        cout << "*" << operand1.to_string() << "\n";
+        s +=  "*" + operand1.to_string();
       else
-        cout << "*(" << operand1.to_string() << " + " << operand2.to_string() << ")\n";
+        s +=  "*(" + operand1.to_string() + " + " + operand2.to_string() + ")";
     }
     break;
     case NOT:
     {
-      cout << "~" << operand1.to_string() << "\n";
+      s +=  "~" + operand1.to_string();
     }
     break;
     case NEGATE:
     {
-      cout << "!" << operand1.to_string() << "\n";
+      s +=  "!" + operand1.to_string();
     }
     break;
     case CONVERT:
     {
       if (operand1.isConst())
       {
-        cout << operand1.to_string() << " to " << assignment.dataType.to_string();
+        s +=  operand1.to_string() + " to " + assignment.dataType.to_string();
       }
       else
       {
-        cout << operand1.to_string() << " (" << operand1.id.dataType.to_string();
-        cout << ") to " << assignment.dataType.to_string();
+        s +=  operand1.to_string() + " (" + operand1.id.dataType.to_string();
+        s +=  ") to " + assignment.dataType.to_string();
       }
     }
     break;
     case ASSIGN:
     {
-      cout << operand1.to_string() << "\n";
+      s +=  operand1.to_string();
     }
     break;
     case ADD:
     {
-      cout << operand2.to_string() << " + " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " + " + operand2.to_string();
     }
     break;
     case SUB:
     {
-      cout << operand2.to_string() << " - " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " - " + operand2.to_string();
     }
     break;
     case MULT:
     {
-      cout << operand2.to_string() << " * " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " * " + operand2.to_string();
     }
     break;
     case DIV:
     {
-      cout << operand2.to_string() << " / " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " / " + operand2.to_string();
     }
     break;
     case MOD:
     {
-      cout << operand2.to_string() << " % " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " % " + operand2.to_string();
     }
     break;
     case SHIFT_L:
     {
-      cout << operand2.to_string() << " << " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " + " + operand2.to_string();
     }
     break;
     case SHIFT_R:
     {
-      cout << operand2.to_string() << " >> " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " >> " + operand2.to_string();
     }
     break;
     case AND:
     {
-      cout << operand2.to_string() << " & " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " & " + operand2.to_string();
     }
     break;
     case XOR:
     {
-      cout << operand2.to_string() << " ^ " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " ^ " + operand2.to_string();
     }
     break;
     case OR:
     {
-      cout << operand2.to_string() << " | " << operand2.to_string() << "\n";
+      s +=  operand1.to_string() + " | " + operand2.to_string();
     }
     break;
     case CMP:
@@ -332,28 +369,29 @@ void Instruction::debugPrint() {
       switch (condition)
       {
         case EQUAL:
-          cout << operand2.to_string() << " == " << operand2.to_string() << "\n";
+          s +=  operand1.to_string() + " == " + operand2.to_string();
           break;
         case NOT_EQUAL:
-          cout << operand2.to_string() << " != " << operand2.to_string() << "\n";
+          s +=  operand1.to_string() + " != " + operand2.to_string();
           break;
         case GREATER:
-          cout << operand2.to_string() << " > " << operand2.to_string() << "\n";
+          s +=  operand1.to_string() + " > " + operand2.to_string();
           break;
         case LESS:
-          cout << operand2.to_string() << " < " << operand2.to_string() << "\n";
+          s +=  operand1.to_string() + " < " + operand2.to_string();
           break;
         case GREATER_EQUAL:
-          cout << operand2.to_string() << " >= " << operand2.to_string() << "\n";
+          s +=  operand1.to_string() + " >= " + operand2.to_string();
           break;
         case LESS_EQUAL:
-          cout << operand2.to_string() << " <= " << operand2.to_string() << "\n";
+          s +=  operand1.to_string() + " <= " + operand2.to_string();
           break;
         default:
-          cout << "error comparison" << "\n";
+          s +=  "error comparison";
           break;
       }
     }
     break;
   }
+  return s;
 }

@@ -9,8 +9,33 @@
 
 using std::string;
 using antlr4::tree::ParseTree;
+using std::vector;
 
 class Instruction; // forward declaration
+
+class FuncComp {
+
+  public:
+    FuncComp() {}
+    ~FuncComp() {}
+    FuncComp(const FuncComp& other) { instructions = other.instructions; }
+
+    void add(Instruction inst);
+
+    /** Removes any trivially unnecessary temporary variables
+     * 
+     */
+    void clean();
+    // not sure what to do about variables from
+    // the global scope
+    // void setTree()
+
+    string to_string();
+
+  private:
+    // vector<SymbolTable> symbol_tree;
+    vector<Instruction> instructions;
+};
 
 class Identifier {
 
@@ -47,7 +72,7 @@ class Identifier {
       initialized = other.initialized;
       members = other.members;
       initializers = other.initializers;
-      instructions = other.instructions;
+      function = other.function;
     }
 
     bool operator==(Identifier& other)
@@ -71,7 +96,7 @@ class Identifier {
       newid.initialized = initialized;
       newid.members = members;
       newid.initializers = initializers;
-      newid.instructions = instructions;
+      newid.function = function;
       return newid;
     }
 
@@ -86,7 +111,7 @@ class Identifier {
     std::vector<Identifier> members;
 
     // For function
-    std::vector<Instruction> instructions;
+    FuncComp function;
 
     // For array
     std::vector<string> initializers;
@@ -130,9 +155,7 @@ class Identifier {
           case IdType::VARIABLE:
             {
               bool equal = other.type == IdType::VARIABLE;
-              equal = equal && other.dataType == dataType;
-              // equal = equal && other.assignment == assignment;
-              return equal;
+              return equal && other.dataType == dataType && other.name == name;
             }
           case IdType::ARRAY:
             {
@@ -154,10 +177,6 @@ class Result {
 
     static constexpr size_t buff_size = 16;
 
-    uint8_t value[buff_size];
-    Identifier id;
-    Type type;
-
     enum Kind {
       VOID = 0,
       ID,
@@ -165,6 +184,11 @@ class Result {
       STRUCT, // dunno if we'll use these?
       UNION,
     };
+
+    uint8_t value[buff_size];
+    Identifier id;
+    Type type;
+    Kind kind = Kind::VOID;
 
     Result() {
       for (int i = 0; i < buff_size; i++)
@@ -174,8 +198,6 @@ class Result {
 
     // copy constructor
     Result(const Result& other);
-
-    Kind kind = Kind::VOID;
 
     bool isConst() { return kind != Kind::ID; }
 
@@ -311,7 +333,7 @@ class Instruction {
     ~Instruction() {}
 
     void setCondition(Cond c) { condition = c; }
-    void debugPrint();
+    string to_string();
 
     Abstr instr;
     Cond condition;

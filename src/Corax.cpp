@@ -55,7 +55,7 @@ int main(int argc, const char* argv[])
   // }
   // std::cout << code.code;
 
-  comp.EnableGraph(graph);
+  // comp.EnableGraph(graph);
   comp.Process(&code, &err);
 
   // std::cout << prepped;

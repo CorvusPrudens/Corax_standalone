@@ -197,7 +197,7 @@ struct Type {
     bool equal(Type& other)
     {
       bool matching = true;
-      if (!MatchingVector(type_specifiers, other.type_specifiers))
+      if (!EqualVectors(type_specifiers, other.type_specifiers))
         return false;
       if (qualifiers != other.qualifiers || storage != other.storage || function != other.function)
         return false;

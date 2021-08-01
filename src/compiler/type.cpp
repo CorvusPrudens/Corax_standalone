@@ -49,7 +49,7 @@ string Pointer::to_string()
   if (qualifiers & (int) Qualifier::RESTRICT)
     s += "restrict ";
   if (s.back() == ' ')
-    s = s.substr(0, s.size() - 2);
+    s = s.substr(0, s.size() - 1);
   return s + "*";
 }
 
@@ -92,7 +92,7 @@ string Type::to_string()
     return s + name;
   
   if (s.back() == ' ')
-    s = s.substr(0, s.size() - 2);
+    s = s.substr(0, s.size() - 1);
   return s;
 }
 
