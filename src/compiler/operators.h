@@ -68,9 +68,6 @@ class Mod : public OperatorBase {
 
     using OperatorBase::OperatorBase;
 
-    void perform(long double v1, long double v2, Result& res) override { throw 1; }
-    void perform(double v1, double v2, Result& res) override { throw 2; }
-    void perform(float v1, float v2, Result& res) override { throw 3; }
     void perform(unsigned long long v1, unsigned long long v2, Result& res) override { operation(v1, v2, res); }
     void perform(long long v1, long long v2, Result& res) override { operation(v1, v2, res); }
     void perform(unsigned long v1, unsigned long v2, Result& res) override { operation(v1, v2, res); }

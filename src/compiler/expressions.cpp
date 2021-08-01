@@ -384,20 +384,8 @@ Any Compiler::visitMod(PostParser::ModContext *ctx)
   Mod oper(ctx, currentScope, currentFunction);
   try {
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
-  } catch (int e) {
-    string errmess = "modulo operator cannot accept operands of type \"";
-    switch (e) {
-      case 1:
-        errmess += "long double";
-        break;
-      case 2:
-        errmess += "double";
-        break;
-      default:
-      case 3:
-        errmess += "float";
-        break;
-    }
+  } catch (TypeDescriptor e) {
+    string errmess = "modulo operator cannot accept operands of type \"" + e.to_string();
     addRuleErr(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;

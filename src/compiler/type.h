@@ -211,9 +211,10 @@ struct Type {
 
 struct TypeDescriptor {
 
-  TypeDescriptor(vector<vector<string>> s, unsigned int b)
+  TypeDescriptor(vector<vector<string>> s, string p, unsigned int b)
   {
     specifiers = s;
+    preferred = p;
     bytes = b;
   }
 
@@ -221,9 +222,13 @@ struct TypeDescriptor {
   {
     specifiers = other.specifiers;
     bytes = other.bytes;
+    preferred = other.preferred;
   }
 
+  string to_string() { return preferred; }
+
   vector<vector<string>> specifiers;
+  string preferred;
   unsigned int bytes;
 
   // bool operator==(TypeDescriptor& other) {

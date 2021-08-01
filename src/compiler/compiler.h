@@ -36,19 +36,19 @@ class OperatorBase {
     // Binary expressions
     /////////////////////////////////////////
 
-    virtual void perform(long double v1, long double v2, Result& res) {}
-    virtual void perform(double v1, double v2, Result& res) {}
-    virtual void perform(float v1, float v2, Result& res) {}
-    virtual void perform(unsigned long long v1, unsigned long long v2, Result& res) {}
-    virtual void perform(long long v1, long long v2, Result& res) {}
-    virtual void perform(unsigned long v1, unsigned long v2, Result& res) {}
-    virtual void perform(long v1, long v2, Result& res) {}
-    virtual void perform(unsigned v1, unsigned v2, Result& res) {}
-    virtual void perform(int v1, int v2, Result& res) {}
-    virtual void perform(unsigned short v1, unsigned short v2, Result& res) {}
-    virtual void perform(unsigned char v1, unsigned char v2, Result& res) {}
-    virtual void perform(signed char v1, signed char v2, Result& res) {}
-    virtual void perform(char v1, char v2, Result& res) {}
+    virtual void perform(long double v1, long double v2, Result& res) { throw long_double_; }
+    virtual void perform(double v1, double v2, Result& res) { throw double_; }
+    virtual void perform(float v1, float v2, Result& res) { throw float_; }
+    virtual void perform(unsigned long long v1, unsigned long long v2, Result& res) { throw unsigned_long_long_; }
+    virtual void perform(long long v1, long long v2, Result& res) { throw long_long_; }
+    virtual void perform(unsigned long v1, unsigned long v2, Result& res) { throw unsigned_long_; }
+    virtual void perform(long v1, long v2, Result& res) { throw long_; }
+    virtual void perform(unsigned v1, unsigned v2, Result& res) { throw unsigned_; }
+    virtual void perform(int v1, int v2, Result& res) { throw int_; }
+    virtual void perform(unsigned short v1, unsigned short v2, Result& res) { throw short_; }
+    virtual void perform(unsigned char v1, unsigned char v2, Result& res) { throw unsigned_char_; }
+    virtual void perform(signed char v1, signed char v2, Result& res) { throw signed_char_; }
+    virtual void perform(char v1, char v2, Result& res) { throw char_; }
 
     // Currently, in an operation between an lvalue and constant, the
     // constant is always converted to the lvalue's type (which may
@@ -178,19 +178,19 @@ class OperatorBase {
     // Unary expressions
     /////////////////////////////////////////
 
-    virtual void perform(long double v1, Result& res) {}
-    virtual void perform(double v1, Result& res) {}
-    virtual void perform(float v1, Result& res) {}
-    virtual void perform(unsigned long long v1, Result& res) {}
-    virtual void perform(long long v1, Result& res) {}
-    virtual void perform(unsigned long v1, Result& res) {}
-    virtual void perform(long v1, Result& res) {}
-    virtual void perform(unsigned v1, Result& res) {}
-    virtual void perform(int v1, Result& res) {}
-    virtual void perform(unsigned short v1, Result& res) {}
-    virtual void perform(unsigned char v1,  Result& res) {}
-    virtual void perform(signed char v1, Result& res) {}
-    virtual void perform(char v1, Result& res) {}
+    virtual void perform(long double v1, Result& res) { throw long_double_; }
+    virtual void perform(double v1, Result& res) { throw double_; }
+    virtual void perform(float v1, Result& res) { throw float_; }
+    virtual void perform(unsigned long long v1, Result& res) { throw unsigned_long_long_; }
+    virtual void perform(long long v1, Result& res) { throw long_long_; }
+    virtual void perform(unsigned long v1, Result& res) { throw unsigned_long_; }
+    virtual void perform(long v1, Result& res) { throw long_; }
+    virtual void perform(unsigned v1, Result& res) { throw unsigned_; }
+    virtual void perform(int v1, Result& res) { throw int_; }
+    virtual void perform(unsigned short v1, Result& res) { throw unsigned_short_; }
+    virtual void perform(unsigned char v1,  Result& res) { throw unsigned_char_; }
+    virtual void perform(signed char v1, Result& res) { throw signed_char_; }
+    virtual void perform(char v1, Result& res) { throw char_; }
 
     virtual void perform(Identifier& id, Result& res) {
 

@@ -97,21 +97,21 @@ string Type::to_string()
 }
 
 // each individual list is sorted alphabetically
-TypeDescriptor long_double_({{"double", "long"}}, 16);
-TypeDescriptor double_({{"double"}}, 8);
-TypeDescriptor float_({{"float"}}, 4);
-TypeDescriptor unsigned_long_long_({{"long", "long", "unsigned"}, {"int", "long", "long", "unsigned"}}, 16);
-TypeDescriptor long_long_({{"long", "long"}, {"long", "long", "signed"}, {"int", "long", "long"}, {"int", "long", "long", "signed"}}, 16);
-TypeDescriptor unsigned_long_({{"long", "unsigned"}, {"int", "long", "unsigned"}}, 8);
-TypeDescriptor long_({{"long"}, {"long", "signed"}, {"int", "long"}, {"int", "long", "signed"}}, 8);
-TypeDescriptor unsigned_({{"unsigned"}, {"int", "unsigned"}}, 4);
-TypeDescriptor int_({{"int"}, {"signed"}, {"int", "signed"}}, 4);
-TypeDescriptor unsigned_short_({{"short", "unsigned"}, {"int", "short", "unsigned"}}, 2);
-TypeDescriptor short_({{"short"}, {"short", "signed"}, {"int", "short"}, {"int", "short", "signed"}}, 2);
-TypeDescriptor unsigned_char_({{"char", "unsigned"}}, 1);
-TypeDescriptor signed_char_({{"char", "signed"}}, 1);
-TypeDescriptor char_({{"char"}}, 1);
-TypeDescriptor void_({{"void"}}, 1); // it'll be easier to consider this 1
+TypeDescriptor long_double_({{"double", "long"}}, "long double", 16);
+TypeDescriptor double_({{"double"}}, "double", 8);
+TypeDescriptor float_({{"float"}}, "float", 4);
+TypeDescriptor unsigned_long_long_({{"long", "long", "unsigned"}, {"int", "long", "long", "unsigned"}}, "unsigned long long", 16);
+TypeDescriptor long_long_({{"long", "long"}, {"long", "long", "signed"}, {"int", "long", "long"}, {"int", "long", "long", "signed"}}, "long long", 16);
+TypeDescriptor unsigned_long_({{"long", "unsigned"}, {"int", "long", "unsigned"}}, "unsigned long", 8);
+TypeDescriptor long_({{"long"}, {"long", "signed"}, {"int", "long"}, {"int", "long", "signed"}}, "long", 8);
+TypeDescriptor unsigned_({{"unsigned"}, {"int", "unsigned"}}, "unsigned int", 4);
+TypeDescriptor int_({{"int"}, {"signed"}, {"int", "signed"}}, "int", 4);
+TypeDescriptor unsigned_short_({{"short", "unsigned"}, {"int", "short", "unsigned"}}, "unsigned short", 2);
+TypeDescriptor short_({{"short"}, {"short", "signed"}, {"int", "short"}, {"int", "short", "signed"}}, "short", 2);
+TypeDescriptor unsigned_char_({{"char", "unsigned"}}, "unsigned char", 1);
+TypeDescriptor signed_char_({{"char", "signed"}}, "signed char", 1);
+TypeDescriptor char_({{"char"}}, "char", 1);
+TypeDescriptor void_({{"void"}}, "void", 1); // it'll be easier to consider this 1
 
 vector<TypeDescriptor> StandardTypes = {
   long_double_,
