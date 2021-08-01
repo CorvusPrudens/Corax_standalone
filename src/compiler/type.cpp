@@ -3,6 +3,42 @@
 
 using std::string;
 
+bool operator==(Type& type, Type& other)
+{
+  return type.equal(other);
+}
+
+bool operator!=(Type& type, Type& other)
+{
+  return !type.equal(other);
+}
+
+bool operator==(TypeDescriptor& type, TypeDescriptor& other)
+{
+  return type.equal(other);
+}
+
+bool operator!=(TypeDescriptor& type, TypeDescriptor& other)
+{
+  return !type.equal(other);
+}
+
+bool operator==(Type& type, TypeDescriptor& desc) {
+  for (int i = 0; i < desc.specifiers.size(); i++)
+    if (EqualVectors(type.type_specifiers, desc.specifiers[i]))
+      return true;
+  
+  return false;
+}
+
+bool operator==(TypeDescriptor& desc, Type& type) {
+  for (int i = 0; i < desc.specifiers.size(); i++)
+    if (EqualVectors(type.type_specifiers, desc.specifiers[i]))
+      return true;
+  
+  return false;
+}
+
 string Pointer::to_string()
 {
   string s = "";

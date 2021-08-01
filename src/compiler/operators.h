@@ -43,8 +43,8 @@ class Assign : public OperatorBase {
       }
       // in some cases this could be optimized out, but for now we'll
       // assume it should be an operation
-      id.assignment = op2;
-      func->instructions.push_back(Instruction(ctx, abstract, op2, &id));
+      // id.assignment = op2;
+      func->instructions.push_back(Instruction(ctx, abstract, op2, id));
       
       // what is this supposed to be set to??
       res.setValue(0);
@@ -54,16 +54,16 @@ class Assign : public OperatorBase {
       if (id2.dataType != id1.dataType) 
       {
         Result temp;
-        temp.setValue(&id2);
+        temp.setValue(id2);
         Result rhs;
-        rhs.setValue(&id1);
-        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, temp, rhs, &id1));
+        rhs.setValue(id1);
+        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, temp, rhs, id1));
       }
       else 
       {
         Result temp;
-        temp.setValue(&id2);
-        func->instructions.push_back(Instruction(ctx, abstract, temp, &id1));
+        temp.setValue(id2);
+        func->instructions.push_back(Instruction(ctx, abstract, temp, id1));
       }
       
       // what is this supposed to be set to??

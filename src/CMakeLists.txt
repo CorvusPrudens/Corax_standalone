@@ -91,6 +91,7 @@ set (INCLUDE_FILES
     ./compiler/identifier.h
     ./compiler/stable.h
     ./compiler/type.h
+    ./compiler/operators.h
 
     ./grammars/build/Post/PostBaseListener.h
     ./grammars/build/Post/PostLexer.h

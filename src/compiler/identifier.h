@@ -10,6 +10,8 @@
 using std::string;
 using antlr4::tree::ParseTree;
 
+class Instruction; // forward declaration
+
 class Identifier {
 
   public:
@@ -89,8 +91,6 @@ class Identifier {
     // For array
     std::vector<string> initializers;
 
-    Result assignment;
-
     private:
 
       bool equal(Identifier& other)
@@ -155,7 +155,7 @@ class Result {
     static constexpr size_t buff_size = 16;
 
     uint8_t value[buff_size];
-    Identifier* id;
+    Identifier id;
     Type type;
 
     enum Kind {
@@ -182,7 +182,7 @@ class Result {
     string to_string();
     void to(Type t);
 
-    void setValue(Identifier* new_id)
+    void setValue(Identifier& new_id)
     {
       kind = Kind::ID;
       id = new_id;
@@ -266,10 +266,9 @@ class Result {
         T val = (T) *orig;
         return val;
       } else if (type == void_) {
-        auto orig = (void*) value;
-        T val = (T) *orig;
-        return val;
+        throw 2;
       }
+      throw 3;
     }
 
     
@@ -306,8 +305,8 @@ class Instruction {
       LESS_EQUAL,
     };
 
-    Instruction(ParseTree* c, Abstr i, Result op1, Identifier* ass);
-    Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier* ass);
+    Instruction(ParseTree* c, Abstr i, Result op1, Identifier& ass);
+    Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier& ass);
     Instruction(const Instruction& other);
     ~Instruction() {}
 
@@ -318,7 +317,7 @@ class Instruction {
     Cond condition;
     Result operand1;
     Result operand2;
-    Identifier* assignment;
+    Identifier assignment;
     ParseTree* ctx; // for easy error reporting
     bool single;
 

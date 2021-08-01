@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef TYPE_H
 #define TYPE_H
 
@@ -118,21 +120,13 @@ struct Type {
 
   string to_string();
 
-  bool operator==(Type& other) {
-    return equal(other);
-  }
+  // bool operator==(Type& other) {
+  //   return equal(other);
+  // }
 
-  bool operator!=(Type& other) {
-    return !equal(other);
-  }
-
-  bool operator==(TypeDescriptor& other) {
-    for (int i = 0; i < other.specifiers.size(); i++)
-      if (EqualVectors(type_specifiers, other.specifiers[i]))
-        return true;
-    
-    return false;
-  }
+  // bool operator!=(Type& other) {
+  //   return !equal(other);
+  // }
 
   Type copy()
   {
@@ -199,7 +193,7 @@ struct Type {
   // each star can have its own type qualifiers
   vector<Pointer> pointers;
 
-  private:
+  // private:
     bool equal(Type& other)
     {
       bool matching = true;
@@ -232,38 +226,38 @@ struct TypeDescriptor {
   vector<vector<string>> specifiers;
   unsigned int bytes;
 
-  bool operator==(Type& other) {
-    for (int i = 0; i < specifiers.size(); i++)
-      if (EqualVectors(other.type_specifiers, specifiers[i]))
-        return true;
-    
-    return false;
-  }
+  // bool operator==(TypeDescriptor& other) {
+  //   return equal(other);
+  // }
 
-  bool operator==(TypeDescriptor& other) {
-    return equal(other);
-  }
+  // bool operator!=(TypeDescriptor& other) {
+  //   return !equal(other);
+  // }
 
-  bool operator!=(TypeDescriptor& other) {
-    return !equal(other);
-  }
-
-  private:
-    bool equal(TypeDescriptor& other) {
-      if (bytes != other.bytes || specifiers.size() != other.specifiers.size())
-        return false;
-      else
+  bool equal(TypeDescriptor& other) {
+    if (bytes != other.bytes || specifiers.size() != other.specifiers.size())
+      return false;
+    else
+    {
+      for (int i = 0; i < specifiers.size(); i++)
       {
-        for (int i = 0; i < specifiers.size(); i++)
-        {
-          if (!EqualVectors(specifiers[i], other.specifiers[i]))
-            return false;
-        }
+        if (!EqualVectors(specifiers[i], other.specifiers[i]))
+          return false;
       }
-      return true;
     }
+    return true;
+  }
 
 };
+
+bool operator==(Type& type, Type& other);
+bool operator!=(Type& type, Type& other);
+
+bool operator==(TypeDescriptor& type, TypeDescriptor& other);
+bool operator!=(TypeDescriptor& type, TypeDescriptor& other);
+
+bool operator==(Type& type, TypeDescriptor& desc);
+bool operator==(TypeDescriptor& desc, Type& type);
 
 int fetchPriority(Type t);
 

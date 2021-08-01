@@ -93,11 +93,11 @@ void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, O
     }
   }
   else if (op1.isConst()) {
-    oper.perform(op1, *op2.id, res);
+    oper.perform(op1, op2.id, res);
   } else if (op2.isConst()) {
-    oper.perform(*op1.id, op2, res);
+    oper.perform(op1.id, op2, res);
   } else {
-    oper.perform(*op1.id, *op2.id, res);
+    oper.perform(op1.id, op2.id, res);
   }
 
   results.put(ctx, res);
@@ -159,7 +159,7 @@ void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase&
       throw 2;
     }
   } else {
-    oper.perform(*op1.id, res);
+    oper.perform(op1.id, res);
   }
 
   results.put(ctx, res);
@@ -225,7 +225,8 @@ Any Compiler::visitIdentifier(PostParser::IdentifierContext* ctx)
 {
   Result res;
   try {
-    res.setValue(&currentScope->GetSymbol(ctx->getText()));
+    auto id = currentScope->GetSymbol(ctx->getText());
+    res.setValue(id);
   } catch (int e) {
     string errmess = "undefined identifier \"" + ctx->getText() + "\"";
     addRuleErr(ctx, errmess);

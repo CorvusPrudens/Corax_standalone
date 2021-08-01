@@ -72,42 +72,43 @@ void Result::to(Type t)
 
 string Result::to_string()
 {
+  string s = "";
   if (kind == Kind::ID)
-    cout << id->name;
+    s = id.name;
   else if (type == long_double_) {
-    cout << as<long double>();
+    s = as<long double>();
   } else if (type == double_) {
-    cout << as<double>();
+    s = as<double>();
   } else if (type == float_) {
-    cout << as<float>();
+    s = as<float>();
   } else if (type == unsigned_long_long_) {
-    cout << as<unsigned long long>();
+    s = as<unsigned long long>();
   } else if (type == long_long_) {
-    cout << as<long long>();
+    s = as<long long>();
   } else if (type == unsigned_long_) {
-    cout << as<unsigned long>();
+    s = as<unsigned long>();
   } else if (type == long_) {
-    cout << as<long>();
+    s = as<long>();
   } else if (type == unsigned_) {
-    cout << as<unsigned>();
+    s = as<unsigned>();
   } else if (type == int_) {
-    cout << as<int>();
+    s = as<int>();
   } else if (type == unsigned_short_) {
-    cout << as<unsigned short>();
+    s = as<unsigned short>();
   } else if (type == short_) {
-    cout << as<short>();
+    s = as<short>();
   } else if (type == unsigned_char_) {
-    cout << as<unsigned char>();
+    s = as<unsigned char>();
   } else if (type == signed_char_) {
-    cout << as<signed char>();
+    s = as<signed char>();
   } else if (type == char_) {
-    cout << as<char>();
+    s = as<char>();
   } else if (type == void_) {
-    cout << "void";
+    s = "void";
   } else {
-    cout << "<error-val>";
+    s = "<error-val>";
   }
-  cout << "\n";
+  return s + "\n";
 }
 
 void Result::setValue(long double val)
@@ -209,7 +210,7 @@ void Result::setValue(char val)
   *ptr = val;
 }
 
-Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Identifier* ass) {
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Identifier& ass) {
   ctx = c;
   instr = i;
   operand1 = op1;
@@ -217,7 +218,7 @@ Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Identifier* ass) {
   assignment = ass;
 }
 
-Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier* ass) {
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier& ass) {
   ctx = c;
   instr = i;
   operand1 = op1;
@@ -238,7 +239,7 @@ Instruction::Instruction(const Instruction& other) {
 }
 
 void Instruction::debugPrint() {
-  cout << assignment->name << " = ";
+  cout << assignment.name << " = ";
   switch (instr) {
     case DEREF:
     {
@@ -262,12 +263,12 @@ void Instruction::debugPrint() {
     {
       if (operand1.isConst())
       {
-        cout << operand1.to_string() << " to " << assignment->dataType.to_string();
+        cout << operand1.to_string() << " to " << assignment.dataType.to_string();
       }
       else
       {
-        cout << operand1.to_string() << " (" << operand1.id->dataType.to_string();
-        cout << ") to " << assignment->dataType.to_string();
+        cout << operand1.to_string() << " (" << operand1.id.dataType.to_string();
+        cout << ") to " << assignment.dataType.to_string();
       }
     }
     break;
