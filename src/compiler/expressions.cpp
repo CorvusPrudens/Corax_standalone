@@ -360,7 +360,7 @@ Any Compiler::visitAssignment(PostParser::AssignmentContext* ctx)
 
   visitChildren(ctx);
   Assign ass(ctx, currentScope, currentFunction);
-  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), assign);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), ass);
 
   // Result op1 = results.get(ctx->expr_primary());
   // Result op2 = results.get(ctx->expr_assi());
