@@ -221,13 +221,12 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
     currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
     inherit = true;
     // the last identifier added to the parent scope is the function
+    currentFunction = &currentScope->parent->symbols.back();
     for (auto arg : currentScope->parent->symbols.back().members)
       currentScope->AddSymbol(arg);
     visit(ctx->stat_compound());
     currentScope = currentScope->parent;
   }
-
-  temp_vars = 0;
 
   return nullptr;
 }

@@ -32,6 +32,8 @@ class Pointer {
     }
     ~Pointer() {}
 
+    string to_string();
+
     void setQualifier(string q) 
     {
       int temp = qualifiers;
@@ -113,6 +115,8 @@ struct Type {
   //   storage = s;
   //   qualifiers = q;
   // }
+
+  string to_string();
 
   bool operator==(Type& other) {
     return equal(other);
@@ -261,6 +265,23 @@ struct TypeDescriptor {
 
 };
 
+int fetchPriority(Type t);
+
+extern TypeDescriptor long_double_;
+extern TypeDescriptor double_;
+extern TypeDescriptor float_;
+extern TypeDescriptor unsigned_long_long_;
+extern TypeDescriptor long_long_;
+extern TypeDescriptor unsigned_long_;
+extern TypeDescriptor long_;
+extern TypeDescriptor unsigned_;
+extern TypeDescriptor int_;
+extern TypeDescriptor unsigned_short_;
+extern TypeDescriptor short_;
+extern TypeDescriptor unsigned_char_;
+extern TypeDescriptor signed_char_;
+extern TypeDescriptor char_;
+extern TypeDescriptor void_; 
 extern vector<TypeDescriptor> StandardTypes;
 
 #endif

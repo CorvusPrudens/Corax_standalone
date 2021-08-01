@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef COMPILER_H
+#define COMPILER_H
+
 #include <iostream>
 #include <vector>
 #include "antlr4-runtime.h"
@@ -35,6 +38,7 @@ class Compiler : PostBaseVisitor {
     Error* err;
     SymbolTable* globalTable;
     SymbolTable* currentScope;
+    Identifier* currentFunction;
     // TODO -- This should probably be refactored later to not suck
     std::vector<Identifier*> currentId;
     std::vector<Type*> currentType;
@@ -44,12 +48,13 @@ class Compiler : PostBaseVisitor {
     bool inherit = false;
     bool func_decl_err;
     int unnamed_inc = 0;
-    int temp_vars = 0;
 
     void addRuleErr(ParserRuleContext* rule, string errmess);
     void addRuleWarn(ParserRuleContext* rule, string warnmess);
 
-    void operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, Result (*fptr)(Result o1, Result o2));
+    void operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, OperatorBase& oper);
+    // unary
+    void operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase& oper);
 
     Any visitParse(PostParser::ParseContext* ctx) override;
     // Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
@@ -140,6 +145,185 @@ class Compiler : PostBaseVisitor {
 
 };
 
+class OperatorBase {
+  public:
+
+    OperatorBase(antlr4::tree::ParseTree* c, SymbolTable* t, Identifier* f) {
+      ctx = c;
+      table = t;
+      func = f;
+    }
+
+    /////////////////////////////////////////
+    // Binary expressions
+    /////////////////////////////////////////
+
+    virtual void perform(long double v1, long double v2, Result& res) {}
+    virtual void perform(double v1, double v2, Result& res) {}
+    virtual void perform(float v1, float v2, Result& res) {}
+    virtual void perform(unsigned long long v1, unsigned long long v2, Result& res) {}
+    virtual void perform(long long v1, long long v2, Result& res) {}
+    virtual void perform(unsigned long v1, unsigned long v2, Result& res) {}
+    virtual void perform(long v1, long v2, Result& res) {}
+    virtual void perform(unsigned v1, unsigned v2, Result& res) {}
+    virtual void perform(int v1, int v2, Result& res) {}
+    virtual void perform(unsigned short v1, unsigned short v2, Result& res) {}
+    virtual void perform(unsigned char v1, unsigned char v2, Result& res) {}
+    virtual void perform(signed char v1, signed char v2, Result& res) {}
+    virtual void perform(char v1, char v2, Result& res) {}
+
+    virtual void perform(Identifier& id, Result& op2, Result& res) {
+      int priority1 = fetchPriority(id.dataType);
+      int priority2 = fetchPriority(op2.type);
+
+      Result lhs;
+      lhs.setValue(&id);
+
+      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
+      Identifier ass;
+      ass.name = tempname;
+
+      if (priority1 == priority2) {
+        ass.dataType = lhs.id->dataType;
+        table->AddSymbol(ass);
+        func->instructions.push_back(Instruction(ctx, abstract, lhs, op2, &ass));
+      }
+      else if (priority1 < priority2) {
+        op2.to(id.dataType);
+        ass.dataType = lhs.id->dataType;
+        table->AddSymbol(ass);
+        func->instructions.push_back(Instruction(ctx, abstract, lhs, op2, &ass));
+      }
+      else
+      {
+        ass.dataType = op2.type;
+        Result temp;
+        temp.setValue(&ass);
+
+        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, lhs, op2, &ass));
+        func->instructions.push_back(Instruction(ctx, abstract, temp, op2, &ass));
+      }
+      res.setValue(&ass);
+    }
+    virtual void perform(Result& op1, Identifier& id, Result& res) {
+      int priority2 = fetchPriority(id.dataType);
+      int priority1 = fetchPriority(op1.type);
+
+      Result rhs;
+      rhs.setValue(&id);
+
+      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
+      Identifier ass;
+      ass.name = tempname;
+
+      if (priority1 == priority2) {
+        ass.dataType = op1.type;
+        table->AddSymbol(ass);
+        func->instructions.push_back(Instruction(ctx, abstract, op1, rhs, &ass));        
+      }
+      else if (priority1 < priority2) {
+
+        ass.dataType = op1.type;
+        Result temp;
+        temp.setValue(&ass);
+
+        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, rhs, op1, &ass));
+        func->instructions.push_back(Instruction(ctx, abstract, op1, temp, &ass));
+      }
+      else
+      {
+        op1.to(id.dataType);
+        ass.dataType = rhs.id->dataType;
+        table->AddSymbol(ass);
+        func->instructions.push_back(Instruction(ctx, abstract, op1, rhs, &ass));
+      }
+      res.setValue(&ass);
+    }
+    virtual void perform(Identifier& id1, Identifier& id2, Result& res) {
+      int priority1 = fetchPriority(id1.dataType);
+      int priority2 = fetchPriority(id2.dataType);
+
+      Result lhs;
+      lhs.setValue(&id1);
+      Result rhs;
+      rhs.setValue(&id2);
+
+      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
+      Identifier ass;
+      ass.name = tempname;
+
+      if (priority1 == priority2)
+      {
+        ass.dataType = id1.dataType;
+        table->AddSymbol(ass);
+        func->instructions.push_back(Instruction(ctx, abstract, lhs, rhs, &ass));
+      }
+      else if (priority1 < priority2)
+      {
+        ass.dataType = id1.dataType;
+        table->AddSymbol(ass);
+        Result temp;
+        temp.setValue(&ass);
+
+        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, rhs, lhs, &ass));
+        func->instructions.push_back(Instruction(ctx, abstract, lhs, temp, &ass));
+      }
+      else if (priority1 > priority2)
+      {
+        ass.dataType = id2.dataType;
+        table->AddSymbol(ass);
+        Result temp;
+        temp.setValue(&ass);
+
+        func->instructions.push_back(Instruction(ctx, Instruction::Abstr::CONVERT, lhs, rhs, &ass));
+        func->instructions.push_back(Instruction(ctx, abstract, temp, rhs, &ass));
+      }
+      res.setValue(&ass);
+    }
+
+    /////////////////////////////////////////
+    // Unary expressions
+    /////////////////////////////////////////
+
+    virtual void perform(long double v1, Result& res) {}
+    virtual void perform(double v1, Result& res) {}
+    virtual void perform(float v1, Result& res) {}
+    virtual void perform(unsigned long long v1, Result& res) {}
+    virtual void perform(long long v1, Result& res) {}
+    virtual void perform(unsigned long v1, Result& res) {}
+    virtual void perform(long v1, Result& res) {}
+    virtual void perform(unsigned v1, Result& res) {}
+    virtual void perform(int v1, Result& res) {}
+    virtual void perform(unsigned short v1, Result& res) {}
+    virtual void perform(unsigned char v1,  Result& res) {}
+    virtual void perform(signed char v1, Result& res) {}
+    virtual void perform(char v1, Result& res) {}
+
+    virtual void perform(Identifier& id, Result& res) {
+
+      Result lhs;
+      lhs.setValue(&id);
+
+      string tempname = "temp_var_" + std::to_string(table->temp_vars++);
+      Identifier ass;
+      ass.name = tempname;
+
+      ass.dataType = lhs.id->dataType;
+      table->AddSymbol(ass);
+      func->instructions.push_back(Instruction(ctx, abstract, lhs, &ass));
+
+      res.setValue(&ass);
+    }
+
+    Instruction::Abstr abstract;
+    // needs access to the symbols table!
+    SymbolTable* table;
+    // will add the instruction to the current function
+    Identifier* func;
+    // Needs the parse tree node
+    antlr4::tree::ParseTree* ctx;
+};
+
 // class CompilerListener : PostBaseListener {
 
 //   public:
@@ -157,3 +341,5 @@ class Compiler : PostBaseVisitor {
 //     PostParser* parse;
 
 // };
+
+#endif

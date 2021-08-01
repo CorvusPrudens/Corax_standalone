@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "compiler.h"
+#include "operators.h"
 
 using antlrcpp::Any;
 using std::string;
@@ -11,78 +12,156 @@ using std::string;
 // EXPRESSIONS
 ////////////////////////////////////////////////
 
-// NOTE -- this should accept a class instance that has a standard interface!!
-void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, Result (*fptr)(Result o1, Result o2))
+void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, OperatorBase& oper)
 {
   Result res;
 
-  // TODO -- create object with some kind of mechanism (method with function pointer?)
-  // that allows us to package all this up neatly instead of have 50 lines of code for
-  // all 60 expressions
   if (op1.isConst() && op2.isConst()) {
-    if (op1.kind == Result::Kind::VOID || op2.kind == Result::Kind::VOID)
+    int priority1 = fetchPriority(op1.type);
+    int priority2 = fetchPriority(op2.type);
+    if (priority1 < priority2)
     {
-      
+      op2.to(op1.type);
     }
-    else if (op1.kind == Result::Kind::FLOAT || op2.kind == Result::Kind::FLOAT)
+    else if (priority2 < priority1)
     {
-      float v1 = op1.as<float>();
-      float v2 = op2.as<float>();
-      res.setValue(v1 * v2);
-    }
-    else if (op1.kind == Result::Kind::INT)
-    {
-      // string warnmess = "operating on signed and unsigned int";
-      // addRuleWarn(ctx, warnmess);
-      int v1 = op1.as<unsigned int>();
-      int v2 = op2.as<unsigned int>();
-      res.setValue(v1 * v2);
-    }
-    else if (op1.kind == Result::Kind::S_INT)
-    {
-      // string warnmess = "operating on signed and unsigned int";
-      // addRuleWarn(ctx, warnmess);
-      int v1 = op1.as<int>();
-      int v2 = op2.as<int>();
-      res.setValue(v1 * v2);
+      op1.to(op2.type);
     }
 
-    results.put(ctx, res);
-    return nullptr;
+    Type type = op1.type;
+
+    if (type == long_double_) {
+      auto v1 = op1.as<long double>();
+      auto v2 = op2.as<long double>();
+      oper.perform(v1, v2, res);
+    } else if (type == double_) {
+      auto v1 = op1.as<double>();
+      auto v2 = op2.as<double>();
+      oper.perform(v1, v2, res);
+    } else if (type == float_) {
+      auto v1 = op1.as<float>();
+      auto v2 = op2.as<float>();
+      oper.perform(v1, v2, res);
+    } else if (type == unsigned_long_long_) {
+      auto v1 = op1.as<unsigned long long>();
+      auto v2 = op2.as<unsigned long long>();
+      oper.perform(v1, v2, res);
+    } else if (type == long_long_) {
+      auto v1 = op1.as<long long>();
+      auto v2 = op2.as<long long>();
+      oper.perform(v1, v2, res);
+    } else if (type == unsigned_long_) {
+      auto v1 = op1.as<unsigned long>();
+      auto v2 = op2.as<unsigned long>();
+      oper.perform(v1, v2, res);
+    } else if (type == long_) {
+      auto v1 = op1.as<long>();
+      auto v2 = op2.as<long>();
+      oper.perform(v1, v2, res);
+    } else if (type == unsigned_) {
+      auto v1 = op1.as<unsigned>();
+      auto v2 = op2.as<unsigned>();
+      oper.perform(v1, v2, res);
+    } else if (type == int_) {
+      auto v1 = op1.as<int>();
+      auto v2 = op2.as<int>();
+      oper.perform(v1, v2, res);
+    } else if (type == unsigned_short_) {
+      auto v1 = op1.as<unsigned short>();
+      auto v2 = op2.as<unsigned short>();
+      oper.perform(v1, v2, res);
+    } else if (type == short_) {
+      auto v1 = op1.as<short>();
+      auto v2 = op2.as<short>();
+      oper.perform(v1, v2, res);
+    } else if (type == unsigned_char_) {
+      auto v1 = op1.as<unsigned char>();
+      auto v2 = op2.as<unsigned char>();
+      oper.perform(v1, v2, res);
+    } else if (type == signed_char_) {
+      auto v1 = op1.as<signed char>();
+      auto v2 = op2.as<signed char>();
+      oper.perform(v1, v2, res);
+    } else if (type == char_) {
+      auto v1 = op1.as<char>();
+      auto v2 = op2.as<char>();
+      oper.perform(v1, v2, res);
+    } else if (type == void_) {
+      throw 1;
+    } else {
+      throw 2;
+    }
+  }
+  else if (op1.isConst()) {
+    oper.perform(op1, *op2.id, res);
+  } else if (op2.isConst()) {
+    oper.perform(*op1.id, op2, res);
+  } else {
+    oper.perform(*op1.id, *op2.id, res);
   }
 
+  results.put(ctx, res);
+}
 
-  string tempname = "temp_var_" + std::to_string(temp_vars++);
-  Identifier temp;
-  temp.name = tempname;
-  currentScope->AddSymbol(temp);
-  std::cout << tempname << " = "; // for testing
+void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase& oper)
+{
+  Result res;
 
-  if (!op1.isConst()) {
-    if (op2.isConst()) {
-      // obviously we'll need to change how we treat the const op and how the temp
-      // variable is created / used
-      std::cout << op1.id.name << "*" << op2.as<float>() << "\n";
+  if (op1.isConst()) {
+
+    Type type = op1.type;
+
+    if (type == long_double_) {
+      auto v1 = op1.as<long double>();
+      oper.perform(v1, res);
+    } else if (type == double_) {
+      auto v1 = op1.as<double>();
+      oper.perform(v1, res);
+    } else if (type == float_) {
+      auto v1 = op1.as<float>();
+      oper.perform(v1, res);
+    } else if (type == unsigned_long_long_) {
+      auto v1 = op1.as<unsigned long long>();
+      oper.perform(v1, res);
+    } else if (type == long_long_) {
+      auto v1 = op1.as<long long>();
+      oper.perform(v1, res);
+    } else if (type == unsigned_long_) {
+      auto v1 = op1.as<unsigned long>();
+      oper.perform(v1, res);
+    } else if (type == long_) {
+      auto v1 = op1.as<long>();
+      oper.perform(v1, res);
+    } else if (type == unsigned_) {
+      auto v1 = op1.as<unsigned>();
+      oper.perform(v1, res);
+    } else if (type == int_) {
+      auto v1 = op1.as<int>();
+      oper.perform(v1, res);
+    } else if (type == unsigned_short_) {
+      auto v1 = op1.as<unsigned short>();
+      oper.perform(v1, res);
+    } else if (type == short_) {
+      auto v1 = op1.as<short>();
+      oper.perform(v1, res);
+    } else if (type == unsigned_char_) {
+      auto v1 = op1.as<unsigned char>();
+      oper.perform(v1, res);
+    } else if (type == signed_char_) {
+      auto v1 = op1.as<signed char>();
+      oper.perform(v1, res);
+    } else if (type == char_) {
+      auto v1 = op1.as<char>();
+      oper.perform(v1, res);
+    } else if (type == void_) {
+      throw 1;
+    } else {
+      throw 2;
     }
-    else
-    {
-      std::cout << op1.id.name << "*" << op2.id.name << "\n";
-    }
+  } else {
+    oper.perform(*op1.id, res);
   }
-  else if (!op2.isConst()) {
-    if (op1.isConst()) {
-      // obviously we'll need to change how we treat the const op and how the temp
-      // variable is created / used
-      std::cout << op2.id.name << "*" << op1.as<float>() << "\n";
-    }
-    else
-    {
-      std::cout << op2.id.name << "*" << op1.id.name << "\n";
-    }
-  }
 
-  // this method is less memory efficient, but it's quite easy!
-  res.setValue(temp);
   results.put(ctx, res);
 }
 
@@ -146,7 +225,7 @@ Any Compiler::visitIdentifier(PostParser::IdentifierContext* ctx)
 {
   Result res;
   try {
-    res.setValue(currentScope->GetSymbol(ctx->getText()));
+    res.setValue(&currentScope->GetSymbol(ctx->getText()));
   } catch (int e) {
     string errmess = "undefined identifier \"" + ctx->getText() + "\"";
     addRuleErr(ctx, errmess);
@@ -194,107 +273,115 @@ Any Compiler::visitMult(PostParser::MultContext* ctx)
 {
 
   visitChildren(ctx);
+  Mult mult(ctx, currentScope, currentFunction);
+  operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), mult);
 
-  Result op1 = results.get(ctx->expr_arith()[0]);
-  Result op2 = results.get(ctx->expr_arith()[1]);
-  Result res;
+  // Result op1 = results.get(ctx->expr_arith()[0]);
+  // Result op2 = results.get(ctx->expr_arith()[1]);
+  // Result res;
 
-  // TODO -- create object with some kind of mechanism (method with function pointer?)
-  // that allows us to package all this up neatly instead of have 50 lines of code for
-  // all 60 expressions
-  if (op1.isConst() && op2.isConst()) {
-    if (op1.kind == Result::Kind::VOID || op2.kind == Result::Kind::VOID)
-    {
+  // // TODO -- create object with some kind of mechanism (method with function pointer?)
+  // // that allows us to package all this up neatly instead of have 50 lines of code for
+  // // all 60 expressions
+  // if (op1.isConst() && op2.isConst()) {
+  //   if (op1.kind == Result::Kind::VOID || op2.kind == Result::Kind::VOID)
+  //   {
       
-    }
-    else if (op1.kind == Result::Kind::FLOAT || op2.kind == Result::Kind::FLOAT)
-    {
-      float v1 = op1.as<float>();
-      float v2 = op2.as<float>();
-      res.setValue(v1 * v2);
-    }
-    else if (op1.kind == Result::Kind::INT)
-    {
-      // string warnmess = "operating on signed and unsigned int";
-      // addRuleWarn(ctx, warnmess);
-      int v1 = op1.as<unsigned int>();
-      int v2 = op2.as<unsigned int>();
-      res.setValue(v1 * v2);
-    }
-    else if (op1.kind == Result::Kind::S_INT)
-    {
-      // string warnmess = "operating on signed and unsigned int";
-      // addRuleWarn(ctx, warnmess);
-      int v1 = op1.as<int>();
-      int v2 = op2.as<int>();
-      res.setValue(v1 * v2);
-    }
+  //   }
+  //   else if (op1.kind == Result::Kind::FLOAT || op2.kind == Result::Kind::FLOAT)
+  //   {
+  //     float v1 = op1.as<float>();
+  //     float v2 = op2.as<float>();
+  //     res.setValue(v1 * v2);
+  //   }
+  //   else if (op1.kind == Result::Kind::INT)
+  //   {
+  //     // string warnmess = "operating on signed and unsigned int";
+  //     // addRuleWarn(ctx, warnmess);
+  //     int v1 = op1.as<unsigned int>();
+  //     int v2 = op2.as<unsigned int>();
+  //     res.setValue(v1 * v2);
+  //   }
+  //   else if (op1.kind == Result::Kind::S_INT)
+  //   {
+  //     // string warnmess = "operating on signed and unsigned int";
+  //     // addRuleWarn(ctx, warnmess);
+  //     int v1 = op1.as<int>();
+  //     int v2 = op2.as<int>();
+  //     res.setValue(v1 * v2);
+  //   }
 
-    results.put(ctx, res);
-    return nullptr;
-  }
+  //   results.put(ctx, res);
+  //   return nullptr;
+  // }
 
 
-  string tempname = "temp_var_" + std::to_string(temp_vars++);
-  Identifier temp;
-  temp.name = tempname;
-  currentScope->AddSymbol(temp);
-  std::cout << tempname << " = "; // for testing
+  // string tempname = "temp_var_" + std::to_string(temp_vars++);
+  // Identifier temp;
+  // temp.name = tempname;
+  // currentScope->AddSymbol(temp);
+  // std::cout << tempname << " = "; // for testing
 
-  if (!op1.isConst()) {
-    if (op2.isConst()) {
-      // obviously we'll need to change how we treat the const op and how the temp
-      // variable is created / used
-      std::cout << op1.id.name << "*" << op2.as<float>() << "\n";
-    }
-    else
-    {
-      std::cout << op1.id.name << "*" << op2.id.name << "\n";
-    }
-  }
-  else if (!op2.isConst()) {
-    if (op1.isConst()) {
-      // obviously we'll need to change how we treat the const op and how the temp
-      // variable is created / used
-      std::cout << op2.id.name << "*" << op1.as<float>() << "\n";
-    }
-    else
-    {
-      std::cout << op2.id.name << "*" << op1.id.name << "\n";
-    }
-  }
+  // if (!op1.isConst()) {
+  //   if (op2.isConst()) {
+  //     // obviously we'll need to change how we treat the const op and how the temp
+  //     // variable is created / used
+  //     std::cout << op1.id.name << "*" << op2.as<float>() << "\n";
+  //   }
+  //   else
+  //   {
+  //     std::cout << op1.id.name << "*" << op2.id.name << "\n";
+  //   }
+  // }
+  // else if (!op2.isConst()) {
+  //   if (op1.isConst()) {
+  //     // obviously we'll need to change how we treat the const op and how the temp
+  //     // variable is created / used
+  //     std::cout << op2.id.name << "*" << op1.as<float>() << "\n";
+  //   }
+  //   else
+  //   {
+  //     std::cout << op2.id.name << "*" << op1.id.name << "\n";
+  //   }
+  // }
 
-  // this method is less memory efficient, but it's quite easy!
-  res.setValue(temp);
-  results.put(ctx, res);
+  // // this method is less memory efficient, but it's quite easy!
+  // res.setValue(temp);
+  // results.put(ctx, res);
   return nullptr;
 }
 
 // Assignments
 Any Compiler::visitAssignment(PostParser::AssignmentContext* ctx)
 {
+  // visitChildren(ctx);
+  // Mult mult(ctx, currentScope, currentFunction);
+  // operation(ctx, results.get(ctx->expr_primary()[0]), mult);
+
   visitChildren(ctx);
+  Assign ass(ctx, currentScope, currentFunction);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), assign);
 
-  Result op1 = results.get(ctx->expr_primary());
-  Result op2 = results.get(ctx->expr_assi());
-  Result res;
+  // Result op1 = results.get(ctx->expr_primary());
+  // Result op2 = results.get(ctx->expr_assi());
+  // Result res;
 
-  if (op1.isConst()) {
-    addRuleErr(ctx, "left hand side must be a modifiable lvalue");
-    results.put(ctx, res);
-    return nullptr;
-  }
+  // if (op1.isConst()) {
+  //   addRuleErr(ctx, "left hand side must be a modifiable lvalue");
+  //   results.put(ctx, res);
+  //   return nullptr;
+  // }
 
-  std::cout << op1.id.name << " = "; // for testing
+  // std::cout << op1.id.name << " = "; // for testing
 
-  if (op2.isConst()) {
-    std::cout << op2.as<float>() << "\n";
-  }
-  else {
-    std::cout << op2.id.name << "\n";
-  }
+  // if (op2.isConst()) {
+  //   std::cout << op2.as<float>() << "\n";
+  // }
+  // else {
+  //   std::cout << op2.id.name << "\n";
+  // }
 
-  results.put(ctx, res); // what should be the result though??
+  // results.put(ctx, res); // what should be the result though??
   return nullptr;
 }
 

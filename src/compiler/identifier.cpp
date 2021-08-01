@@ -19,36 +19,211 @@ Result::Result(const Result& other)
   kind = other.kind;
 }
 
-string Result::to_string()
+void Result::to(Type t)
 {
-  switch (kind)
-  {
-    case ID:
-      return id.name;
-    case FLOAT:
-      return std::to_string(as<float>());
-    case S_INT:
-      return std::to_string(as<int>());
-    case INT:
-      return std::to_string(as<unsigned int>());
-    default:
-      return "void";
+  if (kind == Kind::ID)
+    throw 1;
+  if (t == long_double_) {
+    auto temp = as<long double>();
+    setValue(temp);
+  } else if (t == double_) {
+    auto temp = as<double>();
+    setValue(temp);
+  } else if (t == float_) {
+    auto temp = as<float>();
+    setValue(temp);
+  } else if (t == unsigned_long_long_) {
+    auto temp = as<unsigned long long>();
+    setValue(temp);
+  } else if (t == long_long_) {
+    auto temp = as<long long>();
+    setValue(temp);
+  } else if (t == unsigned_long_) {
+    auto temp = as<unsigned long>();
+    setValue(temp);
+  } else if (t == long_) {
+    auto temp = as<long>();
+    setValue(temp);
+  } else if (t == unsigned_) {
+    auto temp = as<unsigned>();
+    setValue(temp);
+  } else if (t == int_) {
+    auto temp = as<int>();
+    setValue(temp);
+  } else if (t == unsigned_short_) {
+    auto temp = as<unsigned short>();
+    setValue(temp);
+  } else if (t == short_) {
+    auto temp = as<short>();
+    setValue(temp);
+  } else if (t == unsigned_char_) {
+    auto temp = as<unsigned char>();
+    setValue(temp);
+  } else if (t == signed_char_) {
+    auto temp = as<signed char>();
+    setValue(temp);
+  } else if (t == char_) {
+    auto temp = as<char>();
+    setValue(temp);
+  } else if (t == void_) {
+    throw 2;
   }
 }
 
-Instruction::Instruction(ParseTree* c, Abstr i, Result op1) {
+string Result::to_string()
+{
+  if (kind == Kind::ID)
+    cout << id->name;
+  else if (type == long_double_) {
+    cout << as<long double>();
+  } else if (type == double_) {
+    cout << as<double>();
+  } else if (type == float_) {
+    cout << as<float>();
+  } else if (type == unsigned_long_long_) {
+    cout << as<unsigned long long>();
+  } else if (type == long_long_) {
+    cout << as<long long>();
+  } else if (type == unsigned_long_) {
+    cout << as<unsigned long>();
+  } else if (type == long_) {
+    cout << as<long>();
+  } else if (type == unsigned_) {
+    cout << as<unsigned>();
+  } else if (type == int_) {
+    cout << as<int>();
+  } else if (type == unsigned_short_) {
+    cout << as<unsigned short>();
+  } else if (type == short_) {
+    cout << as<short>();
+  } else if (type == unsigned_char_) {
+    cout << as<unsigned char>();
+  } else if (type == signed_char_) {
+    cout << as<signed char>();
+  } else if (type == char_) {
+    cout << as<char>();
+  } else if (type == void_) {
+    cout << "void";
+  } else {
+    cout << "<error-val>";
+  }
+  cout << "\n";
+}
+
+void Result::setValue(long double val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"double", "long"};
+  long double* ptr = (long double*) value;
+  *ptr = val;
+}
+void Result::setValue(double val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"double"};
+  double* ptr = (double*) value;
+  *ptr = val;
+}
+void Result::setValue(float val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"float"};
+  float* ptr = (float*) value;
+  *ptr = val;
+}
+void Result::setValue(unsigned long long val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"long", "long", "unsigned"};
+  long long unsigned* ptr = (long long unsigned*) value;
+  *ptr = val;
+}
+void Result::setValue(long long val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"long", "long"};
+  long long* ptr = (long long*) value;
+  *ptr = val;
+}
+void Result::setValue(unsigned long val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"long", "unsigned"};
+  unsigned long* ptr = (unsigned long*) value;
+  *ptr = val;
+}
+void Result::setValue(long val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"long"};
+  long* ptr = (long*) value;
+  *ptr = val;
+}
+void Result::setValue(unsigned val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"unsigned"};
+  unsigned* ptr = (unsigned*) value;
+  *ptr = val;
+}
+void Result::setValue(int val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"int"};
+  int* ptr = (int*) value;
+  *ptr = val;
+}
+void Result::setValue(unsigned short val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"short", "unsigned"};
+  unsigned short* ptr = (unsigned short*) value;
+  *ptr = val;
+}
+void Result::setValue(short val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"short"};
+  short* ptr = (short*) value;
+  *ptr = val;
+}
+void Result::setValue(unsigned char val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"char", "unsigned"};
+  unsigned char* ptr = (unsigned char*) value;
+  *ptr = val;
+}
+void Result::setValue(signed char val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"char", "signed"};
+  signed char* ptr = (signed char*) value;
+  *ptr = val;
+}
+void Result::setValue(char val)
+{
+  kind = Kind::STANDARD;
+  type.type_specifiers = {"char"};
+  char* ptr = (char*) value;
+  *ptr = val;
+}
+
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Identifier* ass) {
   ctx = c;
   instr = i;
   operand1 = op1;
   single = true;
+  assignment = ass;
 }
 
-Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Result op2) {
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier* ass) {
   ctx = c;
   instr = i;
   operand1 = op1;
   operand2 = op2;
   single = false;
+  assignment = ass;
 }
 
 Instruction::Instruction(const Instruction& other) {
@@ -59,9 +234,11 @@ Instruction::Instruction(const Instruction& other) {
   condition = other.condition;
   if (!single)
     operand2 = other.operand2;
+  assignment = other.assignment;
 }
 
 void Instruction::debugPrint() {
+  cout << assignment->name << " = ";
   switch (instr) {
     case DEREF:
     {
@@ -83,12 +260,20 @@ void Instruction::debugPrint() {
     break;
     case CONVERT:
     {
-      // dunno yet!
+      if (operand1.isConst())
+      {
+        cout << operand1.to_string() << " to " << assignment->dataType.to_string();
+      }
+      else
+      {
+        cout << operand1.to_string() << " (" << operand1.id->dataType.to_string();
+        cout << ") to " << assignment->dataType.to_string();
+      }
     }
     break;
     case ASSIGN:
     {
-      cout << operand1.to_string() << " = " << operand2.to_string() << "\n";
+      cout << operand1.to_string() << "\n";
     }
     break;
     case ADD:

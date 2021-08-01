@@ -32,7 +32,6 @@ class Identifier {
       name = "";
       type = IdType::VARIABLE;
       initialized = false;
-      assignment = "";
     }
     ~Identifier() {}
 
@@ -46,6 +45,7 @@ class Identifier {
       initialized = other.initialized;
       members = other.members;
       initializers = other.initializers;
+      instructions = other.instructions;
     }
 
     bool operator==(Identifier& other)
@@ -69,27 +69,7 @@ class Identifier {
       newid.initialized = initialized;
       newid.members = members;
       newid.initializers = initializers;
-      // switch(type)
-      // {
-      //   case IdType::FUNCTION:
-      //     newid.function_ = function_;
-      //     break;
-      //   case IdType::STRUCT:
-      //     newid.struct_ = struct_;
-      //     break;
-      //   case IdType::UNION:
-      //     newid.union_ = union_;
-      //     break;
-      //   case IdType::VARIABLE:
-      //     newid.variable_ = variable_;
-      //     break;
-      //   case IdType::ARRAY:
-      //     newid.array_ = array_;
-      //     break;
-      //   default:
-      //     newid.variable_ = variable_;
-      //     break;
-      // }
+      newid.instructions = instructions;
       return newid;
     }
 
@@ -109,8 +89,7 @@ class Identifier {
     // For array
     std::vector<string> initializers;
 
-    // for variable
-    string assignment;
+    Result assignment;
 
     private:
 
@@ -152,7 +131,7 @@ class Identifier {
             {
               bool equal = other.type == IdType::VARIABLE;
               equal = equal && other.dataType == dataType;
-              equal = equal && other.assignment == assignment;
+              // equal = equal && other.assignment == assignment;
               return equal;
             }
           case IdType::ARRAY:
@@ -167,22 +146,6 @@ class Identifier {
             return false;
         }
       }
-
-
-    // Function function_;
-    // Struct   struct_;
-    // Union    union_;
-    // Variable variable_;
-    // Array    array_;
-
-    // Type dataType;
-    // Type returnType;
-
-    // std::vector<int> itable;
-    // int ivalue;
-    // double fvalue;
-
-    // std::vector<Identifier> args;
 };
 
 class Result {
@@ -192,15 +155,15 @@ class Result {
     static constexpr size_t buff_size = 16;
 
     uint8_t value[buff_size];
-    Identifier id;
+    Identifier* id;
+    Type type;
 
     enum Kind {
       VOID = 0,
       ID,
-      // Right now it's only really practical to have 3 types
-      FLOAT,
-      INT,
-      S_INT,
+      STANDARD,
+      STRUCT, // dunno if we'll use these?
+      UNION,
     };
 
     Result() {
@@ -217,58 +180,95 @@ class Result {
     bool isConst() { return kind != Kind::ID; }
 
     string to_string();
+    void to(Type t);
 
-    void setValue(Identifier new_id)
+    void setValue(Identifier* new_id)
     {
       kind = Kind::ID;
       id = new_id;
     }
 
-    void setValue(float val)
-    {
-      kind = Kind::FLOAT;
-      float* ptr = (float*) value;
-      *ptr = val;
-    }
-
-    void setValue(int val)
-    {
-      kind = Kind::S_INT;
-      int* ptr = (int*) value;
-      *ptr = val;
-    }
-
-    void setValue(unsigned int val)
-    {
-      kind = Kind::INT;
-      unsigned int* ptr = (unsigned int*) value;
-      *ptr = val;
-    }
+    void setValue(long double val);
+    void setValue(double val);
+    void setValue(float val);
+    void setValue(unsigned long long val);
+    void setValue(long long val);
+    void setValue(unsigned long val);
+    void setValue(long val);
+    void setValue(unsigned val);
+    void setValue(int val);
+    void setValue(unsigned short val);
+    void setValue(short val);
+    void setValue(unsigned char val);
+    void setValue(signed char val);
+    void setValue(char val);
 
     template<typename T>
     T as()
     {
-      switch (kind) {
-        case Kind::FLOAT:
-        {
-          float* orig = (float*) value;
-          T val = (T) *orig;
-          return val;
-        }
-        case Kind::INT:
-        {
-          unsigned int* orig = (unsigned int*) value;
-          T val = (T) *orig;
-          return val;
-        }
-        case Kind::S_INT:cout << "*" <<
-        {
-          int* orig = (int*) value;
-          T val = (T) *orig;
-          return val;
-        }
-        default:
-          return (T) 0;
+      if (kind == Kind::ID)
+        throw 1;
+      if (type == long_double_) {
+        long double* orig = (long double*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == double_) {
+        double* orig = (double*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == float_) {
+        float* orig = (float*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == unsigned_long_long_) {
+        unsigned long long* orig = (unsigned long long*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == long_long_) {
+        long long* orig = (long long*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == unsigned_long_) {
+        unsigned long* orig = (unsigned long*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == long_) {
+        long* orig = (long*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == unsigned_) {
+        unsigned* orig = (unsigned*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == int_) {
+        int* orig = (int*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == unsigned_short_) {
+        unsigned short* orig = (unsigned short*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == short_) {
+        short* orig = (short*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == unsigned_char_) {
+        // WHOA these can all be auto??
+        auto orig = (unsigned char*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == signed_char_) {
+        auto orig = (signed char*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == char_) {
+        auto orig = (char*) value;
+        T val = (T) *orig;
+        return val;
+      } else if (type == void_) {
+        auto orig = (void*) value;
+        T val = (T) *orig;
+        return val;
       }
     }
 
@@ -306,8 +306,8 @@ class Instruction {
       LESS_EQUAL,
     };
 
-    Instruction(ParseTree* c, Abstr i, Result op1);
-    Instruction(ParseTree* c, Abstr i, Result op1, Result op2);
+    Instruction(ParseTree* c, Abstr i, Result op1, Identifier* ass);
+    Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier* ass);
     Instruction(const Instruction& other);
     ~Instruction() {}
 
@@ -318,6 +318,7 @@ class Instruction {
     Cond condition;
     Result operand1;
     Result operand2;
+    Identifier* assignment;
     ParseTree* ctx; // for easy error reporting
     bool single;
 

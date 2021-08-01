@@ -18,6 +18,7 @@ struct SymbolTable {
   {
     parent = p;
     scope = s;
+    temp_vars = 0;
   }
 
   // TODO -- this needs to check if the symbol already exists. 
@@ -44,5 +45,7 @@ struct SymbolTable {
   // string identifier;
   // std::vector<string> symbols;
   std::vector<Identifier> symbols;
+
+  unsigned int temp_vars;
 
 };
