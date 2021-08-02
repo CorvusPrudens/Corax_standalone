@@ -93,11 +93,11 @@ void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, O
     }
   }
   else if (op1.isConst()) {
-    oper.perform(op1, op2.id, res);
+    oper.perform(op1, *op2.id, res);
   } else if (op2.isConst()) {
-    oper.perform(op1.id, op2, res);
+    oper.perform(*op1.id, op2, res);
   } else {
-    oper.perform(op1.id, op2.id, res);
+    oper.perform(*op1.id, *op2.id, res);
   }
 
   results.put(ctx, res);
@@ -159,7 +159,7 @@ void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase&
       throw 2;
     }
   } else {
-    oper.perform(op1.id, res);
+    oper.perform(*op1.id, res);
   }
 
   results.put(ctx, res);
@@ -225,7 +225,7 @@ Any Compiler::visitIdentifier(PostParser::IdentifierContext* ctx)
 {
   Result res;
   try {
-    auto id = currentScope->GetSymbol(ctx->getText());
+    Identifier& id = currentScope->GetSymbol(ctx->getText());
     res.setValue(id);
   } catch (int e) {
     string errmess = "undefined identifier \"" + ctx->getText() + "\"";
@@ -769,7 +769,7 @@ Any Compiler::visitInitAssign(PostParser::InitAssignContext* ctx)
 
 
   Result ass = results.get(ctx->expr_assi());
-  if (!ass.isConst() && currentScope == globalTable)
+  if (!ass.isConst() && currentScope == globalTable.get())
   {
     string errmess = "attempting non-static calculation outside any function";
     addRuleErr(ctx, errmess);
@@ -793,7 +793,7 @@ Any Compiler::visitInitDeclAssigned(PostParser::InitDeclAssignedContext* ctx)
 {
   visit(ctx->declarator());
   // last identifier on the current scope is our boy
-  Identifier tempid = currentScope->symbols.back();
+  Identifier& tempid = currentScope->GetLast();
   visit(ctx->initializer());
 
   // Right now this just assumes a simple declaration (not an initializer list)

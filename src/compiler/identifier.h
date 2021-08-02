@@ -12,6 +12,8 @@ using antlr4::ParserRuleContext;
 using std::vector;
 
 class Instruction; // forward declaration
+class SymbolTable; // forward decl
+class Result; // forward decl
 
 class FuncComp {
 
@@ -50,10 +52,6 @@ class Identifier {
       // Typedef,
     };
 
-    // Identifier(string n, IdType t) {
-    //   name = n;
-    //   type = t;
-    // }
     Identifier() {
       name = "";
       type = IdType::VARIABLE;
@@ -61,49 +59,19 @@ class Identifier {
     }
     ~Identifier() {}
 
-    Identifier(const Identifier& other)
-    {
-      type = other.type;
-      name = other.name;
-      // We can optimize this later
-      dataType = other.dataType;
-      returnType = other.returnType;
-      initialized = other.initialized;
-      members = other.members;
-      initializers = other.initializers;
-      function = other.function;
-    }
+    Identifier(const Identifier& other);
 
-    bool operator==(Identifier& other)
-    {
-      return equal(other);
-    }
-
-    bool operator!=(Identifier& other)
-    {
-      return !equal(other);
-    }
-
-    Identifier copy()
-    {
-      Identifier newid;
-      newid.type = type;
-      newid.name = name;
-      // We can optimize this later
-      newid.dataType = dataType;
-      newid.returnType = returnType;
-      newid.initialized = initialized;
-      newid.members = members;
-      newid.initializers = initializers;
-      newid.function = function;
-      return newid;
-    }
+    bool operator==(Identifier& other) { return equal(other); }
+    bool operator!=(Identifier& other) { return !equal(other); }
+    bool operator==(Identifier* other) { return equal(other); }
+    bool operator!=(Identifier* other) { return !equal(other); }
 
     IdType type;
     string name;
 
     Type dataType;
     Type returnType;
+    SymbolTable* funcTable;
 
     // TODO -- add warnings for operations on uninitialized variables!
     bool initialized;
@@ -115,61 +83,13 @@ class Identifier {
     FuncComp function;
 
     // For array
-    std::vector<string> initializers;
+    std::vector<Result> initializers;
 
     private:
 
-      bool equal(Identifier& other)
-      {
-        switch(type)
-        {
-          case IdType::FUNCTION:
-            {
-              bool equal = other.type == IdType::FUNCTION;
-              equal = equal && other.dataType == dataType;
-              equal = equal && other.returnType == returnType;
-              // TODO -- this needs expansion:
-              // it needs to check if the parameter order and 
-              // types are the same, not names etc.
-              if (members.size() != other.members.size()) return false;
-              for (int i = 0; i < members.size(); i++)
-              {
-                if (members[i].dataType != other.members[i].dataType)
-                  return false;
-              }
-              return equal;
-            }
-          case IdType::STRUCT:
-            {
-              bool equal = other.type == IdType::STRUCT;
-              equal = equal && other.dataType == dataType;
-              equal = equal && EqualVectors(other.members, members);
-              return equal;
-            }
-          case IdType::UNION:
-            {
-              bool equal = other.type == IdType::UNION;
-              equal = equal && other.dataType == dataType;
-              equal = equal && EqualVectors(other.members, members);
-              return equal;
-            }
-          case IdType::VARIABLE:
-            {
-              bool equal = other.type == IdType::VARIABLE;
-              return equal && other.dataType == dataType && other.name == name;
-            }
-          case IdType::ARRAY:
-            {
-              bool equal = other.type == IdType::FUNCTION;
-              equal = equal && other.dataType == dataType;
-              equal = equal && other.returnType == returnType;
-              equal = equal && EqualVectors(other.members, members);
-              return equal;
-            }
-          default:
-            return false;
-        }
-      }
+      bool equal(Identifier& other);
+      bool equal(Identifier* other);
+      
 };
 
 class Result {
@@ -187,7 +107,7 @@ class Result {
     };
 
     uint8_t value[buff_size];
-    Identifier id;
+    Identifier* id;
     Type type;
     Kind kind = Kind::VOID;
 
@@ -208,7 +128,7 @@ class Result {
     void setValue(Identifier& new_id)
     {
       kind = Kind::ID;
-      id = new_id;
+      id = &new_id;
     }
 
     void setValue(long double val);
@@ -345,7 +265,7 @@ class Instruction {
     Cond condition;
     Result operand1;
     Result operand2;
-    Identifier assignment;
+    Identifier* assignment;
     ParserRuleContext* ctx; // for easy error reporting
     bool single;
 

@@ -1,44 +1,43 @@
 #include "stable.h"
 
-void SymbolTable::AddSymbol(Identifier id)
+void SymbolTable::AddSymbol(Identifier& id)
 { 
-  Identifier other;
-  id.dataType.sortSpecifiers();
-  try {
-    // We only need to worry about colliding with local symbols
-    other = GetLocalSymbol(id.name);
-  } catch (int e) {
-    symbols.push_back(id); 
-    return;
-  }
-
-  // If it doesn't throw an exception, then
-  // the identifier has already been 
-  // at least declared
-  if (id.type == Identifier::IdType::FUNCTION && other.type == Identifier::IdType::FUNCTION)
+  if (symbols.count(id.name) == 0) 
   {
-    if (!other.initialized && id == other)
-      symbols.push_back(id);
-    else if (!other.initialized)
-      throw 2;
+    id.dataType.sortSpecifiers();
+    symbols[id.name] = id;
+    ordered.push_back(&symbols[id.name]);
+  } 
+  else 
+  {
+    Identifier& other = symbols[id.name];
+
+    // If we get here, then the identifier has
+    // at least been declared
+    if (id.type == Identifier::IdType::FUNCTION && other.type == Identifier::IdType::FUNCTION)
+    {
+      if (!other.initialized && id == other)
+      {
+        symbols[id.name] = id;
+        ordered.push_back(&symbols[id.name]);
+      }
+      else if (!other.initialized)
+        throw 2;
+      else
+        throw 3;
+    }
     else
-      throw 3;
+      throw 1;
   }
-  else
-    throw 1;
 }
 
-Identifier SymbolTable::GetLocalSymbol(string name)
+Identifier& SymbolTable::GetLocalSymbol(string name)
 {
-  for (int i = symbols.size() - 1; i > -1; i--)
-  {
-    if (symbols[i].name == name)
-      return symbols[i];
-  }
-  throw 1;
+  if (symbols.count(name) == 0) throw 1;
+  return symbols[name];
 }
 
-Identifier SymbolTable::GetSymbol(string name)
+Identifier& SymbolTable::GetSymbol(string name)
 {
   // first check local copy
   try {
@@ -50,4 +49,9 @@ Identifier SymbolTable::GetSymbol(string name)
     else
       return parent->GetSymbol(name);
   }
+}
+
+Identifier& SymbolTable::GetLast()
+{
+  return *ordered.back();
 }

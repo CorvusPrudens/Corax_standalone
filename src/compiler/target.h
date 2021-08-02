@@ -68,28 +68,29 @@ class BaseTarget {
     virtual void TranslateConvert(Instruction& inst) { unsupported(inst); }
     virtual void TranslateAssign(Instruction& inst) { unsupported(inst); }
 
-    typedef void (BaseTarget::*TranslateMethod)(Instruction& inst);
+    typedef void (BaseTarget::*TranslateMethod)(Instruction&);
 
     // Corresponds to Instruction's Abstr enum
     TranslateMethod methods[19] = {
-      TranslateDeref,
-      TranslateNot,
-      TranslateNegate,
-      TranslateNegative,
-      TranslateConvert,
-      TranslateAssign,
-      TranslateAdd,
-      TranslateMult,
-      TranslateDiv,
-      TranslateMod,
-      TranslateShiftl,
-      TranslateShiftr,
-      TranslateBitAnd,
-      TranslateBitXor,
-      TranslateBitOr,
-      TranslateAnd,
-      TranslateOr,
-      TranslateCmp,
+      &BaseTarget::TranslateDeref,
+      &BaseTarget::TranslateNot,
+      &BaseTarget::TranslateNegate,
+      &BaseTarget::TranslateNegative,
+      &BaseTarget::TranslateConvert,
+      &BaseTarget::TranslateAssign,
+      &BaseTarget::TranslateAdd,
+      &BaseTarget::TranslateSub,
+      &BaseTarget::TranslateMult,
+      &BaseTarget::TranslateDiv,
+      &BaseTarget::TranslateMod,
+      &BaseTarget::TranslateShiftl,
+      &BaseTarget::TranslateShiftr,
+      &BaseTarget::TranslateBitAnd,
+      &BaseTarget::TranslateBitXor,
+      &BaseTarget::TranslateBitOr,
+      &BaseTarget::TranslateAnd,
+      &BaseTarget::TranslateOr,
+      &BaseTarget::TranslateCmp,
     };
 
     virtual int freeRegisters(

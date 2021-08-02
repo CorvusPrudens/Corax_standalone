@@ -7,22 +7,41 @@
 using antlrcpp::Any;
 using std::cout;
 
-void Compiler::Process(ProcessedCode* code_, Error* err_)
+Compiler::Compiler(ProcessedCode* code_, Error* err_, bool g)
+  : stream(code_->code)
+  , lexer(&stream)
+  , tokens(&lexer)
+  , parser(&tokens)
 {
   code = code_;
   err = err_;
+  graphing = g;
+  tree::ParseTree* parse_tree = parser.parse();
+  visit(parse_tree);
+}
 
-  ANTLRInputStream stream(code->code);
-  PostLexer lexer(&stream);
-  CommonTokenStream tokens(&lexer);
-  PostParser parser(&tokens);
-
-  tree::ParseTree *tree = parser.parse();
-  visit(tree);
-
+void Compiler::Complete()
+{
   if (graphing) graph.Print();
   else err->Report();
 }
+
+// void Compiler::Process(ProcessedCode* code_, Error* err_)
+// {
+//   code = code_;
+//   err = err_;
+
+//   ANTLRInputStream stream(code->code);
+//   PostLexer lexer(&stream);
+//   CommonTokenStream tokens(&lexer);
+//   parser = new PostParser(&tokens);
+
+//   tree::ParseTree* parse_tree = parser->parse();
+//   visit(parse_tree);
+
+//   if (graphing) graph.Print();
+//   else err->Report();
+// }
 
 void Compiler::addRuleErr(ParserRuleContext* rule, string errmess)
 {
@@ -44,10 +63,20 @@ void Compiler::addRuleWarn(ParserRuleContext* rule, string warnmess)
   err->AddWarning(warnmess, line, file, 1, cols, cole);
 }
 
+void Compiler::pushScope(SymbolTable::Scope scope)
+{
+  currentScope->children.push_back(SymbolTable(currentScope, scope));
+  currentScope = &currentScope->children.back();
+}
+void Compiler::popScope()
+{
+  currentScope = currentScope->parent;
+}
+
 Any Compiler::visitParse(PostParser::ParseContext* ctx)
 {
-  globalTable = new SymbolTable(nullptr, SymbolTable::Scope::GLOBAL);
-  currentScope = globalTable;
+  globalTable = std::make_unique<SymbolTable>(SymbolTable(nullptr, SymbolTable::Scope::GLOBAL));
+  currentScope = globalTable.get();
   visitChildren(ctx);
 
   // for (auto id : globalTable->symbols)
@@ -93,12 +122,12 @@ Any Compiler::visitDeclaration(PostParser::DeclarationContext* ctx)
 
 Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
 {
-  auto tempid = new Identifier;
-  tempid->dataType = *currentType.back(); // if we're in an init_decl list
-  currentId.push_back(tempid);
+  Identifier tempid;
+  tempid.dataType = *currentType.back(); // if we're in an init_decl list
+  currentId.push_back(&tempid);
   visitChildren(ctx); // this adds pointers too!
   try {
-    currentScope->AddSymbol(tempid->copy());
+    currentScope->AddSymbol(tempid);
   } catch (int e) {
     string errmess;
     switch (e)
@@ -116,7 +145,7 @@ Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
         func_decl_err = true;
         break;
     }
-    addRuleErr(ctx, errmess + "\"" + tempid->name + "\"");
+    addRuleErr(ctx, errmess + "\"" + tempid.name + "\"");
   }
   currentId.pop_back();
   return nullptr;
@@ -126,14 +155,14 @@ Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
 {
   visit(ctx->direct_decl());
   currentId.back()->type = Identifier::IdType::FUNCTION;
-  currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
+  pushScope(SymbolTable::Scope::FUNCTION);
   if (ctx->param_type_list() != nullptr)
     visit(ctx->param_type_list());
 
-  for (auto arg : currentScope->symbols)
-    currentId.back()->members.push_back(arg);
+  for (auto arg : currentScope->ordered)
+    currentId.back()->members.push_back(*arg);
 
-  currentScope = currentScope->parent;
+  popScope();
   // visit(ctx->direct_decl());
   // if (ctx->param_type_list() != nullptr)
   //   visit(ctx->param_type_list());
@@ -155,17 +184,16 @@ Any Compiler::visitParamDecl(PostParser::ParamDeclContext* ctx)
 
 Any Compiler::visitParamAbst(PostParser::ParamAbstContext* ctx)
 {
-  auto tt = new Type;
-  currentType.push_back(tt);
+  Type tt;
+  currentType.push_back(&tt);
   if (ctx->abstract_decl() == nullptr)
   {
     visit(ctx->decl_spec());
-    auto ti = new Identifier;
-    ti->dataType = *tt;
-    string name = "unnamed_" + std::to_string(unnamed_inc++);
-    ti->name = name;
+    Identifier ti;
+    ti.dataType = tt;
+    ti.name = "unnamed_" + std::to_string(unnamed_inc++);
     // no need to catch error since this will never collide
-    currentScope->AddSymbol(ti->copy());
+    currentScope->AddSymbol(ti);
   }
   else
     visitChildren(ctx);
@@ -177,60 +205,35 @@ Any Compiler::visitParamAbst(PostParser::ParamAbstContext* ctx)
 // ignoring declarations after parameter list for now
 Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
 {
-  // auto tempid = new Identifier;
-  // currentId.push_back(tempid);
   auto temptype = new Type;
   currentType.push_back(temptype);
 
   // Maybe a bit hacky, but we'll skip compiling the function if its definition had an error
   func_decl_err = false;
-
-  // currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
   
   visit(ctx->decl_spec());
   visit(ctx->declarator());
 
-  // if (graphing) graph.Addf(tempid->name);
-
-  // tempid->type = Identifier::IdType::FUNCTION; // note -- already happens in declarator()
-  // try {
-  //   globalTable->AddSymbol(tempid->copy());
-  // } catch (int e) {
-  //   string errmess;
-  //   switch (e)
-  //   {
-  //     default:
-  //     case 2:
-  //       errmess = "redefinition of function ";
-  //       break;
-  //     case 3:
-  //       errmess = "function definition does not match prototype ";
-  //       break;
-  //   }
-  //   addRuleErr(ctx->declarator(), errmess + "\"" + tempid->name + "\"");
-  //   currentId.pop_back();
-  //   currentScope = currentScope->parent;
-  //   return nullptr;
-  // }
-  // currentId.pop_back();
   currentType.pop_back();
 
   if (!func_decl_err)
   {
     // construct new scope from args
-    currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
+    pushScope(SymbolTable::Scope::FUNCTION);
     inherit = true;
     // the last identifier added to the global scope _must_ be the function
-    currentFunction = &(*(globalTable->symbols.end() - 1)); // NOTE -- dangerous, this vector CANNOT be modified while using this pointer
-    for (auto arg : currentScope->parent->symbols.back().members)
+    currentFunction = &globalTable->GetLast();
+    if (graphing) graph.Addf(currentFunction->name);
+    for (auto &arg : currentFunction->members)
       currentScope->AddSymbol(arg);
     visit(ctx->stat_compound());
-    currentScope = currentScope->parent;
+    currentFunction->funcTable = currentScope;
+    popScope();
 
     // cout << currentFunction->function.to_string();
     // cout << "\n";
     cout << currentFunction->dataType.to_string() << " " << currentFunction->name << "(";
-    for (auto id : currentFunction->members) {
+    for (auto &id : currentFunction->members) {
       cout << id.dataType.to_string() << " " << id.name << ", ";
     }
     cout << ") {\n";
@@ -242,47 +245,6 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
   return nullptr;
 }
 
-// // ignoring declarations after parameter list for now
-// Any Compiler::visitTopFunc(PostParser::TopFuncContext* ctx)
-// {
-//   auto tempid = new Identifier;
-//   currentId.push_back(tempid);
-
-//   currentScope = new SymbolTable(currentScope, SymbolTable::Scope::FUNCTION);
-  
-//   visit(ctx->func_def()->decl_spec());
-//   visit(ctx->func_def()->declarator());
-
-//   if (graphing) graph.Addf(tempid->name);
-
-//   tempid->type = Identifier::IdType::FUNCTION;
-//   try {
-//     globalTable->AddSymbol(tempid->copy());
-//   } catch (int e) {
-//     string errmess;
-//     switch (e)
-//     {
-//       default:
-//       case 2:
-//         errmess = "redefinition of function ";
-//         break;
-//       case 3:
-//         errmess = "function definition does not match prototype ";
-//         break;
-//     }
-//     addRuleErr(ctx->func_def()->declarator(), errmess + "\"" + tempid->name + "\"");
-//     currentId.pop_back();
-//     currentScope = currentScope->parent;
-//     return nullptr;
-//   }
-//   currentId.pop_back();
-
-//   visit(ctx->func_def()->stat_compound());
-
-//   currentScope = currentScope->parent;
-
-//   return nullptr;
-// }
 
 Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
 {
@@ -291,29 +253,7 @@ Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
   {
     auto ti = new Identifier;
     currentId.push_back(ti);
-
     visit(item);
-
-    // try {
-    //   currentScope->AddSymbol(ti->copy());
-    // } catch (int e) {
-    //   string errmess;
-    //   switch (e)
-    //   {
-    //     default:
-    //     case 1:
-    //       errmess = "redefinition of identifier ";
-    //       break;
-    //     case 2:
-    //       errmess = "redefinition of function ";
-    //       break;
-    //     case 3:
-    //       errmess = "function definition does not match prototype ";
-    //       break;
-    //   }
-    //   addRuleErr(item, errmess + "\"" + ti->name + "\"");
-    // }
-    // currentType.pop_back();
     currentId.pop_back();
   }
   return nullptr;
@@ -328,9 +268,9 @@ Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
   }
   else
   {
-    currentScope = new SymbolTable(currentScope, SymbolTable::Scope::LOCAL);
+    pushScope();
     visitChildren(ctx);
-    currentScope = currentScope->parent;
+    popScope();
   }
   
   return nullptr;

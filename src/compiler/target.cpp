@@ -18,6 +18,15 @@ Register::Register(const Register& other)
   status = other.status;
 }
 
+void BaseTarget::TranslateAll()
+{
+  for (const auto id : comp->globalTable->ordered)
+  {
+    if (id->type == Identifier::IdType::FUNCTION)
+      Translate(*id);
+  }
+}
+
 void BaseTarget::Translate(Identifier& function)
 {
   FuncTrans temptrans;
@@ -29,7 +38,7 @@ void BaseTarget::Translate(Identifier& function)
 
   for (int i = 0; i < function.function.instructions.size(); i++)
   {
-    methods[(int) function.function.instructions[i].instr](function.function.instructions[i]);
+    (this->*methods[(int) function.function.instructions[i].instr])(function.function.instructions[i]);
   }
 }
 

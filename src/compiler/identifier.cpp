@@ -36,11 +36,129 @@ void FuncComp::clean()
 string FuncComp::to_string()
 {
   string s = "";
-  for (auto inst : instructions)
+  for (auto& inst : instructions)
   {
     s += inst.to_string() + "\n";
   }
   return s;
+}
+
+Identifier::Identifier(const Identifier& other)
+{
+  type = other.type;
+  name = other.name;
+  // We can optimize this later
+  dataType = other.dataType;
+  returnType = other.returnType;
+  initialized = other.initialized;
+  members = other.members;
+  initializers = other.initializers;
+  function = other.function;
+  funcTable = other.funcTable;
+}
+
+bool Identifier::equal(Identifier& other)
+{
+  switch(type)
+  {
+    case IdType::FUNCTION:
+      {
+        bool equal = other.type == IdType::FUNCTION;
+        equal = equal && other.dataType == dataType;
+        equal = equal && other.returnType == returnType;
+        // TODO -- this needs expansion:
+        // it needs to check if the parameter order and 
+        // types are the same, not names etc.
+        if (members.size() != other.members.size()) return false;
+        for (int i = 0; i < members.size(); i++)
+        {
+          if (members[i].dataType != other.members[i].dataType)
+            return false;
+        }
+        return equal;
+      }
+    case IdType::STRUCT:
+      {
+        bool equal = other.type == IdType::STRUCT;
+        equal = equal && other.dataType == dataType;
+        equal = equal && EqualVectors(other.members, members);
+        return equal;
+      }
+    case IdType::UNION:
+      {
+        bool equal = other.type == IdType::UNION;
+        equal = equal && other.dataType == dataType;
+        equal = equal && EqualVectors(other.members, members);
+        return equal;
+      }
+    case IdType::VARIABLE:
+      {
+        bool equal = other.type == IdType::VARIABLE;
+        return equal && other.dataType == dataType && other.name == name;
+      }
+    case IdType::ARRAY:
+      {
+        bool equal = other.type == IdType::FUNCTION;
+        equal = equal && other.dataType == dataType;
+        equal = equal && other.returnType == returnType;
+        equal = equal && EqualVectors(other.members, members);
+        return equal;
+      }
+    default:
+      return false;
+  }
+}
+
+bool Identifier::equal(Identifier* other)
+{
+  switch(type)
+  {
+    case IdType::FUNCTION:
+      {
+        bool equal = other->type == IdType::FUNCTION;
+        equal = equal && other->dataType == dataType;
+        equal = equal && other->returnType == returnType;
+        // TODO -- this needs expansion:
+        // it needs to check if the parameter order and 
+        // types are the same, not names etc.
+        if (members.size() != other->members.size()) return false;
+        for (int i = 0; i < members.size(); i++)
+        {
+          if (members[i].dataType != other->members[i].dataType)
+            return false;
+        }
+        return equal;
+      }
+    case IdType::STRUCT:
+      {
+        bool equal = other->type == IdType::STRUCT;
+        equal = equal && other->dataType == dataType;
+        equal = equal && EqualVectors(other->members, members);
+        return equal;
+      }
+    case IdType::UNION:
+      {
+        bool equal = other->type == IdType::UNION;
+        equal = equal && other->dataType == dataType;
+        equal = equal && EqualVectors(other->members, members);
+        return equal;
+      }
+    case IdType::VARIABLE:
+      {
+        bool equal = other->type == IdType::VARIABLE;
+        return equal && other->dataType == dataType && other->name == name;
+      }
+    case IdType::ARRAY:
+      {
+        bool equal = other->type == IdType::FUNCTION;
+        equal = equal && other->dataType == dataType;
+        equal = equal && other->returnType == returnType;
+        equal = equal && EqualVectors(other->members, members);
+        return equal;
+      }
+    default:
+      return false;
+  }
 }
 
 Result::Result(const Result& other)
@@ -111,7 +229,7 @@ string Result::to_string()
 {
   string s = "";
   if (kind == Kind::ID)
-    s = id.name;
+    s = id->name;
   else if (type == long_double_) {
     s = std::to_string(as<long double>());
   } else if (type == double_) {
@@ -252,7 +370,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& 
   instr = i;
   operand1 = op1;
   single = true;
-  assignment = ass;
+  assignment = &ass;
 }
 
 Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass) {
@@ -261,7 +379,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, 
   operand1 = op1;
   operand2 = op2;
   single = false;
-  assignment = ass;
+  assignment = &ass;
 }
 
 Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass) {
@@ -271,7 +389,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Res
   operand1 = op1;
   operand2 = op2;
   single = false;
-  assignment = ass;
+  assignment = &ass;
 }
 
 Instruction::Instruction(const Instruction& other) {
@@ -348,7 +466,7 @@ string Instruction::name() {
 }
 
 string Instruction::to_string() {
-  string s = assignment.name + " = ";
+  string s = assignment->name + " = ";
   switch (instr) {
     case DEREF:
     {
@@ -377,12 +495,12 @@ string Instruction::to_string() {
     {
       if (operand1.isConst())
       {
-        s +=  operand1.to_string() + " to " + assignment.dataType.to_string();
+        s +=  operand1.to_string() + " to " + assignment->dataType.to_string();
       }
       else
       {
-        s +=  operand1.to_string() + " (" + operand1.id.dataType.to_string();
-        s +=  ") to " + assignment.dataType.to_string();
+        s +=  operand1.to_string() + " (" + operand1.id->dataType.to_string();
+        s +=  ") to " + assignment->dataType.to_string();
       }
     }
     break;

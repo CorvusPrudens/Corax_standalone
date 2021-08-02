@@ -192,12 +192,12 @@ class And : public OperatorBase {
       rhs.setValue(id);
 
       // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
-      // Identifier ass;
+      // Identifier& ass;
       // ass.name = tempname;
       // ass.dataType.type_specifiers = {"int"};
       Type tt;
       tt.type_specifiers = {"int"};
-      Identifier ass = manageTemps(tt);
+      Identifier& ass = manageTemps(tt);
 
       func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));
   
@@ -209,12 +209,12 @@ class And : public OperatorBase {
       lhs.setValue(id1);
 
       // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
-      // Identifier ass;
+      // Identifier& ass;
       // ass.name = tempname;
       // ass.dataType.type_specifiers = {"int"};
       Type tt;
       tt.type_specifiers = {"int"};
-      Identifier ass = manageTemps(tt);
+      Identifier& ass = manageTemps(tt);
 
       func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
   
@@ -228,12 +228,12 @@ class And : public OperatorBase {
       rhs.setValue(id2);
 
       // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
-      // Identifier ass;
+      // Identifier& ass;
       // ass.name = tempname;
       // ass.dataType.type_specifiers = {"int"};
       Type tt;
       tt.type_specifiers = {"int"};
-      Identifier ass = manageTemps(tt);
+      Identifier& ass = manageTemps(tt);
 
       func->function.add(Instruction(ctx, getAbstr(), lhs, rhs, ass));
   
@@ -255,12 +255,12 @@ class Or : public OperatorBase {
       rhs.setValue(id);
 
       // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
-      // Identifier ass;
+      // Identifier& ass;
       // ass.name = tempname;
       // ass.dataType.type_specifiers = {"int"};
       Type tt;
       tt.type_specifiers = {"int"};
-      Identifier ass = manageTemps(tt);
+      Identifier& ass = manageTemps(tt);
 
       func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));
   
@@ -272,12 +272,12 @@ class Or : public OperatorBase {
       lhs.setValue(id1);
 
       // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
-      // Identifier ass;
+      // Identifier& ass;
       // ass.name = tempname;
       // ass.dataType.type_specifiers = {"int"};
       Type tt;
       tt.type_specifiers = {"int"};
-      Identifier ass = manageTemps(tt);
+      Identifier& ass = manageTemps(tt);
 
       func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
   
@@ -291,12 +291,12 @@ class Or : public OperatorBase {
       rhs.setValue(id2);
 
       // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
-      // Identifier ass;
+      // Identifier& ass;
       // ass.name = tempname;
       // ass.dataType.type_specifiers = {"int"};
       Type tt;
       tt.type_specifiers = {"int"};
-      Identifier ass = manageTemps(tt);
+      Identifier& ass = manageTemps(tt);
 
       func->function.add(Instruction(ctx, getAbstr(), lhs, rhs, ass));
   
@@ -475,12 +475,12 @@ class Negate : public OperatorBase {
       lhs.setValue(id1);
 
       // string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
-      // Identifier ass;
+      // Identifier& ass;
       // ass.name = tempname;
       // ass.dataType.type_specifiers = {"int"};
       Type tt;
       tt.type_specifiers = {"int"};
-      Identifier ass = manageTemps(tt);
+      Identifier& ass = manageTemps(tt);
 
       func->function.add(Instruction(ctx, getAbstr(), lhs, ass));
   
@@ -551,7 +551,7 @@ class IncrPost : public OperatorBase {
       // then we have a warning
       for (auto inst : table->postExpr)
       {
-        if (inst.assignment == id) {
+        if (*inst.assignment == id) {
           string warnmess = "ambiguous postfix operation order";
           // TODO -- add error option with mutliple nodes so we
           // can avoid referencing the same node twice with this (like if there's three!)
@@ -587,7 +587,7 @@ class DecrPost : public OperatorBase {
       // then we have a warning
       for (auto inst : table->postExpr)
       {
-        if (inst.assignment == id) {
+        if (*inst.assignment == id) {
           string warnmess = "ambiguous postfix operation order";
           // TODO -- add error option with mutliple nodes so we
           // can avoid referencing the same node twice with this (like if there's three!)

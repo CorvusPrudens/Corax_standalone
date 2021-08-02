@@ -8,13 +8,14 @@
 #include "compiler.h"
 #include "error.h"
 
-using std::filesystem::path;
+#include "corvassembly.h"
 
-Compiler comp;
-Error err;
+using std::filesystem::path;
 
 int main(int argc, const char* argv[])
 {
+
+  Error err;
 
   CLI::App app{"Compiler for the Corvus flavor of C"};
 
@@ -56,7 +57,14 @@ int main(int argc, const char* argv[])
   // std::cout << code.code;
 
   // comp.EnableGraph(graph);
-  comp.Process(&code, &err);
+  // comp.Process(&code, &err);
+
+  Compiler comp(&code, &err);
+
+  CorvassemblyTarget cor(&comp);
+  cor.TranslateAll();
+
+  comp.Complete();
 
   // std::cout << prepped;
 
