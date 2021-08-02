@@ -143,8 +143,8 @@ abstract_decl : pointer
               | abstract_decl '(' param_type_list ')'
               ;
 
-initializer   : expr_assi
-              | '{' init_list '}'
+initializer   : expr_assi          # initAssign
+              | '{' init_list '}'  # initList
               ;
 
 init_list     : designation? initializer (',' designation? initializer)* ','?;

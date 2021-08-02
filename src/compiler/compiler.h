@@ -44,21 +44,23 @@ class OperatorBase {
       Identifier ass;
       if (table->total_temps == 0) 
       {
+        string tempname = "__temp_var_" + std::to_string(table->temp_vars) + "__";
         table->total_temps++;
-        string tempname = "__temp_var_" + std::to_string(table->temp_vars++) + "__";
+        table->temp_vars++;
         ass.name = tempname;
         ass.dataType = t;
+        table->AddSymbol(ass);
         return ass;
       }
       else
       {
-        for (int i = table->temp_vars + 1; i < table->total_temps; i++) {
-          string tempname = "__temp_var_" + std::to_string(table->temp_vars + i) + "__";
+        for (int i = table->temp_vars; i < table->total_temps; i++) {
+          string tempname = "__temp_var_" + std::to_string(i) + "__";
 
           try {
             Identifier ti = table->GetLocalSymbol(tempname);
             if (ti.dataType == t) {
-              table->temp_vars = i;
+              table->temp_vars = i + 1;
               return ti;
             }
           } catch (int e) {
@@ -66,10 +68,12 @@ class OperatorBase {
           }
         }
 
-        string tempname = "__temp_var_" + std::to_string(table->total_temps - 1) + "__";
-        table->temp_vars = table->total_temps++;
+        string tempname = "__temp_var_" + std::to_string(table->total_temps) + "__";
+        table->total_temps++;
+        table->temp_vars = table->total_temps;
         ass.name = tempname;
         ass.dataType = t;
+        table->AddSymbol(ass);
         return ass;
       }
     }
@@ -114,13 +118,11 @@ class OperatorBase {
 
       if (priority1 == priority2) {
         ass = manageTemps(lhs.id.dataType);
-        table->AddSymbol(ass);
         func->function.add(Instruction(ctx, getAbstr(), getCond(), lhs, op2, ass));
       }
       else {
         op2.to(id.dataType);
         ass = manageTemps(lhs.id.dataType);
-        table->AddSymbol(ass);
         func->function.add(Instruction(ctx, getAbstr(), getCond(), lhs, op2, ass));
       }
       // else if (priority1 < priority2) {
@@ -158,13 +160,11 @@ class OperatorBase {
 
       if (priority1 == priority2) {
         ass = manageTemps(rhs.id.dataType);
-        table->AddSymbol(ass);
         func->function.add(Instruction(ctx, getAbstr(), getCond(), op1, rhs, ass));        
       }
       else {
         op1.to(id.dataType);
         ass = manageTemps(rhs.id.dataType);
-        table->AddSymbol(ass);
         func->function.add(Instruction(ctx, getAbstr(), getCond(), op1, rhs, ass));
       }
       // else if (priority1 < priority2) {
@@ -207,14 +207,12 @@ class OperatorBase {
       {
         // ass.dataType = id1.dataType;
         ass = manageTemps(id1.dataType);
-        table->AddSymbol(ass);
         func->function.add(Instruction(ctx, getAbstr(), getCond(), lhs, rhs, ass));
       }
       else if (priority1 < priority2)
       {
         // ass.dataType = id1.dataType;
         ass = manageTemps(id1.dataType);
-        table->AddSymbol(ass);
         Result temp;
         temp.setValue(ass);
 
@@ -225,7 +223,6 @@ class OperatorBase {
       {
         // ass.dataType = id2.dataType;
         ass = manageTemps(id2.dataType);
-        table->AddSymbol(ass);
         Result temp;
         temp.setValue(ass);
 
@@ -266,7 +263,6 @@ class OperatorBase {
 
       // ass.dataType = lhs.id.dataType;
       Identifier ass = manageTemps(lhs.id.dataType);
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), lhs, ass));
 
       res.setValue(ass);
@@ -321,7 +317,7 @@ class Compiler : PostBaseVisitor {
     Any visitParse(PostParser::ParseContext* ctx) override;
     // Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
     // Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
-    // Any visitBlockDecl(PostParser::BlockDeclContext* ctx) override;
+    Any visitBlockDecl(PostParser::BlockDeclContext* ctx) override;
     Any visitBlockStat(PostParser::BlockStatContext* ctx) override;
     Any visitStat_compound(PostParser::Stat_compoundContext* ctx) override;
     Any visitParamList(PostParser::ParamListContext* ctx) override;
@@ -404,6 +400,10 @@ class Compiler : PostBaseVisitor {
     Any visitComma(PostParser::CommaContext *ctx) override;
     Any visitExprExpression(PostParser::ExprExpressionContext *ctx) override;
     Any visitExpr_const(PostParser::Expr_constContext *ctx) override;
+
+    Any visitInitAssign(PostParser::InitAssignContext* ctx) override;
+    // Any visitInitList(PostParser::InitListContext* ctx) override;
+    Any visitInitDeclAssigned(PostParser::InitDeclAssignedContext* ctx) override;
 
 };
 

@@ -762,3 +762,49 @@ Any Compiler::visitExpr_const(PostParser::Expr_constContext *ctx)
 {
   return visitChildren(ctx);
 }
+
+Any Compiler::visitInitAssign(PostParser::InitAssignContext* ctx) 
+{
+  visitChildren(ctx);
+
+
+  Result ass = results.get(ctx->expr_assi());
+  if (!ass.isConst() && currentScope == globalTable)
+  {
+    string errmess = "attempting non-static calculation outside any function";
+    addRuleErr(ctx, errmess);
+    Result res;
+    res.setValue(0);
+    results.put(ctx, res);
+  }
+  else
+  {
+    // Assign oper(ctx, currentScope, currentFunction, this);
+    // Result lhs;
+    // lhs.setValue(*currentId.back());
+    // operation(ctx, lhs, results.get(ctx->expr_assi()), oper);
+    results.put(ctx, ass);
+  }
+
+  return nullptr;
+}
+
+Any Compiler::visitInitDeclAssigned(PostParser::InitDeclAssignedContext* ctx)
+{
+  visit(ctx->declarator());
+  // last identifier on the current scope is our boy
+  Identifier tempid = currentScope->symbols.back();
+  visit(ctx->initializer());
+
+  // Right now this just assumes a simple declaration (not an initializer list)
+  Assign oper(ctx, currentScope, currentFunction, this);
+  Result lhs;
+  lhs.setValue(tempid);
+  operation(ctx, lhs, results.get(ctx->initializer()), oper);
+
+  Result res;
+  res.setValue(0);
+  results.put(ctx, res);
+
+  return nullptr;
+}

@@ -3,7 +3,9 @@ int expression(int a, int b)
 {
   int temp = 0;
 
-  unsigned int uns;
+  int x, y, z = 10;
+
+  unsigned int uns = temp == z;
 
   // temp = -uns;
 
@@ -16,7 +18,7 @@ int expression(int a, int b)
   temp = 5 * 8 * 34.27 - 7 % 3;
   a = 8 * b++ + 4 * 2;
 
-  int logic = !a && b + (200 | 27);
+  int logic = !a && b + (200 | 27), logic2 = 100;
 
   // return temp * a * b++ + b++;
   return temp * a * b++ + b;
@@ -24,10 +26,12 @@ int expression(int a, int b)
 
 int global1 = 0;
 int global2 = 2 * 3;
+// TODO -- make this work:
+// int global3 = global1 + global2;
 
 void loop() 
 {
   
-  int main_temp = expression(global1, global2);
+  // int main_temp = expression(global1, global2);
 
 }

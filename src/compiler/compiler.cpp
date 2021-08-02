@@ -319,24 +319,6 @@ Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
   return nullptr;
 }
 
-// Any Compiler::visitBlockDecl(PostParser::BlockDeclContext* ctx)
-// {
-//   auto ti = new Identifier;
-//   currentId.push_back(ti);
-
-//   visitChildren(ctx);
-
-//   try {
-//     currentScope->AddSymbol(ti->copy());
-//   } catch (int e) {
-//     string errmess = "redefinition of identifier ";
-//     addRuleErr(ctx, errmess + "\"" + ti->name + "\"");
-//   }
-
-//   currentId.pop_back();
-//   return nullptr;
-// }
-
 Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
 {
   if (inherit)
@@ -351,6 +333,18 @@ Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
     currentScope = currentScope->parent;
   }
   
+  return nullptr;
+}
+
+// These two could be combined:
+Any Compiler::visitBlockDecl(PostParser::BlockDeclContext* ctx)
+{
+  visitChildren(ctx);
+  for (int i = 0; i < currentScope->postExpr.size(); i++) {
+    currentFunction->function.add(currentScope->postExpr[i]);
+  }
+  currentScope->postExpr.clear();
+  currentScope->temp_vars = 0;
   return nullptr;
 }
 

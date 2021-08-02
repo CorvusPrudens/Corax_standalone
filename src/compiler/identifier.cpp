@@ -285,6 +285,68 @@ Instruction::Instruction(const Instruction& other) {
   assignment = other.assignment;
 }
 
+string Instruction::name() {
+  switch (instr) {
+    case DEREF:
+      return "dereference";
+    case NOT:
+      return "bitwise not";
+    case NEGATE:
+      return "logical negation";
+    case NEGATIVE:
+      return "arithmetic negation";
+    case CONVERT:
+      return "type conversion";
+    case ASSIGN:
+      return "assignment";
+    case ADD:
+      return "addition";
+    case SUB:
+      return "subtraction";
+    case MULT:
+      return "multiplication";
+    case DIV:
+      return "division";
+    case MOD:
+      return "modulo";
+    case SHIFT_L:
+      return "logical shift left";
+    case SHIFT_R:
+      return "logical shift right";
+    case BIT_AND:
+      return "bitwise and";
+    case BIT_XOR:
+      return "bitwise exclusive or";
+    case BIT_OR:
+      return "bitwise or";
+    case AND:
+      return "logical and";
+    case OR:
+      return "logical or";
+    case CMP:
+    {
+      switch (condition)
+      {
+        default:
+        case EQUAL:
+          return "equality comparison";
+        case NOT_EQUAL:
+          return "inequality comparison";
+        case GREATER:
+          return "greater than comparison";
+        case LESS:
+          return "less than comparison";
+        case GREATER_EQUAL:
+          return "greater than or equal to comparison";
+        case LESS_EQUAL:
+          return "less than or equal to comparison";
+      }
+    }
+    default:
+      return "<unkown>";
+  }
+}
+
 string Instruction::to_string() {
   string s = assignment.name + " = ";
   switch (instr) {

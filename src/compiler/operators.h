@@ -38,6 +38,14 @@
     res.setValue(out); \
   }
 
+#define OPERATION_LOG(operator) \
+  template <typename T> \
+  void operation(T v1, T v2, Result& res) \
+  { \
+    int out = v1 operator v2; \
+    res.setValue(out); \
+  }
+
 #define INTEGRAL_CHECK \
   bool validType1(Type& t) override { \
     if (t == long_double_ || t == double_ || t == float_) \
@@ -55,7 +63,7 @@ class Equal : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(==)
+    OPERATION_LOG(==)
 
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::CMP; }
     Instruction::Cond getCond() override { return Instruction::Cond::EQUAL; }
@@ -66,7 +74,7 @@ class NotEqual : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(!=)
+    OPERATION_LOG(!=)
 
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::CMP; }
     Instruction::Cond getCond() override { return Instruction::Cond::NOT_EQUAL; }
@@ -77,7 +85,7 @@ class Greater : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(>)
+    OPERATION_LOG(>)
 
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::CMP; }
     Instruction::Cond getCond() override { return Instruction::Cond::GREATER; }
@@ -88,7 +96,7 @@ class Less : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(<)
+    OPERATION_LOG(<)
 
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::CMP; }
     Instruction::Cond getCond() override { return Instruction::Cond::LESS; }
@@ -99,7 +107,7 @@ class GreaterEqual : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(>=)
+    OPERATION_LOG(>=)
 
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::CMP; }
     Instruction::Cond getCond() override { return Instruction::Cond::GREATER_EQUAL; }
@@ -110,7 +118,7 @@ class LessEqual : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(<=)
+    OPERATION_LOG(<=)
 
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::CMP; }
     Instruction::Cond getCond() override { return Instruction::Cond::LESS_EQUAL; }
@@ -177,9 +185,9 @@ class And : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(&&)
+    OPERATION_LOG(&&)
 
-    virtual void perform(Result& op1, Identifier& id, Result& res) {
+    virtual void perform(Result& op1, Identifier& id, Result& res) override {
       Result rhs;
       rhs.setValue(id);
 
@@ -191,7 +199,6 @@ class And : public OperatorBase {
       tt.type_specifiers = {"int"};
       Identifier ass = manageTemps(tt);
 
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));
   
       res.setValue(ass);
@@ -209,7 +216,6 @@ class And : public OperatorBase {
       tt.type_specifiers = {"int"};
       Identifier ass = manageTemps(tt);
 
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
   
       res.setValue(ass);
@@ -229,7 +235,6 @@ class And : public OperatorBase {
       tt.type_specifiers = {"int"};
       Identifier ass = manageTemps(tt);
 
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), lhs, rhs, ass));
   
       res.setValue(ass);
@@ -243,7 +248,7 @@ class Or : public OperatorBase {
   public:
 
     STANDARD_PERFORM
-    OPERATION(||)
+    OPERATION_LOG(||)
 
     virtual void perform(Result& op1, Identifier& id, Result& res) override {
       Result rhs;
@@ -257,13 +262,12 @@ class Or : public OperatorBase {
       tt.type_specifiers = {"int"};
       Identifier ass = manageTemps(tt);
 
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), op1, rhs, ass));
   
       res.setValue(ass);
     }
 
-    virtual void perform(Identifier& id1, Result& op2, Result& res) {
+    virtual void perform(Identifier& id1, Result& op2, Result& res) override {
       Result lhs;
       lhs.setValue(id1);
 
@@ -275,7 +279,6 @@ class Or : public OperatorBase {
       tt.type_specifiers = {"int"};
       Identifier ass = manageTemps(tt);
 
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), lhs, op2, ass));
   
       res.setValue(ass);
@@ -295,7 +298,6 @@ class Or : public OperatorBase {
       tt.type_specifiers = {"int"};
       Identifier ass = manageTemps(tt);
 
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), lhs, rhs, ass));
   
       res.setValue(ass);
@@ -468,7 +470,7 @@ class Negate : public OperatorBase {
       res.setValue(out);
     }
 
-    virtual void perform(Identifier& id1, Result& res) {
+    virtual void perform(Identifier& id1, Result& res) override {
       Result lhs;
       lhs.setValue(id1);
 
@@ -480,7 +482,6 @@ class Negate : public OperatorBase {
       tt.type_specifiers = {"int"};
       Identifier ass = manageTemps(tt);
 
-      table->AddSymbol(ass);
       func->function.add(Instruction(ctx, getAbstr(), lhs, ass));
   
       res.setValue(ass);

@@ -23,6 +23,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/grammars/build/Post
     ${CMAKE_SOURCE_DIR}/grammars/build/Pre
     ${CMAKE_SOURCE_DIR}/compiler
+    ${CMAKE_SOURCE_DIR}/compiler/targets
     ${CMAKE_SOURCE_DIR}/precompiler
     ${CMAKE_SOURCE_DIR}/antlr4/runtime/Cpp/runtime/src
     ${CMAKE_SOURCE_DIR}/cli11/include/CLI/
@@ -54,6 +55,9 @@ set (SOURCE_FILES
     ./compiler/identifier.cpp
     ./compiler/stable.cpp
     ./compiler/type.cpp
+    ./compiler/target.cpp
+
+    ./compiler/targets/corvassembly.cpp
 
     ./grammars/build/Post/PostParser.cpp
     ./grammars/build/Post/PostBaseListener.cpp
@@ -92,6 +96,9 @@ set (INCLUDE_FILES
     ./compiler/stable.h
     ./compiler/type.h
     ./compiler/operators.h
+    ./compiler/target.h
+
+    ./compiler/targets/corvassembly.h
 
     ./grammars/build/Post/PostBaseListener.h
     ./grammars/build/Post/PostLexer.h
