@@ -174,6 +174,54 @@ Result::Result(const Result& other)
   kind = other.kind;
 }
 
+#define T_EQUAL(T) \
+T temp = as<T>(); \
+T oth = other.as<T>(); \
+return temp == oth;
+
+bool Result::equal(const Result& other, bool permissive)
+{
+  if (kind == Kind::ID)
+    return other.id == id; // see if they point to the same place
+
+  // If they're not the same type (and we're not permissive...)
+  if (type != other.type && !permissive)
+    return false;
+  
+  // Otherwise...
+  if (t == long_double_) {
+    T_EQUAL(long double)
+  } else if (t == double_) {
+    T_EQUAL(double)
+  } else if (t == float_) {
+    T_EQUAL(float)
+  } else if (t == unsigned_long_long_) {
+    T_EQUAL(unsigned long long)
+  } else if (t == long_long_) {
+    T_EQUAL(long long)
+  } else if (t == unsigned_long_) {
+    T_EQUAL(unsigned long)
+  } else if (t == long_) {
+    T_EQUAL(long)
+  } else if (t == unsigned_) {
+    T_EQUAL(unsigned)
+  } else if (t == int_) {
+    T_EQUAL(int)
+  } else if (t == unsigned_short_) {
+    T_EQUAL(unsigned short)
+  } else if (t == short_) {
+    T_EQUAL(short)
+  } else if (t == unsigned_char_) {
+    T_EQUAL(unsigned char)
+  } else if (t == signed_char_) {
+    T_EQUAL(signed char)
+  } else if (t == char_) {
+    T_EQUAL(char)
+  } else if (t == void_) {
+    throw 2;
+  }
+}
+
 void Result::to(Type t)
 {
   if (kind == Kind::ID)

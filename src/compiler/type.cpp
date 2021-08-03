@@ -113,29 +113,29 @@ TypeDescriptor signed_char_({{"char", "signed"}}, "signed char", 1);
 TypeDescriptor char_({{"char"}}, "char", 1);
 TypeDescriptor void_({{"void"}}, "void", 1); // it'll be easier to consider this 1
 
-vector<TypeDescriptor> StandardTypes = {
-  long_double_,
-  double_,
-  float_,
-  unsigned_long_long_,
-  long_long_,
-  unsigned_long_,
-  long_,
-  unsigned_,
-  int_,
-  unsigned_short_,
-  short_,
-  unsigned_char_,
-  signed_char_,
-  char_,
-  void_,
+vector<TypeDescriptor*> StandardTypes = {
+  &long_double_,
+  &double_,
+  &float_,
+  &unsigned_long_long_,
+  &long_long_,
+  &unsigned_long_,
+  &long_,
+  &unsigned_,
+  &int_,
+  &unsigned_short_,
+  &short_,
+  &unsigned_char_,
+  &signed_char_,
+  &char_,
+  &void_,
 };
 
 int fetchPriority(Type t)
 {
   for (int i = 0; i < StandardTypes.size(); i++)
   {
-    if (t == StandardTypes[i])
+    if (t == *StandardTypes[i])
       return i;
   }
   throw 1;

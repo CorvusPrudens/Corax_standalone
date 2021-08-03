@@ -281,7 +281,7 @@ extern TypeDescriptor unsigned_char_;
 extern TypeDescriptor signed_char_;
 extern TypeDescriptor char_;
 extern TypeDescriptor void_; 
-extern vector<TypeDescriptor> StandardTypes;
+extern vector<TypeDescriptor*> StandardTypes;
 
 #endif
 

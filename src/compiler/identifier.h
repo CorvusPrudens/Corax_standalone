@@ -72,6 +72,8 @@ class Identifier {
     Type dataType;
     Type returnType;
     SymbolTable* funcTable;
+    // for keeping track of variable updates in function
+    unsigned int latest; 
 
     // TODO -- add warnings for operations on uninitialized variables!
     bool initialized;
@@ -121,6 +123,9 @@ class Result {
     Result(const Result& other);
 
     bool isConst() { return kind != Kind::ID; }
+    bool equal(const Result& other, bool permissive = false);
+    bool operator==(const Result& other) { return equal(other); }
+    bool operator!=(const Result& other) { return !equal(other); }
 
     string to_string();
     void to(Type t);
