@@ -29,6 +29,10 @@ void Register::load(Result& id)
     latest = id.id->latest;
     status = Status::USED;
   }
+  else
+  {
+    status = Status::FREE;
+  }
 }
 
 void Register::flush()
@@ -203,6 +207,8 @@ Register& BaseTarget::LoadResult(Result& res)
   return *reg;
 }
 
+// TODO -- this should look for the register with the _latest_ copy of the
+// intended assignee
 Register& BaseTarget::GetAss(Identifier& res)
 {
   // Check if it's already loaded and not out-of-date

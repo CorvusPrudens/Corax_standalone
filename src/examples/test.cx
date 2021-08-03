@@ -1,33 +1,18 @@
 
-int expression(int a, int b)
+int expression(int lhs, int rhs)
 {
-  int temp = 0;
+  return lhs + rhs;
+}
 
-  int x, y, z = 10;
-
-  unsigned int uns = temp == z;
-
-  // temp = -uns;
-
-  // temp = ++a + ~2.5;
-  temp = ++a + ~2;
-  temp  = ~a;
-  // a = --a * ++4;
-  a = --a;
-  // temp = 5 * 8++ * 34.27 - 7 % 3.2;
-  temp = 5 * 8 * 34.27 - 7 % 3;
-  a = 8 * b++ + 4 * 2;
-
-  int logic = !a && b + (200 | 27), logic2 = 100;
-
-  // return temp * a * b++ + b++;
-  return temp * a * b++ + b;
+int expr2(int lhs, int rhs)
+{
+  int temp = 2;
+  lhs = lhs + temp + 70;
+  return rhs++;
 }
 
 int global1 = 0;
 int global2 = 2 * 3;
-// TODO -- make this work:
-// int global3 = global1 + global2;
 
 void loop() 
 {

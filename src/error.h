@@ -41,7 +41,7 @@ class Error {
     void PrintErrors();
     void PrintWarnings();
 
-    static constexpr int max_errors = 10;
+    static constexpr int max_errors = 20;
     std::vector<item> errors;
     std::vector<item> warnings;
 

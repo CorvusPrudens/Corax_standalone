@@ -21,15 +21,48 @@ CorvassemblyTarget::CorvassemblyTarget(Compiler* c)
 
 void CorvassemblyTarget::TranslateAdd(Instruction& inst)
 {
-  Register& ass = GetAss(*inst.assignment);
-  Register& op1 = LoadResult(inst.operand1);
-  Register& op2 = LoadResult(inst.operand2);
+  if (inst.operand1.isConst())
+  {
+    Register& ass = GetAss(*inst.assignment);
+    Register& op2 = LoadResult(inst.operand2);
 
-  // TODO -- this won't really happen like this, will it??
-  if (&ass == &op1)
-    AddLine("add " + op1.name + ", " + op2.name);
-  else
-    AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
+    if (&ass == &op2)
+      AddLine("add " + op2.name + ", " + inst.operand1.to_string());
+    else
+      AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
+  }
+  else if (inst.operand2.isConst())
+  {
+    Register& ass = GetAss(*inst.assignment);
+    Register& op1 = LoadResult(inst.operand1);
+
+    if (&ass == &op1)
+      AddLine("add " + op1.name + ", " + inst.operand2.to_string());
+    else
+      AddLine("add " + op1.name + ", " + inst.operand2.to_string() + ", " + ass.name);
+  }
+  else // they can't both be const! (cause that would just be made an assignment)
+  {
+    Register& ass = GetAss(*inst.assignment);
+    Register& op1 = LoadResult(inst.operand1);
+    Register& op2 = LoadResult(inst.operand2);
+
+    if (&ass == &op1)
+      AddLine("add " + op1.name + ", " + op2.name);
+    else if (&ass == &op2)
+      AddLine("add " + op2.name + ", " + op1.name);
+    else
+      AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
+  }
+
+  // Register& ass = GetAss(*inst.assignment);
+  // Register& op1 = LoadResult(inst.operand1);
+  // Register& op2 = LoadResult(inst.operand2);
+
+  // if (&ass == &op1)
+  //   AddLine("add " + op1.name + ", " + op2.name);
+  // else
+  //   AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
 }
 void CorvassemblyTarget::TranslateSub(Instruction& inst)
 {
@@ -101,9 +134,36 @@ void CorvassemblyTarget::TranslateConvert(Instruction& inst)
 {
   unsupported(inst);
 }
+// This could probably be cleverly optimized!
 void CorvassemblyTarget::TranslateAssign(Instruction& inst)
 {
-  unsupported(inst);
+  if (inst.operand1.isConst())
+  {
+    // Register& ass = GetAss(*inst.assignment);
+    Register& op2 = LoadResult(inst.operand2);
+
+    // for now, since a register can only hold one pointer,
+    // the loaded value with change to the assignee
+    StoreRegister()
+
+    if (&ass == &op2)
+      AddLine("add " + op2.name + ", " + inst.operand1.to_string());
+    else
+      AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
+  }
+  else // they can't both be const! (cause that would just be made an assignment)
+  {
+    Register& ass = GetAss(*inst.assignment);
+    Register& op1 = LoadResult(inst.operand1);
+    Register& op2 = LoadResult(inst.operand2);
+
+    if (&ass == &op1)
+      AddLine("add " + op1.name + ", " + op2.name);
+    else if (&ass == &op2)
+      AddLine("add " + op2.name + ", " + op1.name);
+    else
+      AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
+  }
 }
 // will only work if it's been loaded _and_ has a non-const loaded value
 void CorvassemblyTarget::TranslateStore(Register& reg)

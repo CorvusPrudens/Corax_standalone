@@ -31,7 +31,7 @@ void Error::AddError(string message, int line, string file, int code, int colsta
 {
   item e {message, line, file, code, colstart, colend};
   errors.push_back(e);
-  if (fatal || errors.size() > max_errors)
+  if (fatal || errors.size() >= max_errors)
     Report();
 }
 
@@ -64,7 +64,10 @@ void Error::Report()
 
     if (num_errors > 0)
     {
-      std::cout << ", exiting...\n";
+      if (errors.size() >= max_errors)
+        std::cout << ", (error limit reached) exiting...\n";
+      else
+        std::cout << ", exiting...\n";
       exit(1);
     }
     std::cout << "\n";

@@ -1,0 +1,37 @@
+
+int expression(int lhs, int rhs)
+{
+  int temp = 0;
+
+  int x, y, z = 10;
+
+  unsigned int uns = temp == z;
+
+  // temp = -uns;
+
+  // temp = ++a + ~2.5;
+  temp = ++lhs + ~2;
+  temp  = ~lhs;
+  // a = --a * ++4;
+  lhs = --lhs;
+  // temp = 5 * 8++ * 34.27 - 7 % 3.2;
+  temp = 5 * 8 * 34.27 - 7 % 3;
+  lhs = 8 * rhs++ + 4 * 2;
+
+  int logic = !lhs && rhs + (200 | 27), logic2 = 100;
+
+  // return temp * a * b++ + b++;
+  return temp * lhs * rhs++ + rhs;
+}
+
+int global1 = 0;
+int global2 = 2 * 3;
+// TODO -- make this work:
+// int global3 = global1 + global2;
+
+void loop() 
+{
+  
+  // int main_temp = expression(global1, global2);
+
+}
