@@ -28,7 +28,7 @@ struct Register {
 
 
   bool isFree() { return status == Status::FREE; }
-  void load(Identifier& id);
+  void load(Result& id);
   void flush();
 
   string name;
@@ -136,6 +136,7 @@ class BaseTarget {
      */
     virtual Register& LoadResult(Result& res);
     virtual Register::Data FetchDataType(Result& res);
+    virtual Register::Data FetchDataType(Identifier& id);
 
     /** Similar to LoadResult without loading any values --
      *  i.e. for setting up assignments
@@ -147,8 +148,8 @@ class BaseTarget {
     virtual void unsupported(Instruction& inst);
     virtual void unsupported(string mess);
 
-    void AddLine(string line) { translations.back().translation.push_back(line); }
-    string GetLines();
+    virtual void AddLine(string line) { translations.back().translation.push_back(line); }
+    virtual string to_string();
 
     Compiler* comp;
     string targetName;

@@ -55,6 +55,7 @@ Identifier::Identifier(const Identifier& other)
   initializers = other.initializers;
   function = other.function;
   funcTable = other.funcTable;
+  latest = other.latest;
 }
 
 bool Identifier::equal(Identifier& other)
@@ -179,8 +180,12 @@ T temp = as<T>(); \
 T oth = other.as<T>(); \
 return temp == oth;
 
-bool Result::equal(const Result& other, bool permissive)
+bool Result::equal(Result& other, bool permissive)
 {
+  
+  if (kind != other.kind)
+    return false;
+  
   if (kind == Kind::ID)
     return other.id == id; // see if they point to the same place
 
@@ -189,37 +194,38 @@ bool Result::equal(const Result& other, bool permissive)
     return false;
   
   // Otherwise...
-  if (t == long_double_) {
+  if (type == long_double_) {
     T_EQUAL(long double)
-  } else if (t == double_) {
+  } else if (type == double_) {
     T_EQUAL(double)
-  } else if (t == float_) {
+  } else if (type == float_) {
     T_EQUAL(float)
-  } else if (t == unsigned_long_long_) {
+  } else if (type == unsigned_long_long_) {
     T_EQUAL(unsigned long long)
-  } else if (t == long_long_) {
+  } else if (type == long_long_) {
     T_EQUAL(long long)
-  } else if (t == unsigned_long_) {
+  } else if (type == unsigned_long_) {
     T_EQUAL(unsigned long)
-  } else if (t == long_) {
+  } else if (type == long_) {
     T_EQUAL(long)
-  } else if (t == unsigned_) {
+  } else if (type == unsigned_) {
     T_EQUAL(unsigned)
-  } else if (t == int_) {
+  } else if (type == int_) {
     T_EQUAL(int)
-  } else if (t == unsigned_short_) {
+  } else if (type == unsigned_short_) {
     T_EQUAL(unsigned short)
-  } else if (t == short_) {
+  } else if (type == short_) {
     T_EQUAL(short)
-  } else if (t == unsigned_char_) {
+  } else if (type == unsigned_char_) {
     T_EQUAL(unsigned char)
-  } else if (t == signed_char_) {
+  } else if (type == signed_char_) {
     T_EQUAL(signed char)
-  } else if (t == char_) {
+  } else if (type == char_) {
     T_EQUAL(char)
-  } else if (t == void_) {
+  } else if (type == void_) {
     throw 2;
   }
+  throw 3;
 }
 
 void Result::to(Type t)

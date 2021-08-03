@@ -56,6 +56,7 @@ class Identifier {
       name = "";
       type = IdType::VARIABLE;
       initialized = false;
+      latest = 0;
     }
     ~Identifier() {}
 
@@ -123,9 +124,9 @@ class Result {
     Result(const Result& other);
 
     bool isConst() { return kind != Kind::ID; }
-    bool equal(const Result& other, bool permissive = false);
-    bool operator==(const Result& other) { return equal(other); }
-    bool operator!=(const Result& other) { return !equal(other); }
+    bool equal(Result& other, bool permissive = false);
+    bool operator==(Result& other) { return equal(other); }
+    bool operator!=(Result& other) { return !equal(other); }
 
     string to_string();
     void to(Type t);

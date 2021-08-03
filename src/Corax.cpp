@@ -64,7 +64,10 @@ int main(int argc, const char* argv[])
   CorvassemblyTarget cor(&comp);
   cor.TranslateAll();
 
-  comp.Complete();
+  string assembly = cor.to_string();
+  std::cout << assembly;
+
+  // comp.Complete();
 
   // std::cout << prepped;
 

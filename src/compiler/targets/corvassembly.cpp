@@ -25,6 +25,7 @@ void CorvassemblyTarget::TranslateAdd(Instruction& inst)
   Register& op1 = LoadResult(inst.operand1);
   Register& op2 = LoadResult(inst.operand2);
 
+  // TODO -- this won't really happen like this, will it??
   if (&ass == &op1)
     AddLine("add " + op1.name + ", " + op2.name);
   else

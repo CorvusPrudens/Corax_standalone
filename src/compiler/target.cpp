@@ -3,6 +3,7 @@
 
 Register::Register(string n, Data d, Rank r, unsigned int b)
 {
+  loaded = nullptr;
   name = n;
   data = d;
   bytes = b;
@@ -17,13 +18,17 @@ Register::Register(const Register& other)
   status = other.status;
   bytes = other.bytes;
   status = other.status;
+  loaded = other.loaded;
 }
 
-void Register::load(Identifier& id)
+void Register::load(Result& id)
 {
   loaded = &id;
-  latest = id.latest;
-  status = Status::USED;
+  if (!id.isConst())
+  {
+    latest = id.id->latest;
+    status = Status::USED;
+  }
 }
 
 void Register::flush()
@@ -44,6 +49,7 @@ void BaseTarget::TranslateAll()
 
 void BaseTarget::Translate(Identifier& function)
 {
+  operationStep = 0;
   FuncTrans temptrans;
   temptrans.id.name = function.name;
   temptrans.id.dataType = function.dataType;
@@ -58,7 +64,7 @@ void BaseTarget::Translate(Identifier& function)
 
   // store any remaining values before returning
   StoreAll();
-  ResetRegister();
+  ResetRegisters();
 }
 
 void BaseTarget::unsupported(Instruction& inst)
@@ -105,19 +111,19 @@ void BaseTarget::ResetRegisters()
 void BaseTarget::StoreRegister(Register& reg)
 {
   // Not totally sure how we should deal with this, but for now...
-  if (reg.loaded->latest < reg.latest)
+  if (reg.loaded->id->latest < reg.latest)
   {
-    reg.loaded->latest = reg.latest;
+    reg.loaded->id->latest = reg.latest;
     TranslateStore(reg);
   }
   reg.status = Register::Status::FREE;
 }
 
-void BaseTarget::StoreAll(bool include special)
+void BaseTarget::StoreAll(bool include)
 {
   for (auto& reg : registers)
   {
-    if (!reg.isFree() && (reg.rank != Register::Rank::RESERVED || special))
+    if (!reg.isFree() && (reg.rank != Register::Rank::RESERVED || include))
       StoreRegister(reg);
   }
 }
@@ -134,13 +140,23 @@ Register::Data BaseTarget::FetchDataType(Result& res)
   throw 1;
 }
 
+Register::Data BaseTarget::FetchDataType(Identifier& id)
+{
+  for (auto st : StandardTypes)
+  {
+    if (id.dataType == *st)
+      return datatypes[st];
+  }
+  throw 1;
+}
+
 Register& BaseTarget::GetLastUsed(Register::Data data, Register::Rank rank)
 {
-  auto lowest = std::numeric_limits<unsigned int>max();
+  auto lowest = std::numeric_limits<unsigned int>::max();
   Register* ptr = nullptr;
   for (auto& reg : registers)
   {
-    if (reg.data == data && reg.rank = rank)
+    if (reg.data == data && reg.rank == rank)
     {
       if (reg.operationStep < lowest)
       {
@@ -187,12 +203,12 @@ Register& BaseTarget::LoadResult(Result& res)
   return *reg;
 }
 
-Register& BaseTarget::GetAss(Result& res)
+Register& BaseTarget::GetAss(Identifier& res)
 {
   // Check if it's already loaded and not out-of-date
   for (auto& reg : registers)
   {
-    if (reg.loaded != nullptr && *reg.loaded == res) 
+    if (reg.loaded != nullptr && !reg.loaded->isConst() && *reg.loaded->id == res) 
     {
       reg.operationStep = operationStep++;
       return reg;
@@ -215,7 +231,7 @@ Register& BaseTarget::GetAss(Result& res)
   return *reg;
 }
 
-string BaseTarget::GetLines()
+string BaseTarget::to_string()
 {
   string output = "";
   for (auto& func : translations)
@@ -232,4 +248,5 @@ string BaseTarget::GetLines()
       output += "  " + line + "\n";
     output += "\n";
   }
+  return output;
 }
