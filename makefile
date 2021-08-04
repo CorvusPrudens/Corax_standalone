@@ -1,7 +1,8 @@
-ANTLR_HOME = /usr/local/lib
-ANTLR_JAR = ${ANTLR_HOME}/antlr-4.9.1-complete.jar
+ANTLR_HOME = src/antlr4-jar
+ANTLR_JAR = $(wildcard $(ANTLR_HOME)/*.jar)
 
 ANTLR = java -jar ${ANTLR_JAR}
+ANTLR_REL = java -jar ../../${ANTLR_JAR}
 GRUN = java org.antlr.v4.gui.TestRig
 
 SRC  = ./src
@@ -31,10 +32,10 @@ test_expr_post: post_expr_java_build post_expr_java_test
 
 grammar: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}Parser.g4 clean
 	$(info Building main compiler...)
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -visitor -Dlanguage=Cpp -o build/${POST} ${POST}.g4;
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR_REL} -visitor -Dlanguage=Cpp -o build/${POST} ${POST}.g4;
 	$(info Building pre-compiler...)
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -visitor -Dlanguage=Cpp -o build/${PRE} ${PRE}.g4;
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -visitor -Dlanguage=Cpp -o build/${PRE} ${PRE}Expr.g4;
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR_REL} -visitor -Dlanguage=Cpp -o build/${PRE} ${PRE}.g4;
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR_REL} -visitor -Dlanguage=Cpp -o build/${PRE} ${PRE}Expr.g4;
 	$(info Done.)
 
 update_and_build: update_compiler build_compiler
