@@ -71,6 +71,13 @@ void BaseTarget::Translate(Identifier& function)
   ResetRegisters();
 }
 
+void BaseTarget::UpdateRegister(Register& reg)
+{
+  if (reg.loaded != nullptr && !reg.loaded->isConst())
+    reg.latest++;
+  reg.operationStep = ++operationStep;
+}
+
 void BaseTarget::unsupported(Instruction& inst)
 {
   string errmess = inst.name() + " operation is not yet support for \"" + targetName + "\"";
@@ -123,6 +130,19 @@ void BaseTarget::StoreRegister(Register& reg)
   reg.status = Register::Status::FREE;
 }
 
+void BaseTarget::StoreRegister(Register& reg, Identifier& ass)
+{
+  // Not totally sure how we should deal with this, but for now...
+  if (reg.loaded->id->latest < reg.latest)
+  {
+    reg.loaded->id->latest = reg.latest;
+    TranslateStore(reg, ass);
+  }
+  reg.status = Register::Status::FREE;
+}
+
+// TODO -- this is a bad idea
+// NOTE -- it may be better to separate out explicit store instructions!!!
 void BaseTarget::StoreAll(bool include)
 {
   for (auto& reg : registers)

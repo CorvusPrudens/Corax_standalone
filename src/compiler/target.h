@@ -79,6 +79,7 @@ class BaseTarget {
     virtual void TranslateAssign(Instruction& inst) { unsupported(inst); }
 
     virtual void TranslateStore(Register& reg) { unsupported("register store"); }
+    virtual void TranslateStore(Register& reg, Identifier& id) { unsupported("register store"); }
     virtual void TranslateLoad(Register& reg, Result& res) { unsupported("register load"); }
 
     typedef void (BaseTarget::*TranslateMethod)(Instruction&);
@@ -122,6 +123,7 @@ class BaseTarget {
     // references from the vector are safe because it
     // will never be modified after initialization
     virtual void StoreRegister(Register& reg);
+    virtual void StoreRegister(Register& reg, Identifier& ass);
 
     /** Stores all currently used registers
      * 
@@ -143,6 +145,7 @@ class BaseTarget {
      */
     virtual Register& GetAss(Identifier& id);
 
+    virtual void UpdateRegister(Register& reg);
     virtual void ResetRegisters();
 
     virtual void unsupported(Instruction& inst);

@@ -30,6 +30,8 @@ void CorvassemblyTarget::TranslateAdd(Instruction& inst)
       AddLine("add " + op2.name + ", " + inst.operand1.to_string());
     else
       AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
+
+    UpdateRegister(ass);
   }
   else if (inst.operand2.isConst())
   {
@@ -40,6 +42,8 @@ void CorvassemblyTarget::TranslateAdd(Instruction& inst)
       AddLine("add " + op1.name + ", " + inst.operand2.to_string());
     else
       AddLine("add " + op1.name + ", " + inst.operand2.to_string() + ", " + ass.name);
+
+    UpdateRegister(ass);
   }
   else // they can't both be const! (cause that would just be made an assignment)
   {
@@ -53,6 +57,8 @@ void CorvassemblyTarget::TranslateAdd(Instruction& inst)
       AddLine("add " + op2.name + ", " + op1.name);
     else
       AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
+
+    UpdateRegister(ass);
   }
 
   // Register& ass = GetAss(*inst.assignment);
@@ -137,33 +143,38 @@ void CorvassemblyTarget::TranslateConvert(Instruction& inst)
 // This could probably be cleverly optimized!
 void CorvassemblyTarget::TranslateAssign(Instruction& inst)
 {
-  if (inst.operand1.isConst())
-  {
-    // Register& ass = GetAss(*inst.assignment);
-    Register& op2 = LoadResult(inst.operand2);
+      // Register& ass = GetAss(*inst.assignment);
+    Register& op2 = LoadResult(inst.operand1);
 
     // for now, since a register can only hold one pointer,
     // the loaded value with change to the assignee
-    StoreRegister()
+    StoreRegister(op2, *inst.assignment);
+  // if (inst.operand1.isConst())
+  // {
+  //   // Register& ass = GetAss(*inst.assignment);
+  //   Register& op2 = LoadResult(inst.operand1);
 
-    if (&ass == &op2)
-      AddLine("add " + op2.name + ", " + inst.operand1.to_string());
-    else
-      AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
-  }
-  else // they can't both be const! (cause that would just be made an assignment)
-  {
-    Register& ass = GetAss(*inst.assignment);
-    Register& op1 = LoadResult(inst.operand1);
-    Register& op2 = LoadResult(inst.operand2);
+  //   // for now, since a register can only hold one pointer,
+  //   // the loaded value with change to the assignee
+  //   StoreRegister(op2, *inst.assignment);
 
-    if (&ass == &op1)
-      AddLine("add " + op1.name + ", " + op2.name);
-    else if (&ass == &op2)
-      AddLine("add " + op2.name + ", " + op1.name);
-    else
-      AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
-  }
+  //   // if (&ass == &op2)
+  //   //   AddLine("add " + op2.name + ", " + inst.operand1.to_string());
+  //   // else
+  //   //   AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
+  // }
+  // else // they can't both be const! (cause that would just be made an assignment)
+  // {
+  //   Register& ass = GetAss(*inst.assignment);
+  //   Register& op1 = LoadResult(inst.operand1);
+
+  //   if (&ass == &op1)
+  //     AddLine("add " + op1.name + ", " + op2.name);
+  //   else if (&ass == &op2)
+  //     AddLine("add " + op2.name + ", " + op1.name);
+  //   else
+  //     AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
+  // }
 }
 // will only work if it's been loaded _and_ has a non-const loaded value
 void CorvassemblyTarget::TranslateStore(Register& reg)
@@ -178,6 +189,13 @@ void CorvassemblyTarget::TranslateStore(Register& reg)
     line += "str " + reg.name + ", " + reg.loaded->to_string();
     reg.status = Register::Status::FREE;
   }
+  AddLine(line);
+}
+void CorvassemblyTarget::TranslateStore(Register& reg, Identifier& id)
+{
+  string line = "";
+  line += "str " + reg.name + ", " + id.name;
+  reg.status = Register::Status::FREE;
   AddLine(line);
 }
 void CorvassemblyTarget::TranslateLoad(Register& reg, Result& res)

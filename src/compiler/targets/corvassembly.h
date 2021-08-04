@@ -36,6 +36,7 @@ class CorvassemblyTarget : public BaseTarget {
     void TranslateAssign(Instruction& inst) override;
 
     void TranslateStore(Register& reg) override;
+    void TranslateStore(Register& reg, Identifier& id) override;
     void TranslateLoad(Register& reg, Result& res) override;
 };
 
