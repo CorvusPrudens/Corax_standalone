@@ -3,6 +3,7 @@ import hashlib
 from math import fabs
 import os
 from os.path import join
+import sys
 import re
 import pickle
 from typing import List
@@ -11,11 +12,11 @@ from antlr4 import *
 from antlr4.tree.Tree import ParseTree
 from .hashing_parse.CppHashLexer import CppHashLexer
 from .hashing_parse.CppHashParser import CppHashParser
-from .hashing_parse.CppHashListener import CppHashListener
+# from .hashing_parse.CppHashListener import CppHashListener
 
 from .hashing_parse.AntlrHashLexer import AntlrHashLexer
 from .hashing_parse.AntlrHashParser import AntlrHashParser
-from .hashing_parse.AntlrHashListener import AntlrHashListener
+# from .hashing_parse.AntlrHashListener import AntlrHashListener
 
 """
 Module for easy-to-use class for file comparisons and storing.
@@ -42,8 +43,7 @@ re_important_file_2 = re.compile(r'\.+[A-Za-z_]+ *\( *"(.+?)" *\)')
 
 re_file = re.compile(r'^((.|..|/|//|.?[\w-]+)?(/[\w-]+)+(\.[\w-]+)?)$')
 
-# Calculates a hash as it listens
-class CppListener(CppHashListener):
+class CppParser(CppHashParser):
 
   def __init__(self, filepath: str, debug: bool=False):
     self.md5 = hashlib.md5()
@@ -52,20 +52,14 @@ class CppListener(CppHashListener):
     input_stream = FileStream(filepath)
     lexer = CppHashLexer(input_stream)
     stream = CommonTokenStream(lexer)
-    parser = CppHashParser(stream)
-    tree = parser.parse()
-    walker = ParseTreeWalker()
-    walker.walk(self, tree)
+    super().__init__(stream)
+    self.buildParseTrees = False
+    self.parse()
 
   def __str__(self):
     return self.md5.hexdigest()
 
-  def enterEveryRule(self, ctx: ParserRuleContext):
-      self.md5.update(ctx.getText().encode('utf-8'))
-      if self.debug:
-        print(ctx.getText())
-
-class AntlrListener(AntlrHashListener):
+class AntlrParser(AntlrHashParser):
 
   def __init__(self, filepath: str, debug: bool=False):
     self.md5 = hashlib.md5()
@@ -74,18 +68,57 @@ class AntlrListener(AntlrHashListener):
     input_stream = FileStream(filepath)
     lexer = AntlrHashLexer(input_stream)
     stream = CommonTokenStream(lexer)
-    parser = AntlrHashParser(stream)
-    tree = parser.parse()
-    walker = ParseTreeWalker()
-    walker.walk(self, tree)
+    super().__init__(stream)
+    self.buildParseTrees = False
+    self.parse()
 
   def __str__(self):
     return self.md5.hexdigest()
 
-  def enterEveryRule(self, ctx: ParserRuleContext):
-      self.md5.update(ctx.getText().encode('utf-8'))
-      if self.debug:
-        print(ctx.getText())
+# # Calculates a hash as it listens
+# class CppListener(CppHashListener):
+
+#   def __init__(self, filepath: str, debug: bool=False):
+#     self.md5 = hashlib.md5()
+#     self.debug = debug
+
+#     input_stream = FileStream(filepath)
+#     lexer = CppHashLexer(input_stream)
+#     stream = CommonTokenStream(lexer)
+#     parser = CppHashParser(stream)
+#     tree = parser.parse()
+#     walker = ParseTreeWalker()
+#     walker.walk(self, tree)
+
+#   def __str__(self):
+#     return self.md5.hexdigest()
+
+#   def enterEveryRule(self, ctx: ParserRuleContext):
+#       self.md5.update(ctx.getText().encode('utf-8'))
+#       if self.debug:
+#         print(ctx.getText())
+
+# class AntlrListener(AntlrHashListener):
+
+#   def __init__(self, filepath: str, debug: bool=False):
+#     self.md5 = hashlib.md5()
+#     self.debug = debug
+
+#     input_stream = FileStream(filepath)
+#     lexer = AntlrHashLexer(input_stream)
+#     stream = CommonTokenStream(lexer)
+#     parser = AntlrHashParser(stream)
+#     tree = parser.parse()
+#     walker = ParseTreeWalker()
+#     walker.walk(self, tree)
+
+#   def __str__(self):
+#     return self.md5.hexdigest()
+
+#   def enterEveryRule(self, ctx: ParserRuleContext):
+#       self.md5.update(ctx.getText().encode('utf-8'))
+#       if self.debug:
+#         print(ctx.getText())
 
 class CodeHash:
 
@@ -96,9 +129,9 @@ class CodeHash:
 
   def getHash(self) -> str:
     if (self.path[-3:] == '.g4'):
-      hasher = AntlrListener(self.path)
+      hasher = AntlrParser(self.path)
     else:
-      hasher = CppListener(self.path)
+      hasher = CppParser(self.path)
     return str(hasher)
 
   def isChanged(self) -> bool:
@@ -154,7 +187,7 @@ class HashManager:
       self.hashes[f] = CodeHash(f)
     self.new = []
     for f in self.changed:
-      self.hashes[f].wwriteChanges()
+      self.hashes[f].writeChanges()
     for f in self.removed:
       del self.hashes[f]
     with open(path, 'wb') as file:

@@ -113,6 +113,7 @@ def _checkEnv(program):
     _execute(
       'java', '-jar', 
       join('../../', antlr_jar),
+      '-no-listener',
       '-Dlanguage=Python3', '-o', 
       os.path.basename(hashing), 'AntlrHash.g4', 
       cwd=utils
@@ -120,6 +121,7 @@ def _checkEnv(program):
     _execute(
       'java', '-jar', 
       join('../../', antlr_jar),
+      '-no-listener',
       '-Dlanguage=Python3', '-o', 
       os.path.basename(hashing), 'CppHash.g4', 
       cwd=utils

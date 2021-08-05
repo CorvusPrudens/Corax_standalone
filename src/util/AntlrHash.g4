@@ -1,7 +1,8 @@
 grammar AntlrHash;
 
-parse: ANYTHING* EOF;
+parse: anything* EOF;
 
+anything: ANYTHING {self.md5.update($text.encode('utf-8'))};
 
 
 COMMENT       : '//' ~[\n\r]* [\n\r] -> skip;
