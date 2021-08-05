@@ -10,11 +10,6 @@ import sys
 import pickle
 import shutil
 
-try:
-  from src.util.hashing import HashManager
-except ModuleNotFoundError:
-  pass
-
 """
 Use this manager to configure and build Corax projects.
 """
@@ -91,22 +86,31 @@ hashing = join(utils, 'hashing_parse')
 antlr_jar = join(source, 'antlr4-jar')
 antlr_jar = join(antlr_jar, os.listdir(antlr_jar)[0])
 
-def _execute(*args: str, cwd: str=None) -> None:
+class ExecutionError(Exception):
+  pass
+
+# TODO -- add Popen based, asyncio subprocess call (https://stackoverflow.com/questions/16071866/non-blocking-subprocess-call)
+# TODO -- the file hashers should be c++ and called by python. They should output to stdout and python can grab that after execution completes
+def _execute(*args: str, cwd: str=None, throw: bool=False) -> None:
     proc = subprocess.run(args, cwd=cwd, capture_output=True)
     if proc.returncode != 0:
         print(f'\nEncountered error while running {Col.Green}"{args[0]}"{Col.Stop}:')
         print(proc.stderr.decode('utf-8'))
+        if throw:
+            raise ExecutionError
         print(f'({proc.returncode}) exiting...')
         sys.exit(proc.returncode)
 
 def _checkEnv(program):
+
+  ready = True
    
   rd = os.path.abspath(__file__).replace(program, '').rstrip('/')
   if rd != os.path.abspath('.'):
     _error("script must be run from the root project directory.")
 
   if not os.path.exists(hashing) or len(os.listdir(hashing)) == 0:
-    if not _queryUser('\nHello! Looks like the build environment hasn\'t been set up yet. Begin setup?', fallback='y'):
+    if not _queryUser('Hello! Looks like the build environment hasn\'t been set up yet. Begin setup?', fallback='y'):
       _error("build dependencies not present.")
     if not os.path.exists(hashing):
       os.mkdir(hashing)
@@ -126,10 +130,25 @@ def _checkEnv(program):
       os.path.basename(hashing), 'CppHash.g4', 
       cwd=utils
     )
-    print("Build environment ready!")
-    return False
 
-  return True
+    ready = False
+
+  # note -- this should probably be replaced at some point with a setup.py
+  try:
+    import antlr4
+  except ModuleNotFoundError:
+    if not _queryUser('The Antlr 4 runtime was not found. Install with pip?', fallback='y'):
+      print(f'Install manually by running "{sys.executable} -m pip install antlr4-python3-runtime"')
+      _error("build dependencies not present.")
+    try:
+      _execute(sys.executable, '-m', 'pip', 'install', 'antlr4-python3-runtime', throw=True)
+    except ExecutionError:
+      _error(f'automatic pip install failed. Install manually by running "{sys.executable} -m pip install antlr4-python3-runtime"')
+
+  if not ready:
+    print("Build environment ready! You can now rerun the script.")
+  
+  return ready
     
 
   # if not 'gen' in os.listdir(assembler_dir):
@@ -138,6 +157,7 @@ def _checkEnv(program):
   #     exit(1)
 
 def FindChanges():
+  from src.util.hashing import HashManager
   try:
     with open(join(utils, 'manager.pkl'), 'rb') as file:
       manager = pickle.load(file)
