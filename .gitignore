@@ -5,3 +5,5 @@ __pycache__
 .DS_Store
 dist
 graph.png
+hashing_parse
+manager.pkl
