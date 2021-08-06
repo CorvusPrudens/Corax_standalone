@@ -89,17 +89,39 @@ antlr_jar = join(antlr_jar, os.listdir(antlr_jar)[0])
 class ExecutionError(Exception):
   pass
 
+def manageReturn(process, returnval, name: str, throw: bool=False):
+  if returnval != 0:
+        print(f'\nEncountered error while running {Col.Green}"{name}"{Col.Stop}:')
+        print(process.stderr.read())
+        process.stderr.close()
+        if throw:
+            raise ExecutionError
+        print(f'({process.returncode}) exiting...')
+        sys.exit(process.returncode)
+  else:
+    process.stderr.close()
+
 # TODO -- add Popen based, asyncio subprocess call (https://stackoverflow.com/questions/16071866/non-blocking-subprocess-call)
 # TODO -- the file hashers should be c++ and called by python. They should output to stdout and python can grab that after execution completes
 def _execute(*args: str, cwd: str=None, throw: bool=False) -> None:
     proc = subprocess.run(args, cwd=cwd, capture_output=True)
-    if proc.returncode != 0:
-        print(f'\nEncountered error while running {Col.Green}"{args[0]}"{Col.Stop}:')
-        print(proc.stderr.decode('utf-8'))
-        if throw:
-            raise ExecutionError
-        print(f'({proc.returncode}) exiting...')
-        sys.exit(proc.returncode)
+    manageReturn(proc, args[0], throw)
+
+# TODO -- it would still be nice to have a true async process so the caller could report progress on tasks other than cmake
+def _execute_report(*args: str, cwd: str=None, throw: bool=False) -> None:
+    proc = subprocess.Popen(args, cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True, stderr=subprocess.PIPE)
+    # for line in proc.stdout:
+    #   print(line.decode(), end='')
+    while True:
+        nextline = proc.stdout.readline()
+        if nextline == '' and proc.poll() is not None:
+            break
+        print(nextline, end='')
+        # sys.stdout.write(nextline)
+        # sys.stdout.flush()
+    proc.stdout.close()
+    returnval = proc.wait()
+    manageReturn(proc, returnval, args[0], throw)
 
 def _checkEnv(program):
 
@@ -156,14 +178,30 @@ def _checkEnv(program):
   #     print('ouch owy my bones')
   #     exit(1)
 
-def FindChanges():
-  from src.util.hashing import HashManager
-  try:
-    with open(join(utils, 'manager.pkl'), 'rb') as file:
-      manager = pickle.load(file)
-  except FileNotFoundError:
-    manager = HashManager(src_dirs)
-  newf, changef, rmf = manager.check()
+def RunCompilation(update: bool = False, build_grammar: bool=False):
+  if update:
+    pass
+  _execute_report(
+    'make', 
+    cwd=join(source, build)
+  )
+
+def RunProgram(**args):
+  if not os.path.exists(join(source, build, 'corax')):
+    _error('executable file not built.')
+
+  out = []
+  if '-f' in args:
+    out.append(args['-f'])
+  else:
+    out.append(join(source, 'examples', 'test.cx'))
+  for key, item in args.items():
+    out.append(key)
+    out.append(item)
+  print(out)
+  _execute_report(join(source, build, 'corax'), *out)
+
+def ReportChanges(newf, changef, rmf):
   if len(newf) > 0:
     print('New files:')
     for f in newf:
@@ -176,12 +214,36 @@ def FindChanges():
     print('Removed files:')
     for f in rmf:
       print('  ' + Col.Gray + f + Col.Stop)
-  if len(newf) > 0 or len(changef) > 0 or len(rmf) > 0:
-    if _queryUser('Changes detected. Recompile?', fallback='y'):
-      manager.save(join(utils, 'manager.pkl'))
-      print('Compiling...')
+
+def FindChanges(*positional, **optional):
+
+  commands = ('run', 'build')
+  if positional[0] not in commands:
+    _error(f'unkown command {positional[0]}')
+
+  from src.util.hashing import HashManager
+  try:
+    with open(join(utils, 'manager.pkl'), 'rb') as file:
+      manager = pickle.load(file)
+  except FileNotFoundError:
+    manager = HashManager(src_dirs)
+  newf, changef, rmf = manager.check()
+
+  if positional[0] == 'run':
+    ReportChanges(newf, changef, rmf)
+    if len(newf) > 0 or len(changef) > 0 or len(rmf) > 0:
+      if _queryUser('Changes detected. Recompile?', fallback='y'):
+        manager.save(join(utils, 'manager.pkl'))
+        RunCompilation(update=True)
+    RunProgram(**optional)
+
+  if positional[0] == 'build':
+    if len(newf) > 0 or len(changef) > 0 or len(rmf) > 0:
+      update = True
     else:
-      print('Running...')
+      update = False
+    RunCompilation(update=update)
+
   
 
 if __name__ == '__main__':
@@ -198,21 +260,13 @@ if __name__ == '__main__':
         'name', metavar='input', type=str, nargs='?',
         help='optional test input'
     )
-    parser.add_argument(
-        '-V', metavar='verilog', type=str, default='top.v',
-        help='top level verilog file for synthesis'
-    )
 
     if _checkEnv(parser.prog):
-      # args = parser.parse_args()
-      FindChanges()
+      args = parser.parse_args()
 
-    # positional = [args.command, args.name]
-    # optional = vars(args)
-    # del optional['name']
-    # del optional['command']
+      positional = [args.command, args.name]
+      optional = vars(args)
+      del optional['name']
+      del optional['command']
 
-    # generateFiles(
-    #     *positional, 
-    #     **optional,
-    # )
+      FindChanges(*positional, **optional)
