@@ -17,3 +17,7 @@ int a, b, c;
 ~~~
 - ~~To accomplish this, the declarator rule is where we'll add a dummy identifier to store the current type, and for each init_decl, we'll add a symbol.~~ Actually no, we just needed the temp type back.
 - For some reason, the redefinition error is going nuts in the parameter list. We'll have to investigate there.
+
+!!!
+- Registers should probably be searched for existing values for all operands (op1, op2, assign) before loading those registers with their values. This maximizes reuse!
+!!!

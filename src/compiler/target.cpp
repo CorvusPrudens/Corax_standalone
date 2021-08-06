@@ -1,7 +1,7 @@
 #include <limits>
 #include "target.h"
 
-Register::Register(string n, Data d, Rank r, unsigned int b)
+Register::Register(string n, Data d, Register::Rank r, unsigned int b)
 {
   loaded = nullptr;
   name = n;
@@ -9,16 +9,22 @@ Register::Register(string n, Data d, Rank r, unsigned int b)
   bytes = b;
   rank = r;
   status = Status::FREE;
+  requires_storage = false;
+  latest = 0;
+  operationStep = 0;
 }
 
 Register::Register(const Register& other)
 {
+  loaded = other.loaded;
   name = other.name;
   data = other.data;
-  status = other.status;
   bytes = other.bytes;
+  rank = other.rank;
   status = other.status;
-  loaded = other.loaded;
+  requires_storage = other.requires_storage;
+  latest = other.latest;
+  operationStep = other.operationStep;
 }
 
 void Register::load(Result& id)
@@ -31,7 +37,7 @@ void Register::load(Result& id)
   }
   else
   {
-    status = Status::FREE;
+    // status = Status::FREE;
   }
 }
 
@@ -40,6 +46,7 @@ void Register::flush()
   loaded = nullptr;
   latest = 0;
   status = Status::FREE;
+  requires_storage = false;
 }
 
 void BaseTarget::TranslateAll()
@@ -67,7 +74,7 @@ void BaseTarget::Translate(Identifier& function)
   }
 
   // store any remaining values before returning
-  StoreAll();
+  StoreAll(function);
   ResetRegisters();
 }
 
@@ -127,28 +134,46 @@ void BaseTarget::StoreRegister(Register& reg)
     reg.loaded->id->latest = reg.latest;
     TranslateStore(reg);
   }
-  reg.status = Register::Status::FREE;
+  // reg.status = Register::Status::FREE;
+  reg.requires_storage = false;
 }
 
 void BaseTarget::StoreRegister(Register& reg, Identifier& ass)
 {
   // Not totally sure how we should deal with this, but for now...
-  if (reg.loaded->id->latest < reg.latest)
+  if (ass.latest < reg.latest || (ass.dataType.qualifiers & Qualifier::VOLATILE))
   {
-    reg.loaded->id->latest = reg.latest;
+    ass.latest = reg.latest;
     TranslateStore(reg, ass);
   }
-  reg.status = Register::Status::FREE;
+  // reg.status = Register::Status::FREE;
+  reg.requires_storage = false;
 }
 
-// TODO -- this is a bad idea
-// NOTE -- it may be better to separate out explicit store instructions!!!
-void BaseTarget::StoreAll(bool include)
+// NOTE -- this is only really for use at the end of the function
+void BaseTarget::StoreAll(Identifier& function, bool include)
 {
   for (auto& reg : registers)
   {
-    if (!reg.isFree() && (reg.rank != Register::Rank::RESERVED || include))
-      StoreRegister(reg);
+    if ((reg.rank != Register::Rank::RESERVED || include) && reg.requires_storage)
+    {
+      try{
+        function.funcTable->GetLocalSymbol(reg.loaded->id->name);
+        if (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE) {
+          // if it's volatile, store it anyway
+          // TODO -- probably needs to happen right at the assignment!!
+          StoreRegister(reg);
+        }
+      } catch (int e) {
+        // bit of a hacky way to determine if it's a global, but it works...
+        try {
+          function.funcTable->GetSymbol(reg.loaded->id->name);
+          StoreRegister(reg);
+        } catch (int e) {
+
+        }
+      }
+    }
   }
 }
 
@@ -203,6 +228,7 @@ Register& BaseTarget::LoadResult(Result& res)
     {
       if (res.isConst() || reg.latest >= res.id->latest)
       {
+        reg.status = Register::Status::USED;
         reg.operationStep = operationStep++;
         return reg;
       }
@@ -223,6 +249,7 @@ Register& BaseTarget::LoadResult(Result& res)
 
   reg->operationStep = operationStep++;
   reg->load(res);
+  reg->status = Register::Status::USED;
   TranslateLoad(*reg, res);
   return *reg;
 }
@@ -236,6 +263,7 @@ Register& BaseTarget::GetAss(Identifier& res)
   {
     if (reg.loaded != nullptr && !reg.loaded->isConst() && *reg.loaded->id == res) 
     {
+      reg.status = Register::Status::USED;
       reg.operationStep = operationStep++;
       return reg;
     }
@@ -253,8 +281,58 @@ Register& BaseTarget::GetAss(Identifier& res)
     TranslateStore(*reg);
   }
 
+  Result& temp = GenerateResult(res);
+  reg->load(temp);
+  reg->status = Register::Status::USED;
   reg->operationStep = operationStep++;
   return *reg;
+}
+
+Register& BaseTarget::CheckLoaded(Identifier& res)
+{
+  // Check if it's already loaded and not out-of-date
+  for (auto& reg : registers)
+  {
+    if (reg.loaded != nullptr && !reg.loaded->isConst() && *reg.loaded->id == res) 
+    {
+      reg.operationStep = operationStep++;
+      return reg;
+    }
+  }
+  throw 1;
+}
+
+Result& BaseTarget::GenerateResult(Identifier& id)
+{
+  Result res;
+  res.setValue(id);
+  temp_results.push_back(res);
+  return temp_results.back();
+}
+
+// Frees registers after statements
+void BaseTarget::TranslateStat(Instruction& inst)
+{
+  for (auto& reg : registers)
+  {
+    if (!reg.isFree() && !reg.requires_storage) 
+    {
+      reg.status = Register::Status::FREE;
+    }
+  }
+}
+
+void BaseTarget::ManageStorage(Register& reg)
+{
+  if (reg.loaded != nullptr && !reg.loaded->isConst() && (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE))
+  {
+    TranslateStore(reg);
+    reg.requires_storage = false;
+  }
+  else
+  {
+    reg.requires_storage = true;
+  }
 }
 
 string BaseTarget::to_string()

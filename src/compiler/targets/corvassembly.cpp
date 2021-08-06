@@ -32,6 +32,8 @@ void CorvassemblyTarget::TranslateAdd(Instruction& inst)
       AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
 
     UpdateRegister(ass);
+    if (ass.loaded->id->name[0] != '$')
+      ManageStorage(ass);
   }
   else if (inst.operand2.isConst())
   {
@@ -44,6 +46,8 @@ void CorvassemblyTarget::TranslateAdd(Instruction& inst)
       AddLine("add " + op1.name + ", " + inst.operand2.to_string() + ", " + ass.name);
 
     UpdateRegister(ass);
+    if (ass.loaded->id->name[0] != '$')
+      ManageStorage(ass);
   }
   else // they can't both be const! (cause that would just be made an assignment)
   {
@@ -59,8 +63,9 @@ void CorvassemblyTarget::TranslateAdd(Instruction& inst)
       AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
 
     UpdateRegister(ass);
+    if (ass.loaded->id->name[0] != '$')
+      ManageStorage(ass);
   }
-
   // Register& ass = GetAss(*inst.assignment);
   // Register& op1 = LoadResult(inst.operand1);
   // Register& op2 = LoadResult(inst.operand2);
@@ -143,12 +148,35 @@ void CorvassemblyTarget::TranslateConvert(Instruction& inst)
 // This could probably be cleverly optimized!
 void CorvassemblyTarget::TranslateAssign(Instruction& inst)
 {
-      // Register& ass = GetAss(*inst.assignment);
+  // if (inst.operand1.isConst())
+  // {
+
+  // }
+  // else
+  // {
+
+  // }
+    // Register& ass = GetAss(*inst.assignment);
     Register& op2 = LoadResult(inst.operand1);
 
-    // for now, since a register can only hold one pointer,
-    // the loaded value with change to the assignee
-    StoreRegister(op2, *inst.assignment);
+    try {
+      Register& ass = CheckLoaded(*inst.assignment);
+      AddLine("add " + op2.name + ", 0, " + ass.name);
+      ManageStorage(ass);
+    } catch (int e) {
+      // for now, since a register can only hold one pointer,
+      // the loaded value will change to the assignee
+      Result& temp = GenerateResult(*inst.assignment);
+      // this would be ideal, but the register needs a pointer to a result!!
+      op2.load(temp);
+      UpdateRegister(op2);
+      ManageStorage(op2);
+      // StoreRegister(op2, *inst.assignment);
+    }
+    
+
+    
+
   // if (inst.operand1.isConst())
   // {
   //   // Register& ass = GetAss(*inst.assignment);
@@ -187,7 +215,7 @@ void CorvassemblyTarget::TranslateStore(Register& reg)
   else
   {
     line += "str " + reg.name + ", " + reg.loaded->to_string();
-    reg.status = Register::Status::FREE;
+    // reg.status = Register::Status::FREE;
   }
   AddLine(line);
 }
@@ -195,12 +223,12 @@ void CorvassemblyTarget::TranslateStore(Register& reg, Identifier& id)
 {
   string line = "";
   line += "str " + reg.name + ", " + id.name;
-  reg.status = Register::Status::FREE;
+  // reg.status = Register::Status::FREE; // not sure this should ever be used
   AddLine(line);
 }
 void CorvassemblyTarget::TranslateLoad(Register& reg, Result& res)
 {
   string line = "ldr " + reg.name + ", " + res.to_string();
-  if (!res.isConst()) reg.status = Register::Status::USED;
+  // if (!res.isConst()) reg.status = Register::Status::USED;
   AddLine(line);
 }

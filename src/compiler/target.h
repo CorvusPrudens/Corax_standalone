@@ -2,6 +2,7 @@
 #define TARGET_H
 
 #include <vector>
+#include <list>
 #include <unordered_map>
 #include <string>
 #include "identifier.h"
@@ -26,7 +27,6 @@ struct Register {
   Register(string n, Data d, Rank r, unsigned int b);
   Register(const Register& other);
 
-
   bool isFree() { return status == Status::FREE; }
   void load(Result& id);
   void flush();
@@ -36,6 +36,7 @@ struct Register {
   Rank rank;
   Status status;
   unsigned int bytes;
+  bool requires_storage;
 
   Result* loaded;
   unsigned int latest;
@@ -78,6 +79,8 @@ class BaseTarget {
     virtual void TranslateConvert(Instruction& inst) { unsupported(inst); }
     virtual void TranslateAssign(Instruction& inst) { unsupported(inst); }
 
+    virtual void TranslateStat(Instruction& inst);
+
     virtual void TranslateStore(Register& reg) { unsupported("register store"); }
     virtual void TranslateStore(Register& reg, Identifier& id) { unsupported("register store"); }
     virtual void TranslateLoad(Register& reg, Result& res) { unsupported("register load"); }
@@ -85,7 +88,7 @@ class BaseTarget {
     typedef void (BaseTarget::*TranslateMethod)(Instruction&);
 
     // Corresponds to Instruction's Abstr enum
-    TranslateMethod methods[19] = {
+    TranslateMethod methods[20] = {
       &BaseTarget::TranslateDeref,
       &BaseTarget::TranslateNot,
       &BaseTarget::TranslateNegate,
@@ -105,6 +108,7 @@ class BaseTarget {
       &BaseTarget::TranslateAnd,
       &BaseTarget::TranslateOr,
       &BaseTarget::TranslateCmp,
+      &BaseTarget::TranslateStat,
     };
 
     virtual int freeRegisters(
@@ -128,7 +132,7 @@ class BaseTarget {
     /** Stores all currently used registers
      * 
      */
-    virtual void StoreAll(bool includeSpecial = false);
+    virtual void StoreAll(Identifier& function, bool includeSpecial = false);
 
     /** Intelligently manages registers, either selecting a register
      * with the value already in it, loading the value into a 
@@ -144,6 +148,9 @@ class BaseTarget {
      *  i.e. for setting up assignments
      */
     virtual Register& GetAss(Identifier& id);
+    virtual Register& CheckLoaded(Identifier& id);
+    virtual Result& GenerateResult(Identifier& id);
+    virtual void ManageStorage(Register& reg);
 
     virtual void UpdateRegister(Register& reg);
     virtual void ResetRegisters();
@@ -159,6 +166,7 @@ class BaseTarget {
     vector<Register> registers;
     vector<FuncTrans> translations;
     unsigned int operationStep;
+    std::list<Result> temp_results;
 
     // maybe a bit silly?
     unordered_map<TypeDescriptor*, Register::Data> datatypes;

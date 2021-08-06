@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "compiler.h"
+#include "operators.h"
 
 using antlrcpp::Any;
 using std::cout;
@@ -15,6 +16,8 @@ Compiler::Compiler(ProcessedCode* code_, Error* err_, bool g)
 {
   code = code_;
   err = err_;
+  globalFunction.type = Identifier::IdType::FUNCTION;
+  currentFunction = &globalFunction;
   graphing = g;
   tree::ParseTree* parse_tree = parser.parse();
   visit(parse_tree);
@@ -242,6 +245,8 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
     cout << "}\n";
   }
 
+  currentFunction = &globalFunction;
+
   return nullptr;
 }
 
@@ -285,6 +290,7 @@ Any Compiler::visitBlockDecl(PostParser::BlockDeclContext* ctx)
   }
   currentScope->postExpr.clear();
   currentScope->temp_vars = 0;
+  currentFunction->function.addStatementEnd(ctx);
   return nullptr;
 }
 
@@ -296,6 +302,7 @@ Any Compiler::visitBlockStat(PostParser::BlockStatContext* ctx)
   }
   currentScope->postExpr.clear();
   currentScope->temp_vars = 0;
+  currentFunction->function.addStatementEnd(ctx);
   return nullptr;
 }
 
@@ -346,6 +353,23 @@ Any Compiler::visitDirId(PostParser::DirIdContext* ctx)
   return nullptr;
 }
 
+Any Compiler::visitQualConst(PostParser::QualConstContext* ctx)
+{
+  currentType.back()->qualifiers |= (int) Qualifier::CONST;
+  return nullptr;
+}
+Any Compiler::visitQualRestrict(PostParser::QualRestrictContext* ctx)
+{
+  currentType.back()->qualifiers |= (int) Qualifier::RESTRICT;
+  return nullptr;
+}
+Any Compiler::visitQualVolatile(PostParser::QualVolatileContext* ctx)
+{
+  currentType.back()->qualifiers |= (int) Qualifier::VOLATILE;
+  return nullptr;
+}
+
+// this will be all fucky now because we visit type_qual
 Any Compiler::visitPointer_item(PostParser::Pointer_itemContext* ctx)
 {
   Pointer p;

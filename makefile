@@ -50,7 +50,7 @@ update_compiler:
 
 update_compiler_debug: 
 	@ if [ ! -d "${SRC}/build" ]; then mkdir ${SRC}/build; fi
-	cd ${SRC}; cmake . -B build -DDEBUG=1;
+	cd ${SRC}; cmake . -B build -DCMAKE_BUILD_TYPE=Debug;
 
 parse_python: ${ASSEMBLER} ${EXAMPLE}
 	python3 test.py

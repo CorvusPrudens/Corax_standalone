@@ -23,6 +23,7 @@ class FuncComp {
     FuncComp(const FuncComp& other) { instructions = other.instructions; }
 
     void add(Instruction inst);
+    void addStatementEnd(antlr4::ParserRuleContext* ctx);
 
     /** Removes any trivially unnecessary temporary variables
      * 
@@ -246,6 +247,7 @@ class Instruction {
       AND,
       OR,
       CMP,
+      STATEMENT_END,
     };
 
     enum Cond {
@@ -257,6 +259,7 @@ class Instruction {
       LESS_EQUAL,
     };
 
+    Instruction(ParserRuleContext* c, Abstr i); // for end of statements / nops
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass);
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass);
     Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass);

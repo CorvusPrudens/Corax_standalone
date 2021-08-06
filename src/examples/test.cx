@@ -1,14 +1,14 @@
 
-int expression(int lhs, int rhs)
-{
-  return lhs + rhs;
-}
+// int expression(int lhs, int rhs)
+// {
+//   return lhs + rhs;
+// }
 
 int expr2(int lhs, int rhs)
 {
-  int temp = 2;
+  volatile int temp = 2;
   lhs = lhs + temp + 70;
-  return rhs++;
+  // return rhs++;
 }
 
 int global1 = 0;

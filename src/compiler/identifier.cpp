@@ -12,6 +12,10 @@ void FuncComp::add(Instruction inst)
   instructions.push_back(inst);
 }
 
+void FuncComp::addStatementEnd(antlr4::ParserRuleContext* ctx) {
+  add(Instruction(ctx, Instruction::Abstr::STATEMENT_END));
+}
+
 void FuncComp::clean()
 {
   // Removing unnecessary temporary variables of the form
@@ -419,6 +423,12 @@ void Result::setValue(char val)
   *ptr = val;
 }
 
+Instruction::Instruction(ParserRuleContext* c, Abstr i) {
+  ctx = c;
+  instr = i;
+  single = true;
+}
+
 Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass) {
   ctx = c;
   instr = i;
@@ -520,7 +530,10 @@ string Instruction::name() {
 }
 
 string Instruction::to_string() {
-  string s = assignment->name + " = ";
+  string s = "";
+  if (instr != STATEMENT_END) {
+    s = assignment->name + " = ";
+  }
   switch (instr) {
     case DEREF:
     {
@@ -651,6 +664,10 @@ string Instruction::to_string() {
       }
     }
     break;
+    case STATEMENT_END:
+    {
+      s += "(end of statement)";
+    }
   }
   return s;
 }
