@@ -12,10 +12,10 @@ CorvassemblyTarget::CorvassemblyTarget(Compiler* c)
     Register("c", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
     Register("d", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
     Register("e", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
+    Register("f", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
 
-    Register("f", Register::Data::INTEGER, Register::Rank::RESERVED, 2),
-    Register("g", Register::Data::INTEGER, Register::Rank::RESERVED, 2),
-    Register("h", Register::Data::INTEGER, Register::Rank::RESERVED, 2),
+    Register("sp", Register::Data::INTEGER, Register::Rank::STACK_POINTER, 2),
+    Register("bp", Register::Data::INTEGER, Register::Rank::BASE_POINTER, 2),
   };
 }
 

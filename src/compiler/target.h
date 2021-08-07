@@ -21,7 +21,7 @@ struct FuncTrans {
 
 struct Register {
   enum Data { INTEGER = 0, FLOATING };
-  enum Rank { GENERAL = 0, RESERVED };
+  enum Rank { GENERAL = 0, STACK_POINTER, BASE_POINTER, RESERVED };
   enum Status { FREE = 0, USED };
 
   Register(string n, Data d, Rank r, unsigned int b);

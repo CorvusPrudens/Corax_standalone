@@ -158,7 +158,7 @@ void BaseTarget::StoreAll(Identifier& function, bool include)
 {
   for (auto& reg : registers)
   {
-    if ((reg.rank != Register::Rank::RESERVED || include) && reg.requires_storage)
+    if ((reg.rank == Register::Rank::GENERAL || include) && reg.requires_storage)
     {
       try{
         function.funcTable->GetLocalSymbol(reg.loaded->id->name);

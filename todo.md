@@ -21,3 +21,13 @@ int a, b, c;
 !!!
 - Registers should probably be searched for existing values for all operands (op1, op2, assign) before loading those registers with their values. This maximizes reuse!
 !!!
+
+- The assembly (and architecture) needs some modification:
+  - relative loads and stores should work with any register:
+~~~arm
+ldr a, [sp]
+ldr b, [sp, 4]
+ldr c, [b, -4]
+~~~
+  - the g and h registers should be renamed to sp and bp (stack pointer and base pointer)
+  - we should be able to store data in program memory (stretch goal)
