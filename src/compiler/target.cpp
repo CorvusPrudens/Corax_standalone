@@ -129,7 +129,10 @@ void BaseTarget::ResetRegisters()
 void BaseTarget::StoreRegister(Register& reg)
 {
   // Not totally sure how we should deal with this, but for now...
-  if (reg.loaded->id->latest < reg.latest)
+  if ((reg.loaded->id->latest < reg.latest || 
+      (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE)) && 
+      reg.requires_storage
+  )
   {
     reg.loaded->id->latest = reg.latest;
     TranslateStore(reg);
@@ -161,7 +164,6 @@ void BaseTarget::StoreAll(Identifier& function, bool include)
         function.funcTable->GetLocalSymbol(reg.loaded->id->name);
         if (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE) {
           // if it's volatile, store it anyway
-          // TODO -- probably needs to happen right at the assignment!!
           StoreRegister(reg);
         }
       } catch (int e) {
@@ -202,24 +204,35 @@ Register::Data BaseTarget::FetchDataType(Identifier& id)
 Register& BaseTarget::GetLastUsed(Register::Data data, Register::Rank rank)
 {
   auto lowest = std::numeric_limits<unsigned int>::max();
-  Register* ptr = nullptr;
+  auto lowestFree = std::numeric_limits<unsigned int>::max();
+  Register* lastToStore = nullptr;
+  Register* lastFree = nullptr;
   for (auto& reg : registers)
   {
     if (reg.data == data && reg.rank == rank)
     {
-      if (reg.operationStep < lowest)
+      if (!reg.isFree() && reg.operationStep < lowest)
       {
         lowest = reg.operationStep;
-        ptr = &reg;
+        lastToStore = &reg;
+      }
+      else if (reg.isFree() && reg.operationStep < lowestFree)
+      {
+        lowestFree = reg.operationStep;
+        lastFree = &reg;
       }
     }
   }
-  if (ptr == nullptr) throw 1;
-  return *ptr;
+  if (lastFree == nullptr) {
+    if (lastToStore == nullptr) throw 1;
+    StoreRegister(*lastToStore);
+    // TranslateStore(*lastToStore);
+    return *lastToStore;
+  }
+  return *lastFree;
 }
 
-// TODO -- still need to figure out 'freed' condition (after assignment?)
-Register& BaseTarget::LoadResult(Result& res)
+Register& BaseTarget::PrepareResult(Result& res)
 {
   // Check if it's already loaded and not out-of-date
   for (auto& reg : registers)
@@ -237,15 +250,8 @@ Register& BaseTarget::LoadResult(Result& res)
 
   Register* reg;
   Register::Data d = FetchDataType(res);
-  // Otherwise, look through free registers of the corresponding type
-  try {
-    reg = &getFree(d);
-  } catch (int e) {
-    // Otherwise, get the last used register of the corresponding type and
-    // forcefully store its value
-    reg = &GetLastUsed(d);
-    TranslateStore(*reg);
-  }
+
+  reg = &GetLastUsed(d);
 
   reg->operationStep = operationStep++;
   reg->load(res);
@@ -256,7 +262,7 @@ Register& BaseTarget::LoadResult(Result& res)
 
 // TODO -- this should look for the register with the _latest_ copy of the
 // intended assignee
-Register& BaseTarget::GetAss(Identifier& res)
+Register& BaseTarget::PrepareAssign(Identifier& res)
 {
   // Check if it's already loaded and not out-of-date
   for (auto& reg : registers)
@@ -271,15 +277,8 @@ Register& BaseTarget::GetAss(Identifier& res)
 
   Register* reg;
   Register::Data d = FetchDataType(res);
-  // Otherwise, look through free registers of the corresponding type
-  try {
-    reg = &getFree(d);
-  } catch (int e) {
-    // Otherwise, get the last used register of the corresponding type and
-    // forcefully store its value
-    reg = &GetLastUsed(d);
-    TranslateStore(*reg);
-  }
+  
+  reg = &GetLastUsed(d);
 
   Result& temp = GenerateResult(res);
   reg->load(temp);
@@ -315,7 +314,7 @@ void BaseTarget::TranslateStat(Instruction& inst)
 {
   for (auto& reg : registers)
   {
-    if (!reg.isFree() && !reg.requires_storage) 
+    if (!reg.isFree() && (!reg.requires_storage || reg.loaded->id->name[0] == '$'))
     {
       reg.status = Register::Status::FREE;
     }
@@ -324,14 +323,17 @@ void BaseTarget::TranslateStat(Instruction& inst)
 
 void BaseTarget::ManageStorage(Register& reg)
 {
-  if (reg.loaded != nullptr && !reg.loaded->isConst() && (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE))
+  if (reg.loaded != nullptr && !reg.loaded->isConst())
   {
-    TranslateStore(reg);
-    reg.requires_storage = false;
-  }
-  else
-  {
-    reg.requires_storage = true;
+    if (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE)
+    {
+      TranslateStore(reg);
+      reg.requires_storage = false;
+    }
+    else
+    {
+      reg.requires_storage = true;
+    }
   }
 }
 

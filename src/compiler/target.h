@@ -140,14 +140,14 @@ class BaseTarget {
      * loading in that register.
      * \returns Reference to register containing newly loaded value
      */
-    virtual Register& LoadResult(Result& res);
+    virtual Register& PrepareResult(Result& res);
     virtual Register::Data FetchDataType(Result& res);
     virtual Register::Data FetchDataType(Identifier& id);
 
-    /** Similar to LoadResult without loading any values --
+    /** Similar to PrepareResult without loading any values --
      *  i.e. for setting up assignments
      */
-    virtual Register& GetAss(Identifier& id);
+    virtual Register& PrepareAssign(Identifier& id);
     virtual Register& CheckLoaded(Identifier& id);
     virtual Result& GenerateResult(Identifier& id);
     virtual void ManageStorage(Register& reg);

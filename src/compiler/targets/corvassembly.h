@@ -12,6 +12,8 @@ class CorvassemblyTarget : public BaseTarget {
     CorvassemblyTarget(Compiler* c);
     ~CorvassemblyTarget() {}
 
+    void StandardInstruction(Instruction& inst, string mnemonic);
+
     void TranslateAdd(Instruction& inst) override;
     void TranslateSub(Instruction& inst) override;
     void TranslateMult(Instruction& inst) override;

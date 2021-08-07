@@ -19,98 +19,95 @@ CorvassemblyTarget::CorvassemblyTarget(Compiler* c)
   };
 }
 
-void CorvassemblyTarget::TranslateAdd(Instruction& inst)
+void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
 {
   if (inst.operand1.isConst())
   {
-    Register& ass = GetAss(*inst.assignment);
-    Register& op2 = LoadResult(inst.operand2);
+    Register& op2 = PrepareResult(inst.operand2);
+    Register& ass = PrepareAssign(*inst.assignment);
 
     if (&ass == &op2)
-      AddLine("add " + op2.name + ", " + inst.operand1.to_string());
+      AddLine(mnemonic + " " + op2.name + ", " + inst.operand1.to_string());
     else
-      AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
+      AddLine(mnemonic + " " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
 
     UpdateRegister(ass);
-    if (ass.loaded->id->name[0] != '$')
-      ManageStorage(ass);
+    ManageStorage(ass);
   }
   else if (inst.operand2.isConst())
   {
-    Register& ass = GetAss(*inst.assignment);
-    Register& op1 = LoadResult(inst.operand1);
+    Register& op1 = PrepareResult(inst.operand1);
+    Register& ass = PrepareAssign(*inst.assignment);
 
     if (&ass == &op1)
-      AddLine("add " + op1.name + ", " + inst.operand2.to_string());
+      AddLine(mnemonic + " " + op1.name + ", " + inst.operand2.to_string());
     else
-      AddLine("add " + op1.name + ", " + inst.operand2.to_string() + ", " + ass.name);
+      AddLine(mnemonic + " " + op1.name + ", " + inst.operand2.to_string() + ", " + ass.name);
 
     UpdateRegister(ass);
-    if (ass.loaded->id->name[0] != '$')
-      ManageStorage(ass);
+    ManageStorage(ass);
   }
   else // they can't both be const! (cause that would just be made an assignment)
   {
-    Register& ass = GetAss(*inst.assignment);
-    Register& op1 = LoadResult(inst.operand1);
-    Register& op2 = LoadResult(inst.operand2);
+    // TODO -- in reality, these should all have a first pass search, and if
+    // it's not already loaded somewhere, then after all the other operands
+    // have had their search, we'll have a second round of searching/loading!!!
+    Register& op1 = PrepareResult(inst.operand1);
+    Register& op2 = PrepareResult(inst.operand2);
+    Register& ass = PrepareAssign(*inst.assignment);
 
     if (&ass == &op1)
-      AddLine("add " + op1.name + ", " + op2.name);
+      AddLine(mnemonic + " " + op1.name + ", " + op2.name);
     else if (&ass == &op2)
-      AddLine("add " + op2.name + ", " + op1.name);
+      AddLine(mnemonic + " " + op2.name + ", " + op1.name);
     else
-      AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
+      AddLine(mnemonic + " " + op1.name + ", " + op2.name + ", " + ass.name);
 
     UpdateRegister(ass);
-    if (ass.loaded->id->name[0] != '$')
-      ManageStorage(ass);
+    ManageStorage(ass);
   }
-  // Register& ass = GetAss(*inst.assignment);
-  // Register& op1 = LoadResult(inst.operand1);
-  // Register& op2 = LoadResult(inst.operand2);
+}
 
-  // if (&ass == &op1)
-  //   AddLine("add " + op1.name + ", " + op2.name);
-  // else
-  //   AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
+void CorvassemblyTarget::TranslateAdd(Instruction& inst)
+{
+  StandardInstruction(inst, "add");
 }
 void CorvassemblyTarget::TranslateSub(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "sub");
 }
 void CorvassemblyTarget::TranslateMult(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "mult");
 }
 void CorvassemblyTarget::TranslateDiv(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "div");
 }
 void CorvassemblyTarget::TranslateMod(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "mod");
 }
 
 void CorvassemblyTarget::TranslateShiftl(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "lsl");
 }
 void CorvassemblyTarget::TranslateShiftr(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "lsr");
 }
 void CorvassemblyTarget::TranslateBitAnd(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "and");
 }
 void CorvassemblyTarget::TranslateBitXor(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "xor");
 }
 void CorvassemblyTarget::TranslateBitOr(Instruction& inst)
 {
-  unsupported(inst);
+  StandardInstruction(inst, "or");
 }
 
 void CorvassemblyTarget::TranslateAnd(Instruction& inst)
@@ -131,7 +128,16 @@ void CorvassemblyTarget::TranslateDeref(Instruction& inst)
 }
 void CorvassemblyTarget::TranslateNot(Instruction& inst)
 {
-  unsupported(inst);
+  Register& op1 = PrepareResult(inst.operand1);
+  Register& ass = PrepareAssign(*inst.assignment);
+
+  if (&ass == &op1)
+    AddLine(mnemonic + " " + op1.name);
+  else
+    AddLine(mnemonic + " " + op1.name + ", " + ass.loaded.to_string());
+
+  UpdateRegister(ass);
+  ManageStorage(ass);
 }
 void CorvassemblyTarget::TranslateNegate(Instruction& inst)
 {
@@ -148,16 +154,7 @@ void CorvassemblyTarget::TranslateConvert(Instruction& inst)
 // This could probably be cleverly optimized!
 void CorvassemblyTarget::TranslateAssign(Instruction& inst)
 {
-  // if (inst.operand1.isConst())
-  // {
-
-  // }
-  // else
-  // {
-
-  // }
-    // Register& ass = GetAss(*inst.assignment);
-    Register& op2 = LoadResult(inst.operand1);
+    Register& op2 = PrepareResult(inst.operand1);
 
     try {
       Register& ass = CheckLoaded(*inst.assignment);
@@ -173,36 +170,6 @@ void CorvassemblyTarget::TranslateAssign(Instruction& inst)
       ManageStorage(op2);
       // StoreRegister(op2, *inst.assignment);
     }
-    
-
-    
-
-  // if (inst.operand1.isConst())
-  // {
-  //   // Register& ass = GetAss(*inst.assignment);
-  //   Register& op2 = LoadResult(inst.operand1);
-
-  //   // for now, since a register can only hold one pointer,
-  //   // the loaded value with change to the assignee
-  //   StoreRegister(op2, *inst.assignment);
-
-  //   // if (&ass == &op2)
-  //   //   AddLine("add " + op2.name + ", " + inst.operand1.to_string());
-  //   // else
-  //   //   AddLine("add " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
-  // }
-  // else // they can't both be const! (cause that would just be made an assignment)
-  // {
-  //   Register& ass = GetAss(*inst.assignment);
-  //   Register& op1 = LoadResult(inst.operand1);
-
-  //   if (&ass == &op1)
-  //     AddLine("add " + op1.name + ", " + op2.name);
-  //   else if (&ass == &op2)
-  //     AddLine("add " + op2.name + ", " + op1.name);
-  //   else
-  //     AddLine("add " + op1.name + ", " + op2.name + ", " + ass.name);
-  // }
 }
 // will only work if it's been loaded _and_ has a non-const loaded value
 void CorvassemblyTarget::TranslateStore(Register& reg)
@@ -215,7 +182,6 @@ void CorvassemblyTarget::TranslateStore(Register& reg)
   else
   {
     line += "str " + reg.name + ", " + reg.loaded->to_string();
-    // reg.status = Register::Status::FREE;
   }
   AddLine(line);
 }
@@ -223,12 +189,10 @@ void CorvassemblyTarget::TranslateStore(Register& reg, Identifier& id)
 {
   string line = "";
   line += "str " + reg.name + ", " + id.name;
-  // reg.status = Register::Status::FREE; // not sure this should ever be used
   AddLine(line);
 }
 void CorvassemblyTarget::TranslateLoad(Register& reg, Result& res)
 {
   string line = "ldr " + reg.name + ", " + res.to_string();
-  // if (!res.isConst()) reg.status = Register::Status::USED;
   AddLine(line);
 }
