@@ -76,7 +76,7 @@ void Compiler::popScope()
   currentScope = currentScope->parent;
 }
 
-Any Compiler::visitParse(PostParser::ParseContext* ctx)
+Any Compiler::visitParse(CoraxParser::ParseContext* ctx)
 {
   globalTable = std::make_unique<SymbolTable>(SymbolTable(nullptr, SymbolTable::Scope::GLOBAL));
   currentScope = globalTable.get();
@@ -97,7 +97,7 @@ Any Compiler::visitParse(PostParser::ParseContext* ctx)
 // DECLARATIONS
 ////////////////////////////////////////////////
 
-// Any Compiler::visitTopDecl(PostParser::TopDeclContext* ctx)
+// Any Compiler::visitTopDecl(CoraxParser::TopDeclContext* ctx)
 // {
 //   auto tempid = new Identifier;
 //   currentId.push_back(tempid);
@@ -114,7 +114,7 @@ Any Compiler::visitParse(PostParser::ParseContext* ctx)
 //   return nullptr;
 // }
 
-Any Compiler::visitDeclaration(PostParser::DeclarationContext* ctx)
+Any Compiler::visitDeclaration(CoraxParser::DeclarationContext* ctx)
 {
   auto temptype = new Type;
   currentType.push_back(temptype);
@@ -123,7 +123,7 @@ Any Compiler::visitDeclaration(PostParser::DeclarationContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
+Any Compiler::visitDeclarator(CoraxParser::DeclaratorContext* ctx)
 {
   Identifier tempid;
   tempid.dataType = *currentType.back(); // if we're in an init_decl list
@@ -154,7 +154,7 @@ Any Compiler::visitDeclarator(PostParser::DeclaratorContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
+Any Compiler::visitDirFunc(CoraxParser::DirFuncContext* ctx)
 {
   visit(ctx->direct_decl());
   currentId.back()->type = Identifier::IdType::FUNCTION;
@@ -175,7 +175,7 @@ Any Compiler::visitDirFunc(PostParser::DirFuncContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitParamDecl(PostParser::ParamDeclContext* ctx)
+Any Compiler::visitParamDecl(CoraxParser::ParamDeclContext* ctx)
 {
   auto tt = new Type;
   currentType.push_back(tt);
@@ -185,7 +185,7 @@ Any Compiler::visitParamDecl(PostParser::ParamDeclContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitParamAbst(PostParser::ParamAbstContext* ctx)
+Any Compiler::visitParamAbst(CoraxParser::ParamAbstContext* ctx)
 {
   Type tt;
   currentType.push_back(&tt);
@@ -206,7 +206,7 @@ Any Compiler::visitParamAbst(PostParser::ParamAbstContext* ctx)
 }
 
 // ignoring declarations after parameter list for now
-Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
+Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
 {
   auto temptype = new Type;
   currentType.push_back(temptype);
@@ -251,7 +251,7 @@ Any Compiler::visitFunc_def(PostParser::Func_defContext* ctx)
 }
 
 
-Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
+Any Compiler::visitParamList(CoraxParser::ParamListContext* ctx)
 {
   auto list = ctx->param_list()->param_decl();
   for (auto item : list)
@@ -264,7 +264,7 @@ Any Compiler::visitParamList(PostParser::ParamListContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
+Any Compiler::visitStat_compound(CoraxParser::Stat_compoundContext* ctx)
 {
   if (inherit)
   {
@@ -282,7 +282,7 @@ Any Compiler::visitStat_compound(PostParser::Stat_compoundContext* ctx)
 }
 
 // These two could be combined:
-Any Compiler::visitBlockDecl(PostParser::BlockDeclContext* ctx)
+Any Compiler::visitBlockDecl(CoraxParser::BlockDeclContext* ctx)
 {
   visitChildren(ctx);
   for (int i = 0; i < currentScope->postExpr.size(); i++) {
@@ -294,7 +294,7 @@ Any Compiler::visitBlockDecl(PostParser::BlockDeclContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitBlockStat(PostParser::BlockStatContext* ctx)
+Any Compiler::visitBlockStat(CoraxParser::BlockStatContext* ctx)
 {
   visitChildren(ctx);
   for (int i = 0; i < currentScope->postExpr.size(); i++) {
@@ -306,36 +306,36 @@ Any Compiler::visitBlockStat(PostParser::BlockStatContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitTypeStd(PostParser::TypeStdContext* ctx)
+Any Compiler::visitTypeStd(CoraxParser::TypeStdContext* ctx)
 {
   currentType.back()->type_specifiers.push_back(ctx->getText());
   return nullptr;
 }
 
-Any Compiler::visitTypeStructUnion(PostParser::TypeStructUnionContext* ctx)
+Any Compiler::visitTypeStructUnion(CoraxParser::TypeStructUnionContext* ctx)
 {
   // currentId.type = Identifier::IdType::
   return visitChildren(ctx);
 }
 
-Any Compiler::visitTypeEnum(PostParser::TypeEnumContext* ctx)
+Any Compiler::visitTypeEnum(CoraxParser::TypeEnumContext* ctx)
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitTypeTypedef(PostParser::TypeTypedefContext* ctx)
+Any Compiler::visitTypeTypedef(CoraxParser::TypeTypedefContext* ctx)
 {
   currentType.back()->name = ctx->IDENTIFIER()->getText();
   return nullptr;
 }
 
-Any Compiler::visitFuncSpecifier(PostParser::FuncSpecifierContext* ctx)
+Any Compiler::visitFuncSpecifier(CoraxParser::FuncSpecifierContext* ctx)
 {
   currentType.back()->function = Type::FunctionSpecifier::INLINE;
   return nullptr;
 }
 
-Any Compiler::visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx)
+Any Compiler::visitStorageSpecifier(CoraxParser::StorageSpecifierContext* ctx)
 {
   if (currentType.back()->storageSet) {
     string errmess = "identifier cannot have more than one storage class";
@@ -347,30 +347,30 @@ Any Compiler::visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitDirId(PostParser::DirIdContext* ctx)
+Any Compiler::visitDirId(CoraxParser::DirIdContext* ctx)
 {
   currentId.back()->name = ctx->getText();
   return nullptr;
 }
 
-Any Compiler::visitQualConst(PostParser::QualConstContext* ctx)
+Any Compiler::visitQualConst(CoraxParser::QualConstContext* ctx)
 {
   currentType.back()->qualifiers |= (int) Qualifier::CONST;
   return nullptr;
 }
-Any Compiler::visitQualRestrict(PostParser::QualRestrictContext* ctx)
+Any Compiler::visitQualRestrict(CoraxParser::QualRestrictContext* ctx)
 {
   currentType.back()->qualifiers |= (int) Qualifier::RESTRICT;
   return nullptr;
 }
-Any Compiler::visitQualVolatile(PostParser::QualVolatileContext* ctx)
+Any Compiler::visitQualVolatile(CoraxParser::QualVolatileContext* ctx)
 {
   currentType.back()->qualifiers |= (int) Qualifier::VOLATILE;
   return nullptr;
 }
 
 // this will be all fucky now because we visit type_qual
-Any Compiler::visitPointer_item(PostParser::Pointer_itemContext* ctx)
+Any Compiler::visitPointer_item(CoraxParser::Pointer_itemContext* ctx)
 {
   Pointer p;
   for (auto qual : ctx->type_qual())

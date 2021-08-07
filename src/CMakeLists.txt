@@ -20,7 +20,7 @@ add_subdirectory(cli11)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/grammars/build/Post
+    ${CMAKE_SOURCE_DIR}/grammars/build/Corax
     ${CMAKE_SOURCE_DIR}/grammars/build/Pre
     ${CMAKE_SOURCE_DIR}/compiler
     ${CMAKE_SOURCE_DIR}/compiler/targets
@@ -59,10 +59,10 @@ set (SOURCE_FILES
 
     ./compiler/targets/corvassembly.cpp
 
-    ./grammars/build/Post/PostParser.cpp
-    ./grammars/build/Post/PostBaseListener.cpp
-    ./grammars/build/Post/PostListener.cpp
-    ./grammars/build/Post/PostLexer.cpp
+    ./grammars/build/Corax/CoraxParser.cpp
+    ./grammars/build/Corax/CoraxBaseListener.cpp
+    ./grammars/build/Corax/CoraxListener.cpp
+    ./grammars/build/Corax/CoraxLexer.cpp
     )
 
 set (INCLUDE_FILES
@@ -100,10 +100,10 @@ set (INCLUDE_FILES
 
     ./compiler/targets/corvassembly.h
 
-    ./grammars/build/Post/PostBaseListener.h
-    ./grammars/build/Post/PostLexer.h
-    ./grammars/build/Post/PostParser.h
-    ./grammars/build/Post/PostListener.h
+    ./grammars/build/Corax/CoraxBaseListener.h
+    ./grammars/build/Corax/CoraxLexer.h
+    ./grammars/build/Corax/CoraxParser.h
+    ./grammars/build/Corax/CoraxListener.h
 
     )
 

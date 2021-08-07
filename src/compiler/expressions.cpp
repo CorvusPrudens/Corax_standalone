@@ -165,14 +165,43 @@ void Compiler::operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase&
   results.put(ctx, res);
 }
 
-Any Compiler::visitCall(PostParser::CallContext* ctx)
+Any Compiler::visitCall(CoraxParser::CallContext* ctx)
 {
-  if (graphing) graph.Addc(ctx->expr_primary()->getText());
-  return visitChildren(ctx);
+  
+  visitChildren(ctx);
+  Call oper(ctx, currentScope, currentFunction, this);
+  vector<Result> args;
+  if (ctx->arg_expr_list() != nullptr)
+  {
+    for (auto* ctxs : ctx->arg_expr_list()->expr_assi())
+    {
+      args.push_back(results.get(ctxs));
+    }
+  }
+
+  // TODO -- needs help with indirect calls
+  // TODO -- need way to detect if what's called is actually a function (or function pointer)
+  Result res;
+  try {
+    Identifier& f = currentScope->GetSymbol(ctx->expr_primary()->getText());
+    if (f.members.size() != args.size()) {
+      // TODO -- this could be made more specific
+      addRuleErr(ctx, "argument count doesn't match function definition");
+      res.setValue(0);
+    } else {
+      oper.perform(f, args, res);
+      if (graphing) graph.Addc(ctx->expr_primary()->getText());
+    }
+  } catch (int e) {
+    addRuleErr(ctx, "attempting to call undefined function");
+    res.setValue(0);
+  }
+  results.put(ctx, res);
+  return nullptr;
 }
 
 // Simple passthroughs
-Any Compiler::visitExprCast(PostParser::ExprCastContext* ctx)
+Any Compiler::visitExprCast(CoraxParser::ExprCastContext* ctx)
 {
   visitChildren(ctx);
   Result res = results.get(ctx->children[0]);
@@ -180,7 +209,7 @@ Any Compiler::visitExprCast(PostParser::ExprCastContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitExprMulti(PostParser::ExprMultiContext* ctx)
+Any Compiler::visitExprMulti(CoraxParser::ExprMultiContext* ctx)
 {
   visitChildren(ctx);
   Result res = results.get(ctx->children[0]);
@@ -188,7 +217,7 @@ Any Compiler::visitExprMulti(PostParser::ExprMultiContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitExprTern(PostParser::ExprTernContext* ctx)
+Any Compiler::visitExprTern(CoraxParser::ExprTernContext* ctx)
 {
   visitChildren(ctx);
   Result res = results.get(ctx->children[0]);
@@ -196,7 +225,7 @@ Any Compiler::visitExprTern(PostParser::ExprTernContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitExprAssi(PostParser::ExprAssiContext* ctx)
+Any Compiler::visitExprAssi(CoraxParser::ExprAssiContext* ctx)
 {
   visitChildren(ctx);
   Result res = results.get(ctx->children[0]);
@@ -204,15 +233,17 @@ Any Compiler::visitExprAssi(PostParser::ExprAssiContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitExprList(PostParser::ExprListContext* ctx)
+Any Compiler::visitArg_expr_list(CoraxParser::Arg_expr_listContext* ctx)
 {
   visitChildren(ctx);
-  Result res = results.get(ctx->children[0]);
-  results.put(ctx, res);
+  // // Just in case we 
+  // Result res;
+  // res.setValue(0);
+  // results.put(ctx, res);
   return nullptr;
 }
 
-Any Compiler::visitExprExpression(PostParser::ExprExpressionContext* ctx)
+Any Compiler::visitExprExpression(CoraxParser::ExprExpressionContext* ctx)
 {
   visitChildren(ctx);
   Result res = results.get(ctx->children[0]);
@@ -221,7 +252,7 @@ Any Compiler::visitExprExpression(PostParser::ExprExpressionContext* ctx)
 }
 
 // Simple primaries
-Any Compiler::visitIdentifier(PostParser::IdentifierContext* ctx)
+Any Compiler::visitIdentifier(CoraxParser::IdentifierContext* ctx)
 {
   Result res;
   try {
@@ -235,7 +266,7 @@ Any Compiler::visitIdentifier(PostParser::IdentifierContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitConstInt(PostParser::ConstIntContext* ctx)
+Any Compiler::visitConstInt(CoraxParser::ConstIntContext* ctx)
 {
   int value = stoi(ctx->getText());
   Result res;
@@ -244,7 +275,7 @@ Any Compiler::visitConstInt(PostParser::ConstIntContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitConstFlt(PostParser::ConstFltContext* ctx)
+Any Compiler::visitConstFlt(CoraxParser::ConstFltContext* ctx)
 {
   float value = stof(ctx->getText());
   Result res;
@@ -254,14 +285,14 @@ Any Compiler::visitConstFlt(PostParser::ConstFltContext* ctx)
 }
 
 // not sure what to do with a string yet
-Any Compiler::visitString(PostParser::StringContext* ctx)
+Any Compiler::visitString(CoraxParser::StringContext* ctx)
 {
   Result res;
   results.put(ctx, res);
   return nullptr;
 }
 
-Any Compiler::visitGroup(PostParser::GroupContext* ctx)
+Any Compiler::visitGroup(CoraxParser::GroupContext* ctx)
 {
   visitChildren(ctx);
   Result res = results.get(ctx->expression());
@@ -270,7 +301,7 @@ Any Compiler::visitGroup(PostParser::GroupContext* ctx)
 }
 
 // simple arithmetic
-Any Compiler::visitMult(PostParser::MultContext* ctx)
+Any Compiler::visitMult(CoraxParser::MultContext* ctx)
 {
   visitChildren(ctx);
   Mult oper(ctx, currentScope, currentFunction, this);
@@ -280,7 +311,7 @@ Any Compiler::visitMult(PostParser::MultContext* ctx)
 }
 
 // Assignments
-Any Compiler::visitAssignment(PostParser::AssignmentContext* ctx)
+Any Compiler::visitAssignment(CoraxParser::AssignmentContext* ctx)
 {
   visitChildren(ctx);
   Assign oper(ctx, currentScope, currentFunction, this);
@@ -289,12 +320,12 @@ Any Compiler::visitAssignment(PostParser::AssignmentContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitDereference(PostParser::DereferenceContext *ctx) 
+Any Compiler::visitDereference(CoraxParser::DereferenceContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitNegation(PostParser::NegationContext *ctx) 
+Any Compiler::visitNegation(CoraxParser::NegationContext *ctx) 
 {
   visitChildren(ctx);
   Negate oper(ctx, currentScope, currentFunction, this);
@@ -303,7 +334,7 @@ Any Compiler::visitNegation(PostParser::NegationContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitIncrementUnary(PostParser::IncrementUnaryContext *ctx) 
+Any Compiler::visitIncrementUnary(CoraxParser::IncrementUnaryContext *ctx) 
 {
   visitChildren(ctx);
   IncrPre oper(ctx, currentScope, currentFunction, this);
@@ -319,17 +350,17 @@ Any Compiler::visitIncrementUnary(PostParser::IncrementUnaryContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitAddress(PostParser::AddressContext *ctx) 
+Any Compiler::visitAddress(CoraxParser::AddressContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitIndexing(PostParser::IndexingContext *ctx) 
+Any Compiler::visitIndexing(CoraxParser::IndexingContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitIncrementPost(PostParser::IncrementPostContext *ctx) 
+Any Compiler::visitIncrementPost(CoraxParser::IncrementPostContext *ctx) 
 {
   visitChildren(ctx);
   IncrPost oper(ctx, currentScope, currentFunction, this);
@@ -345,19 +376,19 @@ Any Compiler::visitIncrementPost(PostParser::IncrementPostContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitSizeof(PostParser::SizeofContext *ctx) 
+Any Compiler::visitSizeof(CoraxParser::SizeofContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitPositive(PostParser::PositiveContext *ctx) 
+Any Compiler::visitPositive(CoraxParser::PositiveContext *ctx) 
 {
   visitChildren(ctx);
   results.put(ctx, results.get(ctx->expr_cast()));
   return nullptr;
 }
 
-Any Compiler::visitDecrementPost(PostParser::DecrementPostContext *ctx) 
+Any Compiler::visitDecrementPost(CoraxParser::DecrementPostContext *ctx) 
 {
   visitChildren(ctx);
   DecrPost oper(ctx, currentScope, currentFunction, this);
@@ -373,7 +404,7 @@ Any Compiler::visitDecrementPost(PostParser::DecrementPostContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitDecrementUnary(PostParser::DecrementUnaryContext *ctx) 
+Any Compiler::visitDecrementUnary(CoraxParser::DecrementUnaryContext *ctx) 
 {
   visitChildren(ctx);
   DecrPre oper(ctx, currentScope, currentFunction, this);
@@ -389,17 +420,17 @@ Any Compiler::visitDecrementUnary(PostParser::DecrementUnaryContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitSizeofType(PostParser::SizeofTypeContext *ctx) 
+Any Compiler::visitSizeofType(CoraxParser::SizeofTypeContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitIndirectMember(PostParser::IndirectMemberContext *ctx) 
+Any Compiler::visitIndirectMember(CoraxParser::IndirectMemberContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitNegative(PostParser::NegativeContext *ctx) 
+Any Compiler::visitNegative(CoraxParser::NegativeContext *ctx) 
 {
   visitChildren(ctx);
   Negative oper(ctx, currentScope, currentFunction, this);
@@ -420,7 +451,7 @@ Any Compiler::visitNegative(PostParser::NegativeContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitNot(PostParser::NotContext *ctx) 
+Any Compiler::visitNot(CoraxParser::NotContext *ctx) 
 {
   visitChildren(ctx);
   Not oper(ctx, currentScope, currentFunction, this);
@@ -441,17 +472,17 @@ Any Compiler::visitNot(PostParser::NotContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitMember(PostParser::MemberContext *ctx) 
+Any Compiler::visitMember(CoraxParser::MemberContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitCast(PostParser::CastContext *ctx) 
+Any Compiler::visitCast(CoraxParser::CastContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitMinus(PostParser::MinusContext *ctx) 
+Any Compiler::visitMinus(CoraxParser::MinusContext *ctx) 
 {
   visitChildren(ctx);
   Sub oper(ctx, currentScope, currentFunction, this);
@@ -460,7 +491,7 @@ Any Compiler::visitMinus(PostParser::MinusContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitMod(PostParser::ModContext *ctx) 
+Any Compiler::visitMod(CoraxParser::ModContext *ctx) 
 {
   visitChildren(ctx);
   Mod oper(ctx, currentScope, currentFunction, this);
@@ -478,7 +509,7 @@ Any Compiler::visitMod(PostParser::ModContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitOr(PostParser::OrContext *ctx) 
+Any Compiler::visitOr(CoraxParser::OrContext *ctx) 
 {
   visitChildren(ctx);
   Or oper(ctx, currentScope, currentFunction, this);
@@ -487,7 +518,7 @@ Any Compiler::visitOr(PostParser::OrContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitNotEqual(PostParser::NotEqualContext *ctx) 
+Any Compiler::visitNotEqual(CoraxParser::NotEqualContext *ctx) 
 {
   visitChildren(ctx);
   NotEqual oper(ctx, currentScope, currentFunction, this);
@@ -496,7 +527,7 @@ Any Compiler::visitNotEqual(PostParser::NotEqualContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitLess(PostParser::LessContext *ctx) 
+Any Compiler::visitLess(CoraxParser::LessContext *ctx) 
 {
   visitChildren(ctx);
   Less oper(ctx, currentScope, currentFunction, this);
@@ -505,7 +536,7 @@ Any Compiler::visitLess(PostParser::LessContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitBit_or(PostParser::Bit_orContext *ctx) 
+Any Compiler::visitBit_or(CoraxParser::Bit_orContext *ctx) 
 {
   visitChildren(ctx);
   BitOr oper(ctx, currentScope, currentFunction, this);
@@ -530,7 +561,7 @@ Any Compiler::visitBit_or(PostParser::Bit_orContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitPlus(PostParser::PlusContext *ctx) 
+Any Compiler::visitPlus(CoraxParser::PlusContext *ctx) 
 {
   visitChildren(ctx);
   Add oper(ctx, currentScope, currentFunction, this);
@@ -539,7 +570,7 @@ Any Compiler::visitPlus(PostParser::PlusContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitGreater_equal(PostParser::Greater_equalContext *ctx) 
+Any Compiler::visitGreater_equal(CoraxParser::Greater_equalContext *ctx) 
 {
   visitChildren(ctx);
   GreaterEqual oper(ctx, currentScope, currentFunction, this);
@@ -548,7 +579,7 @@ Any Compiler::visitGreater_equal(PostParser::Greater_equalContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitDiv(PostParser::DivContext *ctx) 
+Any Compiler::visitDiv(CoraxParser::DivContext *ctx) 
 {
   visitChildren(ctx);
   Div oper(ctx, currentScope, currentFunction, this);
@@ -557,7 +588,7 @@ Any Compiler::visitDiv(PostParser::DivContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitEqual(PostParser::EqualContext *ctx) 
+Any Compiler::visitEqual(CoraxParser::EqualContext *ctx) 
 {
   visitChildren(ctx);
   Equal oper(ctx, currentScope, currentFunction, this);
@@ -566,7 +597,7 @@ Any Compiler::visitEqual(PostParser::EqualContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitShiftLeft(PostParser::ShiftLeftContext *ctx) 
+Any Compiler::visitShiftLeft(CoraxParser::ShiftLeftContext *ctx) 
 {
   visitChildren(ctx);
   Shiftl oper(ctx, currentScope, currentFunction, this);
@@ -591,7 +622,7 @@ Any Compiler::visitShiftLeft(PostParser::ShiftLeftContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitShiftRight(PostParser::ShiftRightContext *ctx) 
+Any Compiler::visitShiftRight(CoraxParser::ShiftRightContext *ctx) 
 {
   visitChildren(ctx);
   Shiftr oper(ctx, currentScope, currentFunction, this);
@@ -616,7 +647,7 @@ Any Compiler::visitShiftRight(PostParser::ShiftRightContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitBit_xor(PostParser::Bit_xorContext *ctx) 
+Any Compiler::visitBit_xor(CoraxParser::Bit_xorContext *ctx) 
 {
   visitChildren(ctx);
   BitXor oper(ctx, currentScope, currentFunction, this);
@@ -641,7 +672,7 @@ Any Compiler::visitBit_xor(PostParser::Bit_xorContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitAnd(PostParser::AndContext *ctx) 
+Any Compiler::visitAnd(CoraxParser::AndContext *ctx) 
 {
   visitChildren(ctx);
   And oper(ctx, currentScope, currentFunction, this);
@@ -650,7 +681,7 @@ Any Compiler::visitAnd(PostParser::AndContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitBit_and(PostParser::Bit_andContext *ctx) 
+Any Compiler::visitBit_and(CoraxParser::Bit_andContext *ctx) 
 {
   visitChildren(ctx);
   BitAnd oper(ctx, currentScope, currentFunction, this);
@@ -675,7 +706,7 @@ Any Compiler::visitBit_and(PostParser::Bit_andContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitGreater(PostParser::GreaterContext *ctx) 
+Any Compiler::visitGreater(CoraxParser::GreaterContext *ctx) 
 {
   visitChildren(ctx);
   Greater oper(ctx, currentScope, currentFunction, this);
@@ -684,7 +715,7 @@ Any Compiler::visitGreater(PostParser::GreaterContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitLess_equal(PostParser::Less_equalContext *ctx) 
+Any Compiler::visitLess_equal(CoraxParser::Less_equalContext *ctx) 
 {
   visitChildren(ctx);
   LessEqual oper(ctx, currentScope, currentFunction, this);
@@ -693,77 +724,72 @@ Any Compiler::visitLess_equal(PostParser::Less_equalContext *ctx)
   return nullptr;
 }
 
-Any Compiler::visitTernary(PostParser::TernaryContext *ctx) 
+Any Compiler::visitTernary(CoraxParser::TernaryContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentMult(PostParser::AssignmentMultContext *ctx) 
+Any Compiler::visitAssignmentMult(CoraxParser::AssignmentMultContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentDiv(PostParser::AssignmentDivContext *ctx) 
+Any Compiler::visitAssignmentDiv(CoraxParser::AssignmentDivContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentMod(PostParser::AssignmentModContext *ctx) 
+Any Compiler::visitAssignmentMod(CoraxParser::AssignmentModContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentPlus(PostParser::AssignmentPlusContext *ctx) 
+Any Compiler::visitAssignmentPlus(CoraxParser::AssignmentPlusContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentMinus(PostParser::AssignmentMinusContext *ctx) 
+Any Compiler::visitAssignmentMinus(CoraxParser::AssignmentMinusContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentShiftLeft(PostParser::AssignmentShiftLeftContext *ctx) 
+Any Compiler::visitAssignmentShiftLeft(CoraxParser::AssignmentShiftLeftContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentShiftRight(PostParser::AssignmentShiftRightContext *ctx) 
+Any Compiler::visitAssignmentShiftRight(CoraxParser::AssignmentShiftRightContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentBitAnd(PostParser::AssignmentBitAndContext *ctx) 
+Any Compiler::visitAssignmentBitAnd(CoraxParser::AssignmentBitAndContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentBitXor(PostParser::AssignmentBitXorContext *ctx) 
+Any Compiler::visitAssignmentBitXor(CoraxParser::AssignmentBitXorContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitAssignmentBitOr(PostParser::AssignmentBitOrContext *ctx) 
+Any Compiler::visitAssignmentBitOr(CoraxParser::AssignmentBitOrContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitArglist(PostParser::ArglistContext *ctx) 
+Any Compiler::visitComma(CoraxParser::CommaContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitComma(PostParser::CommaContext *ctx) 
+Any Compiler::visitExpr_const(CoraxParser::Expr_constContext *ctx) 
 {
   return visitChildren(ctx);
 }
 
-Any Compiler::visitExpr_const(PostParser::Expr_constContext *ctx) 
-{
-  return visitChildren(ctx);
-}
-
-Any Compiler::visitInitAssign(PostParser::InitAssignContext* ctx) 
+Any Compiler::visitInitAssign(CoraxParser::InitAssignContext* ctx) 
 {
   visitChildren(ctx);
 
@@ -789,7 +815,7 @@ Any Compiler::visitInitAssign(PostParser::InitAssignContext* ctx)
   return nullptr;
 }
 
-Any Compiler::visitInitDeclAssigned(PostParser::InitDeclAssignedContext* ctx)
+Any Compiler::visitInitDeclAssigned(CoraxParser::InitDeclAssignedContext* ctx)
 {
   visit(ctx->declarator());
   // last identifier on the current scope is our boy

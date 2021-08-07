@@ -132,9 +132,9 @@ void CorvassemblyTarget::TranslateNot(Instruction& inst)
   Register& ass = PrepareAssign(*inst.assignment);
 
   if (&ass == &op1)
-    AddLine(mnemonic + " " + op1.name);
+    AddLine("not " + op1.name);
   else
-    AddLine(mnemonic + " " + op1.name + ", " + ass.loaded.to_string());
+    AddLine("not " + op1.name + ", " + ass.loaded->to_string());
 
   UpdateRegister(ass);
   ManageStorage(ass);

@@ -244,6 +244,9 @@ class OperatorBase {
       res.setValue(ass);
     }
 
+    // for functions
+    virtual void perform(Identifier& f, vector<Result> args, Result& res) { throw 1; }
+
     // needs access to the symbols table!
     SymbolTable* table;
     // will add the instruction to the current function
@@ -925,4 +928,19 @@ class DecrPre : public OperatorBase {
     }
 
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::SUB; }
+};
+
+class Call : public OperatorBase {
+  public:
+    using OperatorBase::OperatorBase;
+
+    void perform(Identifier& f, vector<Result> args, Result& res) override
+    {
+      Identifier& ass = manageTemps(f.dataType);
+      func->function.add(Instruction(ctx, getAbstr(), f, args, ass));
+  
+      res.setValue(ass);
+    }
+
+    Instruction::Abstr getAbstr() override { return Instruction::Abstr::CALL; }
 };

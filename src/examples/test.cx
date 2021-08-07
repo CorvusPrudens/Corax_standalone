@@ -1,25 +1,18 @@
 
-// int expression(int lhs, int rhs)
-// {
-//   return lhs + rhs;
-// }
+short global;
 
-int global = 0;
-
-int expr2(int lhs, int rhs)
+short add(short x, short y)
 {
-  volatile int temp = 2;
-  lhs = lhs + temp - 70 * rhs + global;
-  lhs = global++ / lhs++;
-  // return rhs++;
+  return x + y;
 }
 
-int global1 = 0;
-int global2 = 2 * 3;
+short expr(short x, short y)
+{
+  short temp = add(x, y);
+  return temp++; // note -- temp should be returned before the increment (which will be skipped)
+}
 
 void loop() 
 {
-  
-  // int main_temp = expression(global1, global2);
-
+  global = expr(2, global + 2) + expr(1, 2);
 }

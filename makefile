@@ -8,7 +8,7 @@ GRUN = java org.antlr.v4.gui.TestRig
 SRC  = ./src
 ANTLR4 = antlr4
 GRAMMARS = grammars
-POST   = Post
+POST = Corax
 PRE = Pre
 JAVA_PATH = build
 BUILD_PATH = ${SRC}/build
@@ -30,7 +30,7 @@ test_expr_post: post_expr_java_build post_expr_java_test
 
 .PHONY: all test clean build_cpp build_java parse_python test_java build_compiler update grammar
 
-grammar: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}Parser.g4 clean
+grammar: ${SRC}/${GRAMMARS}/${POST}.g4 ${SRC}/${GRAMMARS}/${PRE}.g4 clean
 	$(info Building main compiler...)
 	@ cd ${SRC}/${GRAMMARS}; ${ANTLR_REL} -visitor -Dlanguage=Cpp -o build/${POST} ${POST}.g4;
 	$(info Building pre-compiler...)

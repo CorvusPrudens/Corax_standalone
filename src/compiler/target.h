@@ -79,6 +79,7 @@ class BaseTarget {
     virtual void TranslateConvert(Instruction& inst) { unsupported(inst); }
     virtual void TranslateAssign(Instruction& inst) { unsupported(inst); }
 
+    virtual void TranslateCall(Instruction& inst) { unsupported(inst); }
     virtual void TranslateStat(Instruction& inst);
 
     virtual void TranslateStore(Register& reg) { unsupported("register store"); }
@@ -88,7 +89,7 @@ class BaseTarget {
     typedef void (BaseTarget::*TranslateMethod)(Instruction&);
 
     // Corresponds to Instruction's Abstr enum
-    TranslateMethod methods[20] = {
+    TranslateMethod methods[21] = {
       &BaseTarget::TranslateDeref,
       &BaseTarget::TranslateNot,
       &BaseTarget::TranslateNegate,
@@ -108,6 +109,7 @@ class BaseTarget {
       &BaseTarget::TranslateAnd,
       &BaseTarget::TranslateOr,
       &BaseTarget::TranslateCmp,
+      &BaseTarget::TranslateCall,
       &BaseTarget::TranslateStat,
     };
 

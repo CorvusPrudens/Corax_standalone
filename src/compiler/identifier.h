@@ -220,8 +220,6 @@ class Result {
       }
       throw 3;
     }
-
-    
 };
 
 class Instruction {
@@ -247,6 +245,7 @@ class Instruction {
       AND,
       OR,
       CMP,
+      CALL,
       STATEMENT_END,
     };
 
@@ -260,6 +259,7 @@ class Instruction {
     };
 
     Instruction(ParserRuleContext* c, Abstr i); // for end of statements / nops
+    Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass); // for function calls
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass);
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass);
     Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass);
@@ -274,7 +274,9 @@ class Instruction {
     Cond condition;
     Result operand1;
     Result operand2;
+    vector<Result> args;
     Identifier* assignment;
+    Identifier* function;
     ParserRuleContext* ctx; // for easy error reporting
     bool single;
 

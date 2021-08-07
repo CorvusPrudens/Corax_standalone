@@ -61,26 +61,15 @@ int main(int argc, const char* argv[])
 
   Compiler comp(&code, &err);
 
-  CorvassemblyTarget cor(&comp);
-  cor.TranslateAll();
+  // CorvassemblyTarget cor(&comp);
+  // cor.TranslateAll();
 
-  string assembly = cor.to_string();
-  std::cout << assembly;
+  // string assembly = cor.to_string();
+  // std::cout << assembly;
 
-  // comp.Complete();
 
-  // std::cout << prepped;
 
-  // std::ifstream stream2;
-  // std::stringstream buffer;
-  // stream2.open(filename);
-  // buffer << stream2.rdbuf();
-
-  // std::cout << buffer.str();
-
-  // stream2.open(filename);
-  // ANTLRInputStream postinput(stream2);
-  // comp.Process(&postinput);
+  comp.Complete();
 
   return 0;
 }

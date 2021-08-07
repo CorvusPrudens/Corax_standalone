@@ -31,3 +31,6 @@ ldr c, [b, -4]
 ~~~
   - the g and h registers should be renamed to sp and bp (stack pointer and base pointer)
   - we should be able to store data in program memory (stretch goal)
+  - we need a push / pop that uses the sp register!
+
+- With function calls, the convention will be for the callee to restore all registers is uses (i.e. a-f)

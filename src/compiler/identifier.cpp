@@ -429,6 +429,15 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i) {
   single = true;
 }
 
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass) 
+{
+  ctx = c;
+  instr = i;
+  function = &func;
+  assignment = &ass;
+  args = a;
+}
+
 Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass) {
   ctx = c;
   instr = i;
@@ -462,6 +471,8 @@ Instruction::Instruction(const Instruction& other) {
   operand1 = other.operand1;
   single = other.single;
   condition = other.condition;
+  function = other.function;
+  args = other.args;
   if (!single)
     operand2 = other.operand2;
   assignment = other.assignment;
@@ -524,6 +535,8 @@ string Instruction::name() {
           return "less than or equal to comparison";
       }
     }
+    case CALL:
+      return "function call";
     default:
       return "<unkown>";
   }
@@ -662,6 +675,18 @@ string Instruction::to_string() {
           s +=  "error comparison";
           break;
       }
+    }
+    break;
+    case CALL:
+    {
+      s += function->name + "(";
+      for (auto& arg : args) {
+        s += arg.to_string();
+        if (&arg != &args.back()) {
+          s += ", ";
+        }
+      }
+      s += ")";
     }
     break;
     case STATEMENT_END:

@@ -1,0 +1,24 @@
+
+void uart(unsigned char data) {}
+
+short fib(short term)
+{
+  if (term < 2) {
+    return term;
+  } else {
+    return fib(term - 1) + fib(term - 2);
+  }
+}
+
+void stop() 
+{
+  label:
+  goto label;
+}
+
+void loop() 
+{
+  short nth = fib(10);
+  uart(nth);
+  stop();
+}

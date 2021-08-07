@@ -7,10 +7,10 @@
 #include <vector>
 #include <memory>
 #include "antlr4-runtime.h"
-#include "PostLexer.h"
-#include "PostParser.h"
-#include "PostBaseVisitor.h"
-#include "PostBaseListener.h"
+#include "CoraxLexer.h"
+#include "CoraxParser.h"
+#include "CoraxBaseVisitor.h"
+#include "CoraxBaseListener.h"
 
 #include "identifier.h"
 #include "stable.h"
@@ -25,7 +25,7 @@ using std::unique_ptr;
 // forward declaration
 class OperatorBase;
 
-class Compiler : PostBaseVisitor {
+class Compiler : CoraxBaseVisitor {
 
   public:
     Compiler(ProcessedCode* code_, Error* err_, bool g = false);
@@ -44,9 +44,9 @@ class Compiler : PostBaseVisitor {
     tree::ParseTreeProperty<Result> results;
 
     ANTLRInputStream stream;
-    PostLexer lexer;
+    CoraxLexer lexer;
     CommonTokenStream tokens;
-    PostParser parser;
+    CoraxParser parser;
 
     ProcessedCode* code;
     Error* err;
@@ -71,104 +71,103 @@ class Compiler : PostBaseVisitor {
     // unary
     void operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase& oper);
 
-    Any visitParse(PostParser::ParseContext* ctx) override;
-    // Any visitTopDecl(PostParser::TopDeclContext* ctx) override;
-    // Any visitTopFunc(PostParser::TopFuncContext* ctx) override;
-    Any visitBlockDecl(PostParser::BlockDeclContext* ctx) override;
-    Any visitBlockStat(PostParser::BlockStatContext* ctx) override;
-    Any visitStat_compound(PostParser::Stat_compoundContext* ctx) override;
-    Any visitParamList(PostParser::ParamListContext* ctx) override;
-    Any visitTypeStd(PostParser::TypeStdContext* ctx) override;
-    Any visitTypeStructUnion(PostParser::TypeStructUnionContext* ctx) override;
-    Any visitTypeEnum(PostParser::TypeEnumContext* ctx) override;
-    Any visitTypeTypedef(PostParser::TypeTypedefContext* ctx) override;
-    Any visitFuncSpecifier(PostParser::FuncSpecifierContext* ctx) override;
-    Any visitStorageSpecifier(PostParser::StorageSpecifierContext* ctx) override;
-    Any visitDirId(PostParser::DirIdContext* ctx) override;
-    Any visitPointer_item(PostParser::Pointer_itemContext* ctx) override;
+    Any visitParse(CoraxParser::ParseContext* ctx) override;
+    // Any visitTopDecl(CoraxParser::TopDeclContext* ctx) override;
+    // Any visitTopFunc(CoraxParser::TopFuncContext* ctx) override;
+    Any visitBlockDecl(CoraxParser::BlockDeclContext* ctx) override;
+    Any visitBlockStat(CoraxParser::BlockStatContext* ctx) override;
+    Any visitStat_compound(CoraxParser::Stat_compoundContext* ctx) override;
+    Any visitParamList(CoraxParser::ParamListContext* ctx) override;
+    Any visitTypeStd(CoraxParser::TypeStdContext* ctx) override;
+    Any visitTypeStructUnion(CoraxParser::TypeStructUnionContext* ctx) override;
+    Any visitTypeEnum(CoraxParser::TypeEnumContext* ctx) override;
+    Any visitTypeTypedef(CoraxParser::TypeTypedefContext* ctx) override;
+    Any visitFuncSpecifier(CoraxParser::FuncSpecifierContext* ctx) override;
+    Any visitStorageSpecifier(CoraxParser::StorageSpecifierContext* ctx) override;
+    Any visitDirId(CoraxParser::DirIdContext* ctx) override;
+    Any visitPointer_item(CoraxParser::Pointer_itemContext* ctx) override;
 
     // Declarations
-    Any visitDeclaration(PostParser::DeclarationContext* ctx) override;
-    Any visitDeclarator(PostParser::DeclaratorContext* ctx) override;
-    Any visitDirFunc(PostParser::DirFuncContext* ctx) override;
-    Any visitFunc_def(PostParser::Func_defContext* ctx) override;
-    Any visitParamDecl(PostParser::ParamDeclContext* ctx) override;
-    Any visitParamAbst(PostParser::ParamAbstContext* ctx) override;
+    Any visitDeclaration(CoraxParser::DeclarationContext* ctx) override;
+    Any visitDeclarator(CoraxParser::DeclaratorContext* ctx) override;
+    Any visitDirFunc(CoraxParser::DirFuncContext* ctx) override;
+    Any visitFunc_def(CoraxParser::Func_defContext* ctx) override;
+    Any visitParamDecl(CoraxParser::ParamDeclContext* ctx) override;
+    Any visitParamAbst(CoraxParser::ParamAbstContext* ctx) override;
 
-    Any visitQualConst(PostParser::QualConstContext* ctx) override;
-    Any visitQualRestrict(PostParser::QualRestrictContext* ctx) override;
-    Any visitQualVolatile(PostParser::QualVolatileContext* ctx) override;
+    Any visitQualConst(CoraxParser::QualConstContext* ctx) override;
+    Any visitQualRestrict(CoraxParser::QualRestrictContext* ctx) override;
+    Any visitQualVolatile(CoraxParser::QualVolatileContext* ctx) override;
 
     // Expressions
-    Any visitDereference(PostParser::DereferenceContext *ctx) override;
-    Any visitIdentifier(PostParser::IdentifierContext *ctx) override;
-    Any visitNegation(PostParser::NegationContext *ctx) override;
-    Any visitIncrementUnary(PostParser::IncrementUnaryContext *ctx) override;
-    Any visitAddress(PostParser::AddressContext *ctx) override;
-    Any visitConstInt(PostParser::ConstIntContext *ctx) override;
-    Any visitConstFlt(PostParser::ConstFltContext *ctx) override;
-    Any visitString(PostParser::StringContext *ctx) override;
-    Any visitIndexing(PostParser::IndexingContext *ctx) override;
-    Any visitIncrementPost(PostParser::IncrementPostContext *ctx) override;
-    Any visitSizeof(PostParser::SizeofContext *ctx) override;
-    Any visitPositive(PostParser::PositiveContext *ctx) override;
-    Any visitDecrementPost(PostParser::DecrementPostContext *ctx) override;
-    Any visitDecrementUnary(PostParser::DecrementUnaryContext *ctx) override;
-    Any visitCall(PostParser::CallContext *ctx) override;
-    Any visitSizeofType(PostParser::SizeofTypeContext *ctx) override;
-    Any visitIndirectMember(PostParser::IndirectMemberContext *ctx) override;
-    Any visitNegative(PostParser::NegativeContext *ctx) override;
-    Any visitNot(PostParser::NotContext *ctx) override;
-    Any visitMember(PostParser::MemberContext *ctx) override;
-    Any visitGroup(PostParser::GroupContext *ctx) override;
-    Any visitExprCast(PostParser::ExprCastContext *ctx) override;
-    Any visitCast(PostParser::CastContext *ctx) override;
-    Any visitMinus(PostParser::MinusContext *ctx) override;
-    Any visitMult(PostParser::MultContext *ctx) override;
-    Any visitMod(PostParser::ModContext *ctx) override;
-    Any visitOr(PostParser::OrContext *ctx) override;
-    Any visitExprMulti(PostParser::ExprMultiContext *ctx) override;
-    Any visitNotEqual(PostParser::NotEqualContext *ctx) override;
-    Any visitLess(PostParser::LessContext *ctx) override;
-    Any visitBit_or(PostParser::Bit_orContext *ctx) override;
-    Any visitPlus(PostParser::PlusContext *ctx) override;
-    Any visitGreater_equal(PostParser::Greater_equalContext *ctx) override;
-    Any visitDiv(PostParser::DivContext *ctx) override;
-    Any visitEqual(PostParser::EqualContext *ctx) override;
-    Any visitShiftLeft(PostParser::ShiftLeftContext *ctx) override;
-    Any visitShiftRight(PostParser::ShiftRightContext *ctx) override;
-    Any visitBit_xor(PostParser::Bit_xorContext *ctx) override;
-    Any visitAnd(PostParser::AndContext *ctx) override;
-    Any visitBit_and(PostParser::Bit_andContext *ctx) override;
-    Any visitGreater(PostParser::GreaterContext *ctx) override;
-    Any visitLess_equal(PostParser::Less_equalContext *ctx) override;
-    Any visitExprTern(PostParser::ExprTernContext *ctx) override;
-    Any visitTernary(PostParser::TernaryContext *ctx) override;
-    Any visitExprAssi(PostParser::ExprAssiContext *ctx) override;
-    Any visitAssignment(PostParser::AssignmentContext *ctx) override;
-    Any visitAssignmentMult(PostParser::AssignmentMultContext *ctx) override;
-    Any visitAssignmentDiv(PostParser::AssignmentDivContext *ctx) override;
-    Any visitAssignmentMod(PostParser::AssignmentModContext *ctx) override;
-    Any visitAssignmentPlus(PostParser::AssignmentPlusContext *ctx) override;
-    Any visitAssignmentMinus(PostParser::AssignmentMinusContext *ctx) override;
-    Any visitAssignmentShiftLeft(PostParser::AssignmentShiftLeftContext *ctx) override;
-    Any visitAssignmentShiftRight(PostParser::AssignmentShiftRightContext *ctx) override;
-    Any visitAssignmentBitAnd(PostParser::AssignmentBitAndContext *ctx) override;
-    Any visitAssignmentBitXor(PostParser::AssignmentBitXorContext *ctx) override;
-    Any visitAssignmentBitOr(PostParser::AssignmentBitOrContext *ctx) override;
-    Any visitArglist(PostParser::ArglistContext *ctx) override;
-    Any visitExprList(PostParser::ExprListContext *ctx) override;
-    Any visitComma(PostParser::CommaContext *ctx) override;
-    Any visitExprExpression(PostParser::ExprExpressionContext *ctx) override;
-    Any visitExpr_const(PostParser::Expr_constContext *ctx) override;
+    Any visitDereference(CoraxParser::DereferenceContext *ctx) override;
+    Any visitIdentifier(CoraxParser::IdentifierContext *ctx) override;
+    Any visitNegation(CoraxParser::NegationContext *ctx) override;
+    Any visitIncrementUnary(CoraxParser::IncrementUnaryContext *ctx) override;
+    Any visitAddress(CoraxParser::AddressContext *ctx) override;
+    Any visitConstInt(CoraxParser::ConstIntContext *ctx) override;
+    Any visitConstFlt(CoraxParser::ConstFltContext *ctx) override;
+    Any visitString(CoraxParser::StringContext *ctx) override;
+    Any visitIndexing(CoraxParser::IndexingContext *ctx) override;
+    Any visitIncrementPost(CoraxParser::IncrementPostContext *ctx) override;
+    Any visitSizeof(CoraxParser::SizeofContext *ctx) override;
+    Any visitPositive(CoraxParser::PositiveContext *ctx) override;
+    Any visitDecrementPost(CoraxParser::DecrementPostContext *ctx) override;
+    Any visitDecrementUnary(CoraxParser::DecrementUnaryContext *ctx) override;
+    Any visitCall(CoraxParser::CallContext *ctx) override;
+    Any visitSizeofType(CoraxParser::SizeofTypeContext *ctx) override;
+    Any visitIndirectMember(CoraxParser::IndirectMemberContext *ctx) override;
+    Any visitNegative(CoraxParser::NegativeContext *ctx) override;
+    Any visitNot(CoraxParser::NotContext *ctx) override;
+    Any visitMember(CoraxParser::MemberContext *ctx) override;
+    Any visitGroup(CoraxParser::GroupContext *ctx) override;
+    Any visitExprCast(CoraxParser::ExprCastContext *ctx) override;
+    Any visitCast(CoraxParser::CastContext *ctx) override;
+    Any visitMinus(CoraxParser::MinusContext *ctx) override;
+    Any visitMult(CoraxParser::MultContext *ctx) override;
+    Any visitMod(CoraxParser::ModContext *ctx) override;
+    Any visitOr(CoraxParser::OrContext *ctx) override;
+    Any visitExprMulti(CoraxParser::ExprMultiContext *ctx) override;
+    Any visitNotEqual(CoraxParser::NotEqualContext *ctx) override;
+    Any visitLess(CoraxParser::LessContext *ctx) override;
+    Any visitBit_or(CoraxParser::Bit_orContext *ctx) override;
+    Any visitPlus(CoraxParser::PlusContext *ctx) override;
+    Any visitGreater_equal(CoraxParser::Greater_equalContext *ctx) override;
+    Any visitDiv(CoraxParser::DivContext *ctx) override;
+    Any visitEqual(CoraxParser::EqualContext *ctx) override;
+    Any visitShiftLeft(CoraxParser::ShiftLeftContext *ctx) override;
+    Any visitShiftRight(CoraxParser::ShiftRightContext *ctx) override;
+    Any visitBit_xor(CoraxParser::Bit_xorContext *ctx) override;
+    Any visitAnd(CoraxParser::AndContext *ctx) override;
+    Any visitBit_and(CoraxParser::Bit_andContext *ctx) override;
+    Any visitGreater(CoraxParser::GreaterContext *ctx) override;
+    Any visitLess_equal(CoraxParser::Less_equalContext *ctx) override;
+    Any visitExprTern(CoraxParser::ExprTernContext *ctx) override;
+    Any visitTernary(CoraxParser::TernaryContext *ctx) override;
+    Any visitExprAssi(CoraxParser::ExprAssiContext *ctx) override;
+    Any visitAssignment(CoraxParser::AssignmentContext *ctx) override;
+    Any visitAssignmentMult(CoraxParser::AssignmentMultContext *ctx) override;
+    Any visitAssignmentDiv(CoraxParser::AssignmentDivContext *ctx) override;
+    Any visitAssignmentMod(CoraxParser::AssignmentModContext *ctx) override;
+    Any visitAssignmentPlus(CoraxParser::AssignmentPlusContext *ctx) override;
+    Any visitAssignmentMinus(CoraxParser::AssignmentMinusContext *ctx) override;
+    Any visitAssignmentShiftLeft(CoraxParser::AssignmentShiftLeftContext *ctx) override;
+    Any visitAssignmentShiftRight(CoraxParser::AssignmentShiftRightContext *ctx) override;
+    Any visitAssignmentBitAnd(CoraxParser::AssignmentBitAndContext *ctx) override;
+    Any visitAssignmentBitXor(CoraxParser::AssignmentBitXorContext *ctx) override;
+    Any visitAssignmentBitOr(CoraxParser::AssignmentBitOrContext *ctx) override;
+    Any visitArg_expr_list(CoraxParser::Arg_expr_listContext* ctx) override;
+    Any visitComma(CoraxParser::CommaContext *ctx) override;
+    Any visitExprExpression(CoraxParser::ExprExpressionContext *ctx) override;
+    Any visitExpr_const(CoraxParser::Expr_constContext *ctx) override;
 
-    Any visitInitAssign(PostParser::InitAssignContext* ctx) override;
-    // Any visitInitList(PostParser::InitListContext* ctx) override;
-    Any visitInitDeclAssigned(PostParser::InitDeclAssignedContext* ctx) override;
+    Any visitInitAssign(CoraxParser::InitAssignContext* ctx) override;
+    // Any visitInitList(CoraxParser::InitListContext* ctx) override;
+    Any visitInitDeclAssigned(CoraxParser::InitDeclAssignedContext* ctx) override;
 
 };
 
-// class CompilerListener : PostBaseListener {
+// class CompilerListener : CoraxBaseListener {
 
 //   public:
 //     CompilerListener() {}
@@ -176,13 +175,13 @@ class Compiler : PostBaseVisitor {
 
 //     void Process(ANTLRInputStream* stream);
 
-//     void enterParse(PostParser::ParseContext* ctx) override;
-//     void enterVariable_init(PostParser::Variable_initContext* ctx) override;
+//     void enterParse(CoraxParser::ParseContext* ctx) override;
+//     void enterVariable_init(CoraxParser::Variable_initContext* ctx) override;
 
 //   private:
 
 //     std::vector<Variable> globals;
-//     PostParser* parse;
+//     CoraxParser* parse;
 
 // };
 

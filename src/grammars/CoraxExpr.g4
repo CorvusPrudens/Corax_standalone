@@ -32,6 +32,8 @@ expr_primary  : IDENTIFIER                         # identifier
               | 'sizeof' '(' type_name ')'         # sizeofType
               ;
 
+arg_expr_list : expr_assi (',' expr_assi)* ','?;
+
               // postfix
 // expr_postfix  : expr_primary                       # exprPostfix         
 //               | expr_postfix '[' expression ']'    # indexing
@@ -109,10 +111,6 @@ expr_assi     : expr_tern                     # exprAssi
               | expr_primary '&=' expr_assi   # assignmentBitAnd
               | expr_primary '^=' expr_assi   # assignmentBitXor
               | expr_primary '|=' expr_assi   # assignmentBitOr
-              ;
-
-arg_expr_list : expr_assi                       # exprList
-              | arg_expr_list ',' arg_expr_list # arglist
               ;
 
               // Comma

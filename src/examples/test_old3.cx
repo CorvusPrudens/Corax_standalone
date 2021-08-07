@@ -1,0 +1,25 @@
+
+// int expression(int lhs, int rhs)
+// {
+//   return lhs + rhs;
+// }
+
+int global = 0;
+
+int expr2(int lhs, int rhs)
+{
+  volatile int temp = 2;
+  lhs = lhs + temp - 70 * rhs + global;
+  lhs = global++ / lhs++;
+  // return rhs++;
+}
+
+int global1 = 0;
+int global2 = 2 * 3;
+
+void loop() 
+{
+  
+  // int main_temp = expression(global1, global2);
+
+}
