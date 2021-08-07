@@ -57,6 +57,10 @@ class Compiler : CoraxBaseVisitor {
     // TODO -- This should probably be refactored later to not suck
     std::vector<Identifier*> currentId;
     std::vector<Type*> currentType;
+    std::list<Result> tempResults;
+
+    Result& generateResult(Identifier& id);
+    Result& generateResult(Result& res);
 
     Graph graph;
     bool graphing = false;
@@ -160,6 +164,8 @@ class Compiler : CoraxBaseVisitor {
     Any visitComma(CoraxParser::CommaContext *ctx) override;
     Any visitExprExpression(CoraxParser::ExprExpressionContext *ctx) override;
     Any visitExpr_const(CoraxParser::Expr_constContext *ctx) override;
+
+    Any visitStatReturn(CoraxParser::StatReturnContext* ctx) override;
 
     Any visitInitAssign(CoraxParser::InitAssignContext* ctx) override;
     // Any visitInitList(CoraxParser::InitListContext* ctx) override;

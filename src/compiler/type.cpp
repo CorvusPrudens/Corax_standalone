@@ -140,3 +140,14 @@ int fetchPriority(Type t)
   }
   throw 1;
 }
+
+// TODO -- make this work with typedefs and structs / unions
+size_t Type::size()
+{
+  for (int i = 0; i < StandardTypes.size(); i++)
+  {
+    if (*this == *StandardTypes[i])
+      return StandardTypes[i]->bytes;
+  }
+  throw 1;
+}

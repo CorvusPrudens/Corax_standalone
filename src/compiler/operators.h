@@ -930,6 +930,21 @@ class DecrPre : public OperatorBase {
     Instruction::Abstr getAbstr() override { return Instruction::Abstr::SUB; }
 };
 
+// class Convert {
+//   public:
+//     STANDARD_PERFORM
+
+//     template <typename T>
+//     void operation(T v1, T v2, Result& res)
+//     {
+//       int out = !v1;
+//       res.setValue(out);
+//     }
+
+//     Instruction::Abstr getAbstr() override { return Instruction::Abstr::CONVERT; }
+
+// };
+
 class Call : public OperatorBase {
   public:
     using OperatorBase::OperatorBase;
@@ -937,6 +952,24 @@ class Call : public OperatorBase {
     void perform(Identifier& f, vector<Result> args, Result& res) override
     {
       Identifier& ass = manageTemps(f.dataType);
+      
+      for (int i = args.size() - 1; i > -1; i--) {
+        if (args[i].getType() != f.members[i].dataType) {
+          Identifier& tempass = manageTemps(f.members[i].dataType);
+          if (args[i].isConst())
+          {
+            Result res = args[i];
+            res.to(f.members[i].dataType);
+            func->function.add(Instruction(ctx, Instruction::Abstr::ASSIGN, res, tempass));
+          }
+          else
+          {
+            func->function.add(Instruction(ctx, Instruction::Abstr::CONVERT, args[i], tempass));
+          }
+          args[i].setValue(tempass);
+        }
+      }
+      
       func->function.add(Instruction(ctx, getAbstr(), f, args, ass));
   
       res.setValue(ass);

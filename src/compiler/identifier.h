@@ -138,6 +138,9 @@ class Result {
       id = &new_id;
     }
 
+    size_t getSize();
+    Type& getType();
+
     void setValue(long double val);
     void setValue(double val);
     void setValue(float val);
@@ -246,6 +249,8 @@ class Instruction {
       OR,
       CMP,
       CALL,
+      SETUP,
+      RETURN,
       STATEMENT_END,
     };
 
@@ -259,6 +264,7 @@ class Instruction {
     };
 
     Instruction(ParserRuleContext* c, Abstr i); // for end of statements / nops
+    Instruction(ParserRuleContext* c, Abstr i, Result op1); // for returns
     Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass); // for function calls
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass);
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass);

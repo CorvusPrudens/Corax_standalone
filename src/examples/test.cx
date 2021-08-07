@@ -9,7 +9,9 @@ short add(short x, short y)
 short expr(short x, short y)
 {
   short temp = add(x, y);
-  return temp++; // note -- temp should be returned before the increment (which will be skipped)
+  // TODO -- make this post increment not mess with the A register
+  return temp++; 
+  // note -- temp should be returned before the increment (which will be skipped)
 }
 
 void loop() 

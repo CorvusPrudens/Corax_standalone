@@ -179,6 +179,19 @@ Result::Result(const Result& other)
   kind = other.kind;
 }
 
+size_t Result::getSize()
+{
+  return getType().size();
+}
+
+Type& Result::getType()
+{
+  if (kind == Kind::ID)
+    return id->dataType;
+  else
+    return type;
+}
+
 #define T_EQUAL(T) \
 T temp = as<T>(); \
 T oth = other.as<T>(); \
@@ -429,6 +442,13 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i) {
   single = true;
 }
 
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1) {
+  ctx = c;
+  instr = i;
+  operand1 = op1;
+  single = true;
+}
+
 Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass) 
 {
   ctx = c;
@@ -544,7 +564,7 @@ string Instruction::name() {
 
 string Instruction::to_string() {
   string s = "";
-  if (instr != STATEMENT_END) {
+  if (instr != STATEMENT_END && instr != RETURN && instr != SETUP) {
     s = assignment->name + " = ";
   }
   switch (instr) {
@@ -687,6 +707,21 @@ string Instruction::to_string() {
         }
       }
       s += ")";
+    }
+    break;
+    case SETUP:
+    {
+      s += "<function setup>";
+    }
+    break;
+    case RETURN:
+    {
+      if (operand1.isConst() && operand1.type == void_) {
+        s += "return";
+      } else {
+        s += "return " + operand1.id->name;
+      }
+      
     }
     break;
     case STATEMENT_END:

@@ -47,6 +47,7 @@ void Register::flush()
   latest = 0;
   status = Status::FREE;
   requires_storage = false;
+  operationStep = 0;
 }
 
 void BaseTarget::TranslateAll()
@@ -355,4 +356,23 @@ string BaseTarget::to_string()
     output += "\n";
   }
   return output;
+}
+
+Register& BaseTarget::GetStackPointer()
+{
+  for (auto& reg : registers)
+  {
+    if (reg.rank == Register::Rank::STACK_POINTER)
+      return reg;
+  }
+  throw 1;
+}
+Register& BaseTarget::GetBasePointer()
+{
+  for (auto& reg : registers)
+  {
+    if (reg.rank == Register::Rank::BASE_POINTER)
+      return reg;
+  }
+  throw 1;
 }

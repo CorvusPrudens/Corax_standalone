@@ -61,11 +61,11 @@ int main(int argc, const char* argv[])
 
   Compiler comp(&code, &err);
 
-  // CorvassemblyTarget cor(&comp);
-  // cor.TranslateAll();
+  CorvassemblyTarget cor(&comp);
+  cor.TranslateAll();
 
-  // string assembly = cor.to_string();
-  // std::cout << assembly;
+  string assembly = cor.to_string();
+  std::cout << assembly;
 
 
 

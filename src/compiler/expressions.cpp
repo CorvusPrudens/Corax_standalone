@@ -200,6 +200,23 @@ Any Compiler::visitCall(CoraxParser::CallContext* ctx)
   return nullptr;
 }
 
+Any Compiler::visitStatReturn(CoraxParser::StatReturnContext* ctx)
+{
+  visitChildren(ctx);
+  if (ctx->expression() != nullptr)
+  {
+    currentFunction->function.add(Instruction(ctx, Instruction::RETURN, results.get(ctx->expression())));
+  }
+  else
+  {
+    Result res;
+    res.setValue(0);
+    res.type.type_specifiers = {"void"};
+    currentFunction->function.add(Instruction(ctx, Instruction::RETURN, res));
+  }
+  return nullptr;
+}
+
 // Simple passthroughs
 Any Compiler::visitExprCast(CoraxParser::ExprCastContext* ctx)
 {

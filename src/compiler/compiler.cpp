@@ -29,6 +29,20 @@ void Compiler::Complete()
   else err->Report();
 }
 
+Result& Compiler::generateResult(Identifier& id)
+{
+  Result res;
+  res.setValue(id);
+  tempResults.push_back(res);
+  return tempResults.back();
+}
+
+Result& Compiler::generateResult(Result& res)
+{
+  tempResults.push_back(res);
+  return tempResults.back();
+}
+
 // void Compiler::Process(ProcessedCode* code_, Error* err_)
 // {
 //   code = code_;
@@ -226,6 +240,7 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
     inherit = true;
     // the last identifier added to the global scope _must_ be the function
     currentFunction = &globalTable->GetLast();
+    currentFunction->function.add(Instruction(ctx, Instruction::SETUP));
     if (graphing) graph.Addf(currentFunction->name);
     for (auto &arg : currentFunction->members)
       currentScope->AddSymbol(arg);

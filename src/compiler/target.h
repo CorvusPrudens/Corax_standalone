@@ -80,6 +80,8 @@ class BaseTarget {
     virtual void TranslateAssign(Instruction& inst) { unsupported(inst); }
 
     virtual void TranslateCall(Instruction& inst) { unsupported(inst); }
+    virtual void TranslateSetup(Instruction& inst) { unsupported(inst); }
+    virtual void TranslateReturn(Instruction& inst) { unsupported(inst); }
     virtual void TranslateStat(Instruction& inst);
 
     virtual void TranslateStore(Register& reg) { unsupported("register store"); }
@@ -89,7 +91,7 @@ class BaseTarget {
     typedef void (BaseTarget::*TranslateMethod)(Instruction&);
 
     // Corresponds to Instruction's Abstr enum
-    TranslateMethod methods[21] = {
+    TranslateMethod methods[23] = {
       &BaseTarget::TranslateDeref,
       &BaseTarget::TranslateNot,
       &BaseTarget::TranslateNegate,
@@ -110,6 +112,8 @@ class BaseTarget {
       &BaseTarget::TranslateOr,
       &BaseTarget::TranslateCmp,
       &BaseTarget::TranslateCall,
+      &BaseTarget::TranslateSetup,
+      &BaseTarget::TranslateReturn,
       &BaseTarget::TranslateStat,
     };
 
@@ -146,6 +150,14 @@ class BaseTarget {
     virtual Register::Data FetchDataType(Result& res);
     virtual Register::Data FetchDataType(Identifier& id);
 
+    /** Returns the first register with the rank of STACK_POINTER
+     */
+    virtual Register& GetStackPointer();
+
+    /** Returns the first register with the rank of BASE_POINTER
+     */
+    virtual Register& GetBasePointer();
+
     /** Similar to PrepareResult without loading any values --
      *  i.e. for setting up assignments
      */
@@ -167,6 +179,7 @@ class BaseTarget {
     string targetName;
     vector<Register> registers;
     vector<FuncTrans> translations;
+    Register* returnVal;
     unsigned int operationStep;
     std::list<Result> temp_results;
 

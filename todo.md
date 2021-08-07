@@ -34,3 +34,5 @@ ldr c, [b, -4]
   - we need a push / pop that uses the sp register!
 
 - With function calls, the convention will be for the callee to restore all registers is uses (i.e. a-f)
+- BUG -- inline comments after code cause the error reporting to move down by a line
+- Need to add implicit return (if not given)

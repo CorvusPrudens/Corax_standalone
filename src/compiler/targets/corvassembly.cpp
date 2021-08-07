@@ -17,6 +17,8 @@ CorvassemblyTarget::CorvassemblyTarget(Compiler* c)
     Register("sp", Register::Data::INTEGER, Register::Rank::STACK_POINTER, 2),
     Register("bp", Register::Data::INTEGER, Register::Rank::BASE_POINTER, 2),
   };
+
+  returnVal = &registers[0];
 }
 
 void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
@@ -171,6 +173,69 @@ void CorvassemblyTarget::TranslateAssign(Instruction& inst)
       // StoreRegister(op2, *inst.assignment);
     }
 }
+
+void CorvassemblyTarget::TranslateCall(Instruction& inst)
+{
+  // the A register is the only one we'll save before the jump
+  if (returnVal->loaded != nullptr && !returnVal->loaded->isConst())
+    StoreRegister(*returnVal);
+  for (int i = inst.args.size() - 1; i > -1; i--)
+  {
+    Register& pr = PrepareResult(inst.args[i]);
+    AddLine("push " + pr.name);
+  }
+  AddLine("push <address + 4>");
+  AddLine("jmp " + inst.function->name);
+
+  size_t sp_offset = 0;
+  for (auto& arg : inst.args)
+    sp_offset += arg.getSize() / 2; // corvassembly is a strictly 16-bit-word language
+  AddLine("add " + GetStackPointer().name + ", " + std::to_string(sp_offset + 1));
+  // Register& reg = PrepareAssign(inst.assignment);
+  try {
+    Register& ass = CheckLoaded(*inst.assignment);
+    AddLine("add " + returnVal->name + ", 0, " + ass.name);
+    UpdateRegister(ass);
+    ManageStorage(ass);
+  } catch (int e) {
+    Result& res = GenerateResult(*inst.assignment);
+    returnVal->load(res);
+    UpdateRegister(*returnVal);
+    ManageStorage(*returnVal);
+  }
+}
+
+#define FUNC_END \
+AddLine("<restore used>"); \
+AddLine("add bp, 0, " + GetStackPointer().name); \
+AddLine("pop " + GetBasePointer().name); \
+AddLine("jmp [" + GetStackPointer().name + "]");
+
+// TODO -- this could be optimized better!!
+void CorvassemblyTarget::TranslateReturn(Instruction& inst)
+{
+  if (inst.operand1.isConst() && inst.operand1.type == void_) {
+    FUNC_END
+  }
+  else
+  {
+    Register& ret = PrepareResult(inst.operand1);
+    if (&ret != returnVal) {
+      StoreRegister(*returnVal);
+      AddLine("add " + ret.name + ", 0, " + returnVal->name);
+      returnVal->load(inst.operand1);
+    }
+    FUNC_END
+  }
+  
+
+}
+
+void CorvassemblyTarget::TranslateSetup(Instruction& inst)
+{
+  AddLine("<save used>");
+}
+
 // will only work if it's been loaded _and_ has a non-const loaded value
 void CorvassemblyTarget::TranslateStore(Register& reg)
 {

@@ -119,6 +119,7 @@ struct Type {
   // }
 
   string to_string();
+  size_t size();
 
   // bool operator==(Type& other) {
   //   return equal(other);
