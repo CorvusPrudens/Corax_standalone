@@ -64,11 +64,14 @@ Identifier::Identifier(const Identifier& other)
 
 bool Identifier::equal(Identifier& other)
 {
+  bool equal = other.type == type;
+  if (!equal)
+    return false;
+
   switch(type)
   {
     case IdType::FUNCTION:
       {
-        bool equal = other.type == IdType::FUNCTION;
         equal = equal && other.dataType == dataType;
         equal = equal && other.returnType == returnType;
         // TODO -- this needs expansion:
@@ -84,30 +87,30 @@ bool Identifier::equal(Identifier& other)
       }
     case IdType::STRUCT:
       {
-        bool equal = other.type == IdType::STRUCT;
         equal = equal && other.dataType == dataType;
         equal = equal && EqualVectors(other.members, members);
         return equal;
       }
     case IdType::UNION:
       {
-        bool equal = other.type == IdType::UNION;
         equal = equal && other.dataType == dataType;
         equal = equal && EqualVectors(other.members, members);
         return equal;
       }
     case IdType::VARIABLE:
       {
-        bool equal = other.type == IdType::VARIABLE;
         return equal && other.dataType == dataType && other.name == name;
       }
     case IdType::ARRAY:
       {
-        bool equal = other.type == IdType::FUNCTION;
         equal = equal && other.dataType == dataType;
         equal = equal && other.returnType == returnType;
         equal = equal && EqualVectors(other.members, members);
         return equal;
+      }
+    case IdType::LABEL:
+      {
+        return equal && name == other.name;
       }
     default:
       return false;
@@ -436,21 +439,38 @@ void Result::setValue(char val)
   *ptr = val;
 }
 
+#define SET_NULLS \
+assignment = nullptr; \
+function = nullptr; \
+label1 = nullptr; \
+label2 = nullptr;
+
 Instruction::Instruction(ParserRuleContext* c, Abstr i) {
+  SET_NULLS
   ctx = c;
   instr = i;
   single = true;
 }
 
 Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1) {
+  SET_NULLS
   ctx = c;
   instr = i;
   operand1 = op1;
   single = true;
 }
 
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& label)
+{
+  SET_NULLS
+  ctx = c;
+  instr = i;
+  label1 = &label;
+}
+
 Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass) 
 {
+  SET_NULLS
   ctx = c;
   instr = i;
   function = &func;
@@ -458,7 +478,9 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector
   args = a;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass) {
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass) 
+{
+  SET_NULLS
   ctx = c;
   instr = i;
   operand1 = op1;
@@ -466,7 +488,19 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& 
   assignment = &ass;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass) {
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2)
+{
+  SET_NULLS
+  ctx = c;
+  instr = i;
+  operand1 = op1;
+  operand2 = op2;
+  single = false;
+}
+
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass) 
+{
+  SET_NULLS
   ctx = c;
   instr = i;
   operand1 = op1;
@@ -475,7 +509,9 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, 
   assignment = &ass;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass) {
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass) 
+{
+  SET_NULLS
   ctx = c;
   instr = i;
   condition = co;
@@ -483,6 +519,19 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Res
   operand2 = op2;
   single = false;
   assignment = &ass;
+}
+
+Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& lab1, Identifier& lab2)
+{
+  SET_NULLS
+  ctx = c;
+  instr = i;
+  condition = co;
+  operand1 = op1;
+  operand2 = op2;
+  label1 = &lab1;
+  label2 = &lab2;
+  single = false;
 }
 
 Instruction::Instruction(const Instruction& other) {
@@ -496,6 +545,8 @@ Instruction::Instruction(const Instruction& other) {
   if (!single)
     operand2 = other.operand2;
   assignment = other.assignment;
+  label1 = other.label1;
+  label2 = other.label2;
 }
 
 string Instruction::name() {
@@ -557,6 +608,16 @@ string Instruction::name() {
     }
     case CALL:
       return "function call";
+    case RETURN:
+      return "return statement";
+    case SETUP:
+      return "function setup";
+    case IF:
+      return "if statement";
+    case LABEL:
+      return "labeled statement";
+    case CONDITIONAL:
+      return "conditional jump";
     default:
       return "<unkown>";
   }
@@ -564,7 +625,14 @@ string Instruction::name() {
 
 string Instruction::to_string() {
   string s = "";
-  if (instr != STATEMENT_END && instr != RETURN && instr != SETUP) {
+  if (
+    instr != STATEMENT_END && 
+    instr != RETURN && 
+    instr != SETUP &&
+    instr != IF &&
+    instr != LABEL &&
+    instr != CONDITIONAL
+  ) {
     s = assignment->name + " = ";
   }
   switch (instr) {
@@ -697,6 +765,35 @@ string Instruction::to_string() {
       }
     }
     break;
+    case CONDITIONAL:
+    {
+      switch (condition)
+      {
+        case EQUAL:
+          s +=  "if " + operand1.to_string() + " == " + operand2.to_string();
+          break;
+        case NOT_EQUAL:
+          s += "if " + operand1.to_string() + " != " + operand2.to_string();
+          break;
+        case GREATER:
+          s +=  "if " + operand1.to_string() + " > " + operand2.to_string();
+          break;
+        case LESS:
+          s +=  "if " + operand1.to_string() + " < " + operand2.to_string();
+          break;
+        case GREATER_EQUAL:
+          s +=  "if " + operand1.to_string() + " >= " + operand2.to_string();
+          break;
+        case LESS_EQUAL:
+          s +=  "if " + operand1.to_string() + " <= " + operand2.to_string();
+          break;
+        default:
+          s +=  "error comparison";
+          break;
+        s += " then goto " + label1->name + ", else goto " + label2->name;
+      }
+    }
+    break;
     case CALL:
     {
       s += function->name + "(";
@@ -721,9 +818,17 @@ string Instruction::to_string() {
       } else {
         s += "return " + operand1.id->name;
       }
-      
     }
     break;
+    case IF:
+    {
+      s += "if " + operand1.to_string() + "> 0";
+    }
+    break;
+    case LABEL:
+    {
+      s += label1->name + ":";
+    }
     case STATEMENT_END:
     {
       s += "(end of statement)";

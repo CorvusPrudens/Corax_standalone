@@ -14,6 +14,11 @@ Compiler::Compiler(ProcessedCode* code_, Error* err_, bool g)
   , tokens(&lexer)
   , parser(&tokens)
 {
+  totalIfs = 0;
+  totalWhiles = 0;
+  totalFors = 0;
+  totalSwitches = 0;
+
   code = code_;
   err = err_;
   globalFunction.type = Identifier::IdType::FUNCTION;
@@ -27,6 +32,27 @@ void Compiler::Complete()
 {
   if (graphing) graph.Print();
   else err->Report();
+}
+
+string Compiler::LabelIf(bool before) 
+{ 
+  if (before) return "$if_start_" + std::to_string(currentIf.back()); 
+  else return "$if_end_" + std::to_string(currentIf.back());
+}
+string Compiler::LabelSwitch(bool before)
+{
+  if (before) return "$switch_start_" + std::to_string(currentSwitch.back()); 
+  else return "$switch_end_" + std::to_string(currentSwitch.back());
+}
+string Compiler::LabelWhile(bool before)
+{
+  if (before) return "$while_start_" + std::to_string(currentWhile.back()); 
+  else return "$while_end_" + std::to_string(currentWhile.back());
+}
+string Compiler::LabelFor(bool before)
+{
+  if (before) return "$for_start_" + std::to_string(currentFor.back()); 
+  else return "$for_end_" + std::to_string(currentFor.back());
 }
 
 Result& Compiler::generateResult(Identifier& id)

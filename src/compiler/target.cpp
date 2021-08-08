@@ -310,6 +310,12 @@ Result& BaseTarget::GenerateResult(Identifier& id)
   return temp_results.back();
 }
 
+Result& BaseTarget::GenerateResult(Result& res)
+{
+  temp_results.push_back(res);
+  return temp_results.back();
+}
+
 // Frees registers after statements
 void BaseTarget::TranslateStat(Instruction& inst)
 {

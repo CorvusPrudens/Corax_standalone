@@ -59,6 +59,33 @@ class Compiler : CoraxBaseVisitor {
     std::vector<Type*> currentType;
     std::list<Result> tempResults;
 
+    std::vector<int> currentIf;
+    size_t totalIfs;
+
+    std::vector<int> currentSwitch;
+    size_t totalSwitches;
+
+    std::vector<int> currentWhile;
+    size_t totalWhiles;
+
+    std::vector<int> currentFor;
+    size_t totalFors;
+
+    void PushIf() { currentIf.push_back(totalIfs++); }
+    void PushSwitch() { currentSwitch.push_back(totalSwitches++); }
+    void PushWhile() { currentWhile.push_back(totalWhiles++); }
+    void PushFor() { currentFor.push_back(totalFors++); }
+
+    void PopIf() { currentIf.pop_back(); }
+    void PopSwitch() { currentSwitch.pop_back(); }
+    void PopWhile() { currentWhile.pop_back(); }
+    void PopFor() { currentFor.pop_back(); }
+
+    string LabelIf(bool before = true);
+    string LabelSwitch(bool before = true);
+    string LabelWhile(bool before = true);
+    string LabelFor(bool before = true);
+
     Result& generateResult(Identifier& id);
     Result& generateResult(Result& res);
 
@@ -166,6 +193,9 @@ class Compiler : CoraxBaseVisitor {
     Any visitExpr_const(CoraxParser::Expr_constContext *ctx) override;
 
     Any visitStatReturn(CoraxParser::StatReturnContext* ctx) override;
+    Any visitStatLabeled(CoraxParser::StatLabeledContext* ctx) override;
+    Any visitStatIf(CoraxParser::StatIfContext* ctx) override;
+    Any visitStatIfElse(CoraxParser::StatIfElseContext* ctx) override;
 
     Any visitInitAssign(CoraxParser::InitAssignContext* ctx) override;
     // Any visitInitList(CoraxParser::InitListContext* ctx) override;

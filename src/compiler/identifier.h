@@ -50,6 +50,7 @@ class Identifier {
       // Pointer,
       VARIABLE,
       ARRAY,
+      LABEL,
       // Typedef,
     };
 
@@ -251,6 +252,9 @@ class Instruction {
       CALL,
       SETUP,
       RETURN,
+      IF,
+      LABEL,
+      CONDITIONAL,
       STATEMENT_END,
     };
 
@@ -265,9 +269,12 @@ class Instruction {
 
     Instruction(ParserRuleContext* c, Abstr i); // for end of statements / nops
     Instruction(ParserRuleContext* c, Abstr i, Result op1); // for returns
+    Instruction(ParserRuleContext* c, Abstr i, Identifier& label);
+    Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2);
     Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass); // for function calls
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass);
     Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass);
+    Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& lab1, Identifier& lab2);
     Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass);
     Instruction(const Instruction& other);
     ~Instruction() {}
@@ -283,6 +290,8 @@ class Instruction {
     vector<Result> args;
     Identifier* assignment;
     Identifier* function;
+    Identifier* label1;
+    Identifier* label2;
     ParserRuleContext* ctx; // for easy error reporting
     bool single;
 

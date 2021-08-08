@@ -217,6 +217,58 @@ Any Compiler::visitStatReturn(CoraxParser::StatReturnContext* ctx)
   return nullptr;
 }
 
+Any Compiler::visitStatLabeled(CoraxParser::StatLabeledContext* ctx)
+{
+  Identifier id;
+  id.type = Identifier::LABEL;
+  id.name = ctx->IDENTIFIER()->getText();
+  try {
+    currentScope->AddSymbol(id);
+    currentFunction->function.add(Instruction(ctx, Instruction::LABEL, currentScope->GetLast()));
+  } catch (int e) {
+    string errmess = "label name overrides local variable";
+    addRuleErr(ctx, errmess);
+  }
+  return visitChildren(ctx);
+}
+
+// TODO -- the architecture should update flags IN ADDITION TO return 1 / 0 results for comparisons!
+Any Compiler::visitStatIf(CoraxParser::StatIfContext* ctx)
+{
+  PushIf();
+
+  Identifier begin;
+  begin.type = Identifier::LABEL;
+  begin.name = LabelIf();
+  currentScope->AddSymbol(begin);
+  Identifier& bptr = currentScope->GetLast();
+
+  Identifier end;
+  end.type = Identifier::LABEL;
+  end.name = LabelIf(false);
+  currentScope->AddSymbol(end);
+  Identifier& eptr = currentScope->GetLast();
+
+  visit(ctx->expression());
+  Result check = results.get(ctx->expression());
+  Result constant;
+  constant.setValue(0);
+  Instruction inst(ctx, Instruction::CONDITIONAL, Instruction::GREATER, check, constant, bptr, eptr);
+  currentFunction->function.add(inst);
+
+  currentFunction->function.add(Instruction(ctx, Instruction::LABEL, bptr));
+  visit(ctx->statement());
+  currentFunction->function.add(Instruction(ctx, Instruction::LABEL, eptr));
+
+  PopIf();
+
+  return nullptr;
+}
+Any Compiler::visitStatIfElse(CoraxParser::StatIfElseContext* ctx)
+{
+  return visitChildren(ctx);
+}
+
 // Simple passthroughs
 Any Compiler::visitExprCast(CoraxParser::ExprCastContext* ctx)
 {

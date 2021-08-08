@@ -3,7 +3,10 @@ short global;
 
 short add(short x, short y)
 {
-  return x + y;
+  if (x > 2) {
+    return x + y;
+  }
+  return x;
 }
 
 short expr(short x, short y)

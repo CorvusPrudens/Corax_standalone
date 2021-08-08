@@ -84,6 +84,10 @@ class BaseTarget {
     virtual void TranslateReturn(Instruction& inst) { unsupported(inst); }
     virtual void TranslateStat(Instruction& inst);
 
+    virtual void TranslateIf(Instruction& inst) { unsupported(inst); }
+    virtual void TranslateLabel(Instruction& inst) { unsupported(inst); }
+    virtual void TranslateConditional(Instruction& inst) { unsupported(inst); }
+
     virtual void TranslateStore(Register& reg) { unsupported("register store"); }
     virtual void TranslateStore(Register& reg, Identifier& id) { unsupported("register store"); }
     virtual void TranslateLoad(Register& reg, Result& res) { unsupported("register load"); }
@@ -91,7 +95,7 @@ class BaseTarget {
     typedef void (BaseTarget::*TranslateMethod)(Instruction&);
 
     // Corresponds to Instruction's Abstr enum
-    TranslateMethod methods[23] = {
+    TranslateMethod methods[26] = {
       &BaseTarget::TranslateDeref,
       &BaseTarget::TranslateNot,
       &BaseTarget::TranslateNegate,
@@ -114,6 +118,9 @@ class BaseTarget {
       &BaseTarget::TranslateCall,
       &BaseTarget::TranslateSetup,
       &BaseTarget::TranslateReturn,
+      &BaseTarget::TranslateIf,
+      &BaseTarget::TranslateLabel,
+      &BaseTarget::TranslateConditional,
       &BaseTarget::TranslateStat,
     };
 
@@ -164,6 +171,7 @@ class BaseTarget {
     virtual Register& PrepareAssign(Identifier& id);
     virtual Register& CheckLoaded(Identifier& id);
     virtual Result& GenerateResult(Identifier& id);
+    virtual Result& GenerateResult(Result& res);
     virtual void ManageStorage(Register& reg);
 
     virtual void UpdateRegister(Register& reg);
@@ -181,6 +189,7 @@ class BaseTarget {
     vector<FuncTrans> translations;
     Register* returnVal;
     unsigned int operationStep;
+    unsigned int conditionalLabels;
     std::list<Result> temp_results;
 
     // maybe a bit silly?

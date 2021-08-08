@@ -5,6 +5,8 @@ CorvassemblyTarget::CorvassemblyTarget(Compiler* c)
 {
   comp = c;
   targetName = "Corvassembly";
+  conditionalLabels = 0;
+  operationStep = 0;
 
   registers = {
     Register("a", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
@@ -120,9 +122,85 @@ void CorvassemblyTarget::TranslateOr(Instruction& inst)
 {
   unsupported(inst);
 }
+
+#define AFFIRMATIVE(condition) \
+AddLine("joc " condition ", " + successLabel); \
+AddLine("jmp " + failLabel); \
+AddLine(successLabel + ":"); \
+AddLine("ldr " + ass.name + ", 1"); \
+AddLine("jmp " + endLabel); \
+AddLine(failLabel + ":"); \
+AddLine("ldr " + ass.name + ", 0"); \
+AddLine(endLabel + ":");
+
 void CorvassemblyTarget::TranslateCmp(Instruction& inst)
 {
-  unsupported(inst);
+  // if (inst.operand1.isConst()) {
+  //   Register& op1 = PrepareResult(inst.operand1);
+  //   AddLine("cmp " + op1.name + ", " + inst.operand2.to_string());
+
+  // } 
+  if (inst.operand2.isConst()) {
+    Register& op1 = PrepareResult(inst.operand1);
+    AddLine("cmp " + op1.name + ", " + inst.operand2.to_string());
+  } else {
+    Register& op1 = PrepareResult(inst.operand1);
+    Register& op2 = PrepareResult(inst.operand2);
+    AddLine("cmp " + op1.name + ", " + op2.name);
+  }
+
+  Register& ass = PrepareAssign(*inst.assignment);
+
+  Result c1;
+  c1.setValue(1);
+  Result& const1 = GenerateResult(c1);
+  c1.setValue(0);
+  Result& const0 = GenerateResult(c1);
+
+  string successLabel = "$succ_" + std::to_string(conditionalLabels++);
+  string failLabel = "$fail_" + std::to_string(conditionalLabels++);
+  string endLabel = "$end_" + std::to_string(conditionalLabels++);
+
+  switch (inst.condition) {
+    case Instruction::EQUAL:
+      {
+        AFFIRMATIVE("equal")
+      }
+      break;
+    case Instruction::NOT_EQUAL:
+      {
+        AddLine("joc equal, " + failLabel);
+        AddLine("ldr " + ass.name + ", 1");  
+        AddLine("jmp " + endLabel); 
+        AddLine(failLabel + ":"); 
+        AddLine("ldr " + ass.name + ", 0"); 
+        AddLine(endLabel + ":");
+      }
+      break;
+    case Instruction::GREATER:
+      {
+        AFFIRMATIVE("greater")
+      }
+      break;
+    case Instruction::LESS:
+      {
+        AFFIRMATIVE("less")
+      }
+      break;
+    case Instruction::GREATER_EQUAL:
+      {
+        unsupported(inst);
+      }
+      break;
+    case Instruction::LESS_EQUAL:
+      {
+        unsupported(inst);
+      }
+      break;
+    default:
+      throw 1;
+  }
+  UpdateRegister(ass);
 }
 void CorvassemblyTarget::TranslateDeref(Instruction& inst)
 {
@@ -227,13 +305,36 @@ void CorvassemblyTarget::TranslateReturn(Instruction& inst)
     }
     FUNC_END
   }
-  
-
 }
 
 void CorvassemblyTarget::TranslateSetup(Instruction& inst)
 {
   AddLine("<save used>");
+}
+
+void CorvassemblyTarget::TranslateIf(Instruction& inst)
+{
+  
+}
+void CorvassemblyTarget::TranslateLabel(Instruction& inst)
+{
+  AddLine(inst.label1->name + ":");
+}
+void CorvassemblyTarget::TranslateConditional(Instruction& inst)
+{
+  Register& op1 = PrepareResult(inst.operand1);
+  Register& op2 = PrepareResult(inst.operand2);
+  AddLine("cmp " + op1.name + ", " + op2.name);
+  switch (inst.condition)
+  {
+    default:
+    case Instruction::GREATER:
+    {
+      AddLine("joc greater, " + inst.label1->name);
+      AddLine("jmp " + inst.label2->name);
+    }
+    break;
+  }
 }
 
 // will only work if it's been loaded _and_ has a non-const loaded value
