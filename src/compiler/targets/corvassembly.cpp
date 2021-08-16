@@ -9,12 +9,12 @@ CorvassemblyTarget::CorvassemblyTarget(Compiler* c)
   operationStep = 0;
 
   registers = {
-    Register("a", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
-    Register("b", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
-    Register("c", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
-    Register("d", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
-    Register("e", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
-    Register("f", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
+    Register("r0", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
+    Register("r1", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
+    Register("r2", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
+    Register("r3", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
+    Register("r4", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
+    Register("r5", Register::Data::INTEGER, Register::Rank::GENERAL, 2),
 
     Register("sp", Register::Data::INTEGER, Register::Rank::STACK_POINTER, 2),
     Register("bp", Register::Data::INTEGER, Register::Rank::BASE_POINTER, 2),
