@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <list>
+#include <unordered_set>
 #include <unordered_map>
 #include <string>
 #include "identifier.h"
@@ -12,16 +13,43 @@
 using std::vector;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 
 struct FuncTrans {
   Identifier id; // NOTE -- this should only contain a name, return type, and members
   string language;
-  vector<string> translation;
+  unordered_set<string> used_registers;
+
+  struct Line {
+    vector<string> ops;
+    Line(vector<string>& init) {
+      ops = init;
+    }
+    string Print() {
+      string out = ops[0] + " ";
+      for (int i = 1; i < ops.size(); i++) {
+        out += ops[i];
+        if (i < ops.size() - 1)
+          out += ", ";
+      }
+      return out;
+    }
+  };
+
+  void AddLine(vector<string> items, vector<string> registers) {
+    translation.push_back(items);
+    for (auto& reg : registers)
+    {
+      used_registers.emplace(reg);
+    }
+  }
+
+  vector<Line> translation;
 };
 
 struct Register {
   enum Data { INTEGER = 0, FLOATING };
-  enum Rank { GENERAL = 0, STACK_POINTER, BASE_POINTER, RESERVED };
+  enum Rank { GENERAL = 0, STACK_POINTER, BASE_POINTER, PROGRAM_COUNTER, RESERVED };
   enum Status { FREE = 0, USED };
 
   Register(string n, Data d, Rank r, unsigned int b);
@@ -165,6 +193,10 @@ class BaseTarget {
      */
     virtual Register& GetBasePointer();
 
+    /** Returns the first register with the rank of PROGRAM_COUNTER
+     */
+    virtual Register& GetProgramCounter();
+
     /** Similar to PrepareResult without loading any values --
      *  i.e. for setting up assignments
      */
@@ -180,7 +212,10 @@ class BaseTarget {
     virtual void unsupported(Instruction& inst);
     virtual void unsupported(string mess);
 
-    virtual void AddLine(string line) { translations.back().translation.push_back(line); }
+    virtual void SaveUsedRegisters() = 0;
+    virtual void RestoreUsedRegisters() = 0;
+
+    virtual void AddLine(vector<string> line, vector<string> regs) { translations.back().AddLine(line, regs); }
     virtual string to_string();
 
     Compiler* comp;

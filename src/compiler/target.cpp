@@ -69,13 +69,20 @@ void BaseTarget::Translate(Identifier& function)
   temptrans.language = targetName;
   translations.push_back(temptrans);
 
-  for (int i = 0; i < function.function.instructions.size(); i++)
+  for (auto& inst : function.function.instructions)
   {
-    (this->*methods[(int) function.function.instructions[i].instr])(function.function.instructions[i]);
+    (this->*methods[(int) inst.instr])(inst);
   }
+
+  // for (int i = 0; i < function.function.instructions.size(); i++)
+  // {
+  //   (this->*methods[(int) function.function.instructions[i].instr])(function.function.instructions[i]);
+  // }
 
   // store any remaining values before returning
   StoreAll(function);
+  SaveUsedRegisters(); // save all the registers that were used (prepending code)
+  RestoreUsedRegisters(); // restore all the registers that were used (appending code)
   ResetRegisters();
 }
 
@@ -358,7 +365,10 @@ string BaseTarget::to_string()
     output += "output:\n";
 
     for (auto& line : func.translation)
-      output += "  " + line + "\n";
+    {
+      output += " " + line.Print() + "\n";
+    }
+      
     output += "\n";
   }
   return output;
@@ -373,11 +383,22 @@ Register& BaseTarget::GetStackPointer()
   }
   throw 1;
 }
+
 Register& BaseTarget::GetBasePointer()
 {
   for (auto& reg : registers)
   {
     if (reg.rank == Register::Rank::BASE_POINTER)
+      return reg;
+  }
+  throw 1;
+}
+
+Register& BaseTarget::GetProgramCounter()
+{
+  for (auto& reg : registers)
+  {
+    if (reg.rank == Register::Rank::PROGRAM_COUNTER)
       return reg;
   }
   throw 1;
