@@ -97,6 +97,11 @@ class Identifier {
       
 };
 
+#define AS(type) \
+type* orig = (type*) value; \
+T val = (T) *orig; \
+return val; 
+
 class Result {
 
   public:
@@ -163,62 +168,33 @@ class Result {
       if (kind == Kind::ID)
         throw 1;
       if (type == long_double_) {
-        long double* orig = (long double*) value;
-        T val = (T) *orig;
-        return val;
+        AS(long double)
       } else if (type == double_) {
-        double* orig = (double*) value;
-        T val = (T) *orig;
-        return val;
+        AS(double)
       } else if (type == float_) {
-        float* orig = (float*) value;
-        T val = (T) *orig;
-        return val;
+        AS(float)
       } else if (type == unsigned_long_long_) {
-        unsigned long long* orig = (unsigned long long*) value;
-        T val = (T) *orig;
-        return val;
+        AS(unsigned long long)
       } else if (type == long_long_) {
-        long long* orig = (long long*) value;
-        T val = (T) *orig;
-        return val;
+        AS(long long)
       } else if (type == unsigned_long_) {
-        unsigned long* orig = (unsigned long*) value;
-        T val = (T) *orig;
-        return val;
+        AS(unsigned long)
       } else if (type == long_) {
-        long* orig = (long*) value;
-        T val = (T) *orig;
-        return val;
+        AS(long)
       } else if (type == unsigned_) {
-        unsigned* orig = (unsigned*) value;
-        T val = (T) *orig;
-        return val;
+        AS(unsigned)
       } else if (type == int_) {
-        int* orig = (int*) value;
-        T val = (T) *orig;
-        return val;
+        AS(int)
       } else if (type == unsigned_short_) {
-        unsigned short* orig = (unsigned short*) value;
-        T val = (T) *orig;
-        return val;
+        AS(unsigned short)
       } else if (type == short_) {
-        short* orig = (short*) value;
-        T val = (T) *orig;
-        return val;
+        AS(short)
       } else if (type == unsigned_char_) {
-        // WHOA these can all be auto??
-        auto orig = (unsigned char*) value;
-        T val = (T) *orig;
-        return val;
+        AS(unsigned char)
       } else if (type == signed_char_) {
-        auto orig = (signed char*) value;
-        T val = (T) *orig;
-        return val;
+        AS(signed char)
       } else if (type == char_) {
-        auto orig = (char*) value;
-        T val = (T) *orig;
-        return val;
+        AS(char)
       } else if (type == void_) {
         throw 2;
       }
