@@ -1,6 +1,13 @@
 #include <limits>
 #include "target.h"
 
+void FuncTrans::AddLine(Line line, vector<Register*> regs)
+{
+  translation.push_back(line);
+  for (auto r : regs)
+    used_registers.emplace(r);
+}
+
 Register::Register(string n, Data d, Register::Rank r, unsigned int b)
 {
   loaded = nullptr;
@@ -48,6 +55,68 @@ void Register::flush()
   status = Status::FREE;
   requires_storage = false;
   operationStep = 0;
+}
+
+LineArg::LineArg(Register& r)
+{
+  t = TYPE::REGISTER;
+  reg = &r;
+}
+LineArg::LineArg(Result& r)
+{
+  t = TYPE::RESULT;
+  result = &r;
+}
+LineArg::LineArg(string s)
+{
+  t = TYPE::STRING;
+  str = s;
+}
+// LineArg::LineArg(LineArg& other)
+// {
+//   t = other.t;
+//   reg = other.reg;
+//   result = other.result;
+//   str = other.str;
+// }
+string LineArg::to_string()
+{
+  switch (t)
+  {
+    case TYPE::REGISTER:
+      return reg->name;
+    case TYPE::RESULT:
+      return result->to_string();
+    case TYPE::STRING:
+      return str;
+    default:
+      throw 1;
+  }
+}
+
+Line::Line(string mnem, vector<LineArg> a)
+{
+  mnemonic = mnem;
+  args = a;
+}
+Line::Line(string mnem, vector<LineArg> a, string cond)
+{
+  mnemonic = mnem;
+  args = a;
+  condition = cond;
+}
+string Line::to_string()
+{
+  string out = mnemonic + " ";
+  for (int i = 0; i < args.size(); i++)
+  {
+    out += args[i].to_string();
+    if (i < args.size() - 1)
+      out += ", ";
+  }
+  if (condition != "")
+    out += " -> " + condition;
+  return out;
 }
 
 void BaseTarget::TranslateAll()
@@ -366,7 +435,7 @@ string BaseTarget::to_string()
 
     for (auto& line : func.translation)
     {
-      output += " " + line.Print() + "\n";
+      output += " " + line.to_string() + "\n";
     }
       
     output += "\n";
@@ -402,4 +471,32 @@ Register& BaseTarget::GetProgramCounter()
       return reg;
   }
   throw 1;
+}
+
+void BaseTarget::AddLine(string mnemonic, vector<LineArg> args)
+{
+  Line l(mnemonic, args);
+  vector<Register*> regs;
+  for (auto& a : args)
+  {
+    if (a.t == LineArg::TYPE::REGISTER)
+    {
+      regs.push_back(a.reg);
+    }
+  }
+  translations.back().AddLine(l, regs);
+}
+
+void BaseTarget::AddLine(string mnemonic, vector<LineArg> args, string condition)
+{
+  Line l(mnemonic, args, condition);
+  vector<Register*> regs;
+  for (auto& a : args)
+  {
+    if (a.t == LineArg::TYPE::REGISTER)
+    {
+      regs.push_back(a.reg);
+    }
+  }
+  translations.back().AddLine(l, regs);
 }

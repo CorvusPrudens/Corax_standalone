@@ -15,34 +15,15 @@ using std::string;
 using std::unordered_map;
 using std::unordered_set;
 
+struct Line; // forward decl
+struct Register;
+
 struct FuncTrans {
   Identifier id; // NOTE -- this should only contain a name, return type, and members
   string language;
-  unordered_set<string> used_registers;
+  unordered_set<Register*> used_registers;
 
-  struct Line {
-    vector<string> ops;
-    Line(vector<string>& init) {
-      ops = init;
-    }
-    string Print() {
-      string out = ops[0] + " ";
-      for (int i = 1; i < ops.size(); i++) {
-        out += ops[i];
-        if (i < ops.size() - 1)
-          out += ", ";
-      }
-      return out;
-    }
-  };
-
-  void AddLine(vector<string> items, vector<string> registers) {
-    translation.push_back(items);
-    for (auto& reg : registers)
-    {
-      used_registers.emplace(reg);
-    }
-  }
+  void AddLine(Line line, vector<Register*> registers);
 
   vector<Line> translation;
 };
@@ -69,6 +50,37 @@ struct Register {
   Result* loaded;
   unsigned int latest;
   unsigned int operationStep;
+};
+
+struct LineArg {
+  enum TYPE { REGISTER = 0, RESULT, STRING };
+  
+  LineArg() {}
+  LineArg(Register& r);
+  LineArg(Result& r);
+  LineArg(string s);
+  // LineArg(LineArg& other);
+  ~LineArg() {}
+
+  string to_string();
+  TYPE GetType() { return t; }
+
+  Register* reg;
+  Result* result;
+  string str;
+  TYPE t;
+};
+
+struct Line {
+  Line() {}
+  Line(string mnem, vector<LineArg> a);
+  Line(string mnem, vector<LineArg> a, string cond);
+
+  string to_string();
+
+  string mnemonic;
+  string condition;
+  vector<LineArg> args;
 };
 
 class BaseTarget {
@@ -215,7 +227,8 @@ class BaseTarget {
     virtual void SaveUsedRegisters() = 0;
     virtual void RestoreUsedRegisters() = 0;
 
-    virtual void AddLine(vector<string> line, vector<string> regs) { translations.back().AddLine(line, regs); }
+    virtual void AddLine(string mnemonic, vector<LineArg> args);
+    virtual void AddLine(string mnemonic, vector<LineArg> args, string condition);
     virtual string to_string();
 
     Compiler* comp;

@@ -31,11 +31,9 @@ void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
     Register& ass = PrepareAssign(*inst.assignment);
 
     if (&ass == &op2)
-      AddLine({mnemonic, op2.name, inst.operand1.to_string()}, {op2.name});
-      // AddLine(mnemonic + " " + op2.name + ", " + inst.operand1.to_string());
+      AddLine(mnemonic, {LineArg(op2), LineArg(inst.operand1)});
     else
-      AddLine({mnemonic, op2.name, inst.operand1.to_string(), ass.name}, {op2.name, ass.name});
-      // AddLine(mnemonic + " " + op2.name + ", " + inst.operand1.to_string() + ", " + ass.name);
+      AddLine(mnemonic, {LineArg(op2), LineArg(inst.operand1), LineArg(ass)});
 
     UpdateRegister(ass);
     ManageStorage(ass);
@@ -46,11 +44,11 @@ void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
     Register& ass = PrepareAssign(*inst.assignment);
 
     if (&ass == &op1)
-      AddLine({mnemonic, op1.name, inst.operand2.to_string()}, {op1.name});
-      // AddLine(mnemonic + " " + op1.name + ", " + inst.operand2.to_string());
+      AddLine(mnemonic, {LineArg(op1), LineArg(inst.operand2)});
+      // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(inst.operand2));
     else
-      AddLine({mnemonic, op1.name, inst.operand1.to_string(), ass.name}, {op1.name, ass.name});
-      // AddLine(mnemonic + " " + op1.name + ", " + inst.operand2.to_string() + ", " + ass.name);
+      AddLine(mnemonic, {LineArg(op1), LineArg(inst.operand1), LineArg(ass)});
+      // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(inst.operand2) + ", " + LineArg(ass));
 
     UpdateRegister(ass);
     ManageStorage(ass);
@@ -66,14 +64,14 @@ void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
 
     
     if (&ass == &op1)
-      AddLine({mnemonic, op1.name, op2.name}, {op1.name, op2.name});
+      AddLine(mnemonic, {LineArg(op1), LineArg(op1)});
     // TODO -- this doesn't work for subtraction or division operations, 
     // so it has to be commented out
     // else if (&ass == &op2)
-    //   AddLine(mnemonic + " " + op2.name + ", " + op1.name);
+    //   AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1));
     else
-      AddLine({mnemonic, op1.name, op2.name, ass.name}, {op1.name, op2.name, ass.name});
-      // AddLine(mnemonic + " " + op1.name + ", " + op2.name + ", " + ass.name);
+      AddLine(mnemonic, {LineArg(op1), LineArg(op1), LineArg(ass)});
+      // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1) + ", " + LineArg(ass));
 
     UpdateRegister(ass);
     ManageStorage(ass);
@@ -135,10 +133,10 @@ void CorvassemblyTarget::TranslateOr(Instruction& inst)
 AddLine("joc " condition ", " + successLabel); \
 AddLine("jmp " + failLabel); \
 AddLine(successLabel + ":"); \
-AddLine("ldr " + ass.name + ", 1"); \
+AddLine("ldr " + LineArg(ass) + ", 1"); \
 AddLine("jmp " + endLabel); \
 AddLine(failLabel + ":"); \
-AddLine("ldr " + ass.name + ", 0"); \
+AddLine("ldr " + LineArg(ass) + ", 0"); \
 AddLine(endLabel + ":");
 
 // TODO -- just do cps for this!
@@ -146,18 +144,18 @@ void CorvassemblyTarget::TranslateCmp(Instruction& inst)
 {
   // // if (inst.operand1.isConst()) {
   // //   Register& op1 = PrepareResult(inst.operand1);
-  // //   AddLine("cmp " + op1.name + ", " + inst.operand2.to_string());
+  // //   AddLine("cmp " + LineArg(op1) + ", " + LineArg(inst.operand2));
 
   // // } 
   // if (inst.operand2.isConst()) {
   //   Register& op1 = PrepareResult(inst.operand1);
-  //   // AddLine("cmp " + op1.name + ", " + inst.operand2.to_string());
-  //   AddLine({"cmp", op1.name, inst.operand2.to_string()}, {op1.name});
+  //   // AddLine("cmp " + LineArg(op1) + ", " + LineArg(inst.operand2));
+  //   AddLine({"cmp", LineArg(op1), LineArg(inst.operand2)});
   // } else {
   //   Register& op1 = PrepareResult(inst.operand1);
   //   Register& op2 = PrepareResult(inst.operand2);
-  //   // AddLine("cmp " + op1.name + ", " + op2.name);
-  //   AddLine({"cmp", op1.name, op2.name}, {op1.name, op2.name});
+  //   // AddLine("cmp " + LineArg(op1) + ", " + LineArg(op1));
+  //   AddLine({"cmp", LineArg(op1), LineArg(op1)});
   // }
 
   // Register& ass = PrepareAssign(*inst.assignment);
@@ -181,10 +179,10 @@ void CorvassemblyTarget::TranslateCmp(Instruction& inst)
   //   case Instruction::NOT_EQUAL:
   //     {
   //       AddLine("joc equal, " + failLabel);
-  //       AddLine("ldr " + ass.name + ", 1");  
+  //       AddLine("ldr " + LineArg(ass) + ", 1");  
   //       AddLine("jmp " + endLabel); 
   //       AddLine(failLabel + ":"); 
-  //       AddLine("ldr " + ass.name + ", 0"); 
+  //       AddLine("ldr " + LineArg(ass) + ", 0"); 
   //       AddLine(endLabel + ":");
   //     }
   //     break;
@@ -223,9 +221,9 @@ void CorvassemblyTarget::TranslateNot(Instruction& inst)
   Register& ass = PrepareAssign(*inst.assignment);
 
   if (&ass == &op1)
-    AddLine({"not", op1.name}, {op1.name});
+    AddLine("not", {LineArg(op1)});
   else
-    AddLine({"not", op1.name, ass.loaded->to_string()}, {op1.name, ass.loaded->to_string()});
+    AddLine("not", {LineArg(op1), LineArg(*ass.loaded)});
 
   UpdateRegister(ass);
   ManageStorage(ass);
@@ -249,8 +247,8 @@ void CorvassemblyTarget::TranslateAssign(Instruction& inst)
 
     try {
       Register& ass = CheckLoaded(*inst.assignment);
-      // AddLine("add " + op2.name + ", 0, " + ass.name);
-      AddLine({"add", op2.name, "0", ass.name}, {op2.name, ass.name});
+      // AddLine("add " + LineArg(op1) + ", 0, " + LineArg(ass));
+      AddLine("add", {LineArg(op2), LineArg("0"), LineArg(ass)});
       ManageStorage(ass);
     } catch (int e) {
       // for now, since a register can only hold one pointer,
@@ -272,21 +270,22 @@ void CorvassemblyTarget::TranslateCall(Instruction& inst)
   for (int i = inst.args.size() - 1; i > -1; i--)
   {
     Register& pr = PrepareResult(inst.args[i]);
-    AddLine({"push", pr.name}, {pr.name});
+    AddLine("push", {pr});
   }
   // AddLine("push pc, 4");
-  AddLine({"push", GetProgramCounter().name, "4"}, {});
-  AddLine({"jmp", inst.function->name}, {});
+  AddLine("push", {LineArg(GetProgramCounter()), LineArg("4")});
+  Result& res = GenerateResult(*inst.function);
+  AddLine("jmp", {LineArg(res)});
 
   size_t sp_offset = 0;
   for (auto& arg : inst.args)
     sp_offset += arg.getSize() / 2; // corvassembly is a strictly 16-bit-word language
-  AddLine({"add", GetStackPointer().name, std::to_string(sp_offset + 1)}, {});
+  AddLine("add", {LineArg(GetStackPointer()), LineArg(std::to_string(sp_offset + 1))});
   // Register& reg = PrepareAssign(inst.assignment);
   try {
     Register& ass = CheckLoaded(*inst.assignment);
-    // AddLine("add " + returnVal->name + ", 0, " + ass.name);
-    AddLine({"add", returnVal->name, "0", ass.name}, {});
+    // AddLine("add " + returnVal->name + ", 0, " + LineArg(ass));
+    AddLine("add", {LineArg(*returnVal), LineArg("0"), LineArg(ass)});
     UpdateRegister(ass);
     ManageStorage(ass);
   } catch (int e) {
@@ -298,16 +297,16 @@ void CorvassemblyTarget::TranslateCall(Instruction& inst)
 }
 
 // #define FUNC_END \
-// AddLine({"<restore used>"}, {}); \
+// AddLine({"<restore used>"}); \
 // AddLine("add bp, 0, " + GetStackPointer().name); \
 // AddLine("pop " + GetBasePointer().name); \
 // AddLine("jmp [" + GetStackPointer().name + "]");
 
 #define FUNC_END \
-AddLine({"<restore used>"}, {}); \
-AddLine({"add", GetBasePointer().name, "0", GetStackPointer().name}, {}); \
-AddLine({"pop", GetBasePointer().name}, {}); \
-AddLine({"jmp", "[" + GetStackPointer().name + "]"}, {});
+AddLine("", {LineArg("<restore used>")}); \
+AddLine("add", {LineArg(GetBasePointer()), LineArg("0"), LineArg(GetStackPointer())}); \
+AddLine("pop", {LineArg(GetBasePointer())}); \
+AddLine("jmp", {LineArg("[" + GetStackPointer().name + "]")});
 
 // TODO -- this could be optimized better!!
 void CorvassemblyTarget::TranslateReturn(Instruction& inst)
@@ -320,7 +319,7 @@ void CorvassemblyTarget::TranslateReturn(Instruction& inst)
     Register& ret = PrepareResult(inst.operand1);
     if (&ret != returnVal) {
       StoreRegister(*returnVal);
-      AddLine({"add", ret.name, "0", returnVal->name}, {});
+      AddLine("add", {LineArg(ret), LineArg("0"), LineArg(*returnVal)});
       returnVal->load(inst.operand1);
     }
     FUNC_END
@@ -329,7 +328,7 @@ void CorvassemblyTarget::TranslateReturn(Instruction& inst)
 
 void CorvassemblyTarget::TranslateSetup(Instruction& inst)
 {
-  AddLine({"<save used>"}, {});
+  AddLine("", {LineArg("<save used>")});
 }
 
 void CorvassemblyTarget::TranslateIf(Instruction& inst)
@@ -338,20 +337,22 @@ void CorvassemblyTarget::TranslateIf(Instruction& inst)
 }
 void CorvassemblyTarget::TranslateLabel(Instruction& inst)
 {
-  AddLine({inst.label1->name + ":"}, {});
+  AddLine(inst.label1->name + ":", {});
 }
 void CorvassemblyTarget::TranslateConditional(Instruction& inst)
 {
   Register& op1 = PrepareResult(inst.operand1);
   Register& op2 = PrepareResult(inst.operand2);
-  AddLine({"cmp", op1.name, op2.name}, {op1.name, op2.name});
+  AddLine("cmp", {LineArg(op1), LineArg(op1)});
   switch (inst.condition)
   {
     default:
     case Instruction::GREATER:
     {
-      AddLine({"joc", "greater", inst.label1->name}, {});
-      AddLine({"jmp", inst.label2->name}, {});
+      Result& res1 = GenerateResult(*inst.label1);
+      Result& res2 = GenerateResult(*inst.label2);
+      AddLine("joc", {LineArg("greater"), LineArg(res1)});
+      AddLine("jmp", {LineArg(res2)});
     }
     break;
   }
@@ -366,7 +367,7 @@ void CorvassemblyTarget::TranslateStore(Register& reg)
   }
   else
   {
-    AddLine({"str", reg.name, reg.loaded->to_string()}, {reg.name});
+    AddLine("str", {LineArg(reg), LineArg(*reg.loaded)});
   }
 }
 void CorvassemblyTarget::TranslateStore(Register& reg, Identifier& id)
@@ -374,13 +375,14 @@ void CorvassemblyTarget::TranslateStore(Register& reg, Identifier& id)
   // string line = "";
   // line += "str " + reg.name + ", " + id.name;
   // AddLine(line);
-  AddLine({"Str", reg.name, id.name}, {reg.name});
+  Result& res = GenerateResult(id);
+  AddLine("Str", {LineArg(reg), LineArg(res)});
 }
 void CorvassemblyTarget::TranslateLoad(Register& reg, Result& res)
 {
   // string line = "ldr " + reg.name + ", " + res.to_string();
   // AddLine(line);
-  AddLine({"ldr", reg.name, res.to_string()}, {reg.name});
+  AddLine("ldr", {LineArg(reg), LineArg(res)});
 }
 
 // TODO -- variable management needs to be carefully done!
