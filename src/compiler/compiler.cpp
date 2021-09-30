@@ -106,13 +106,21 @@ void Compiler::addRuleWarn(ParserRuleContext* rule, string warnmess)
   err->AddWarning(warnmess, line, file, 1, cols, cole);
 }
 
-void Compiler::pushScope(SymbolTable::Scope scope)
+void Compiler::pushScope(ParserRuleContext* rule, SymbolTable::Scope scope)
 {
+  if (currentFunction != nullptr)
+  {
+    currentFunction->function.add(Instruction(rule, Instruction::SCOPE_BEGIN));
+  }
   currentScope->children.push_back(SymbolTable(currentScope, scope));
   currentScope = &currentScope->children.back();
 }
-void Compiler::popScope()
+void Compiler::popScope(ParserRuleContext* rule)
 {
+  if (currentFunction != nullptr)
+  {
+    currentFunction->function.add(Instruction(rule, Instruction::SCOPE_END));
+  }
   currentScope = currentScope->parent;
 }
 
@@ -198,14 +206,14 @@ Any Compiler::visitDirFunc(CoraxParser::DirFuncContext* ctx)
 {
   visit(ctx->direct_decl());
   currentId.back()->type = Identifier::IdType::FUNCTION;
-  pushScope(SymbolTable::Scope::FUNCTION);
+  pushScope(ctx, SymbolTable::Scope::FUNCTION);
   if (ctx->param_type_list() != nullptr)
     visit(ctx->param_type_list());
 
   for (auto arg : currentScope->ordered)
     currentId.back()->members.push_back(*arg);
 
-  popScope();
+  popScope(ctx);
   // visit(ctx->direct_decl());
   // if (ctx->param_type_list() != nullptr)
   //   visit(ctx->param_type_list());
@@ -262,7 +270,7 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
   if (!func_decl_err)
   {
     // construct new scope from args
-    pushScope(SymbolTable::Scope::FUNCTION);
+    pushScope(ctx, SymbolTable::Scope::FUNCTION);
     inherit = true;
     // the last identifier added to the global scope _must_ be the function
     currentFunction = &globalTable->GetLast();
@@ -272,7 +280,7 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
       currentScope->AddSymbol(arg);
     visit(ctx->stat_compound());
     currentFunction->funcTable = currentScope;
-    popScope();
+    popScope(ctx);
 
     // cout << currentFunction->function.to_string();
     // cout << "\n";
@@ -314,9 +322,9 @@ Any Compiler::visitStat_compound(CoraxParser::Stat_compoundContext* ctx)
   }
   else
   {
-    pushScope();
+    pushScope(ctx);
     visitChildren(ctx);
-    popScope();
+    popScope(ctx);
   }
   
   return nullptr;

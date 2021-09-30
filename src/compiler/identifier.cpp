@@ -618,6 +618,12 @@ string Instruction::name() {
       return "labeled statement";
     case CONDITIONAL:
       return "conditional jump";
+    case STATEMENT_END:
+      return "end of statement";
+    case SCOPE_BEGIN:
+      return "beginning of scope";
+    case SCOPE_END:
+      return "end of scope";
     default:
       return "<unkown>";
   }
@@ -627,6 +633,8 @@ string Instruction::to_string() {
   string s = "";
   if (
     instr != STATEMENT_END && 
+    instr != SCOPE_BEGIN &&
+    instr != SCOPE_END &&
     instr != RETURN && 
     instr != SETUP &&
     instr != IF &&
@@ -832,6 +840,14 @@ string Instruction::to_string() {
     case STATEMENT_END:
     {
       s += "(end of statement)";
+    }
+    case SCOPE_BEGIN:
+    {
+      s += "(beginning of scope)";
+    }
+    case SCOPE_END:
+    {
+      s += "(end of scope)";
     }
   }
   return s;

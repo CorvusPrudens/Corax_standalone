@@ -232,6 +232,8 @@ class Instruction {
       LABEL,
       CONDITIONAL,
       STATEMENT_END,
+      SCOPE_BEGIN,
+      SCOPE_END,
     };
 
     enum Cond {
