@@ -165,7 +165,7 @@ void BaseTarget::UpdateRegister(Register& reg)
 void BaseTarget::unsupported(Instruction& inst)
 {
   string errmess = inst.name() + " operation is not yet support for \"" + targetName + "\"";
-  comp->addRuleErr(inst.ctx, errmess);
+  comp->addNodeError(inst.ctx, errmess);
 }
 
 void BaseTarget::unsupported(string mess)

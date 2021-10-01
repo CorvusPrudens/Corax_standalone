@@ -128,6 +128,9 @@ class BaseTarget {
     virtual void TranslateLabel(Instruction& inst) { unsupported(inst); }
     virtual void TranslateConditional(Instruction& inst) { unsupported(inst); }
 
+    virtual void TranslateScopeBegin(Instruction& inst) { unsupported(inst); }
+    virtual void TranslateScopeEnd(Instruction& inst) { unsupported(inst); }
+
     virtual void TranslateStore(Register& reg) { unsupported("register store"); }
     virtual void TranslateStore(Register& reg, Identifier& id) { unsupported("register store"); }
     virtual void TranslateLoad(Register& reg, Result& res) { unsupported("register load"); }
@@ -135,7 +138,7 @@ class BaseTarget {
     typedef void (BaseTarget::*TranslateMethod)(Instruction&);
 
     // Corresponds to Instruction's Abstr enum
-    TranslateMethod methods[26] = {
+    TranslateMethod methods[Instruction::INSTRUCTION_COUNT] = {
       &BaseTarget::TranslateDeref,
       &BaseTarget::TranslateNot,
       &BaseTarget::TranslateNegate,
@@ -162,6 +165,8 @@ class BaseTarget {
       &BaseTarget::TranslateLabel,
       &BaseTarget::TranslateConditional,
       &BaseTarget::TranslateStat,
+      &BaseTarget::TranslateScopeBegin,
+      &BaseTarget::TranslateScopeEnd,
     };
 
     virtual int freeRegisters(

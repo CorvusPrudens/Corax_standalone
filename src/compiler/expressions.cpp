@@ -186,14 +186,14 @@ Any Compiler::visitCall(CoraxParser::CallContext* ctx)
     Identifier& f = currentScope->GetSymbol(ctx->expr_primary()->getText());
     if (f.members.size() != args.size()) {
       // TODO -- this could be made more specific
-      addRuleErr(ctx, "argument count doesn't match function definition");
+      addNodeError(ctx, "argument count doesn't match function definition");
       res.setValue(0);
     } else {
       oper.perform(f, args, res);
       if (graphing) graph.Addc(ctx->expr_primary()->getText());
     }
   } catch (int e) {
-    addRuleErr(ctx, "attempting to call undefined function");
+    addNodeError(ctx, "attempting to call undefined function");
     res.setValue(0);
   }
   results.put(ctx, res);
@@ -227,7 +227,7 @@ Any Compiler::visitStatLabeled(CoraxParser::StatLabeledContext* ctx)
     currentFunction->function.add(Instruction(ctx, Instruction::LABEL, currentScope->GetLast()));
   } catch (int e) {
     string errmess = "label name overrides local variable";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
   }
   return visitChildren(ctx);
 }
@@ -329,7 +329,7 @@ Any Compiler::visitIdentifier(CoraxParser::IdentifierContext* ctx)
     res.setValue(id);
   } catch (int e) {
     string errmess = "undefined identifier \"" + ctx->getText() + "\"";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
   }
   results.put(ctx, res);
   return nullptr;
@@ -411,7 +411,7 @@ Any Compiler::visitIncrementUnary(CoraxParser::IncrementUnaryContext *ctx)
     operation(ctx, results.get(ctx->expr_primary()), oper);
   } catch (TypeDescriptor e) {
     string errmess = "unary increment requires modifiable lvalue";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
 
     results.put(ctx, results.get(ctx->expr_primary()));
   }
@@ -437,7 +437,7 @@ Any Compiler::visitIncrementPost(CoraxParser::IncrementPostContext *ctx)
     operation(ctx, results.get(ctx->expr_primary()), oper);
   } catch (TypeDescriptor e) {
     string errmess = "postfix increment requires modifiable lvalue";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
 
     results.put(ctx, results.get(ctx->expr_primary()));
   }
@@ -465,7 +465,7 @@ Any Compiler::visitDecrementPost(CoraxParser::DecrementPostContext *ctx)
     operation(ctx, results.get(ctx->expr_primary()), oper);
   } catch (TypeDescriptor e) {
     string errmess = "postfix decrement requires modifiable lvalue";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
 
     results.put(ctx, results.get(ctx->expr_primary()));
   }
@@ -481,7 +481,7 @@ Any Compiler::visitDecrementUnary(CoraxParser::DecrementUnaryContext *ctx)
     operation(ctx, results.get(ctx->expr_primary()), oper);
   } catch (TypeDescriptor e) {
     string errmess = "unary decrement requires modifiable lvalue";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
 
     results.put(ctx, results.get(ctx->expr_primary()));
   }
@@ -507,12 +507,12 @@ Any Compiler::visitNegative(CoraxParser::NegativeContext *ctx)
     operation(ctx, results.get(ctx->expr_cast()), oper);
   } catch (TypeDescriptor e) {
     string errmess = "behavior undefined for unsigned type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
 
     results.put(ctx, results.get(ctx->expr_cast()));
   } catch (Type e) {
     string errmess = "behavior undefined for unsigned type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
 
     results.put(ctx, results.get(ctx->expr_cast()));
   }
@@ -528,12 +528,12 @@ Any Compiler::visitNot(CoraxParser::NotContext *ctx)
     operation(ctx, results.get(ctx->expr_cast()), oper);
   } catch (TypeDescriptor e) {
     string errmess = "behavior undefined for type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
 
     results.put(ctx, results.get(ctx->expr_cast()));
   } catch (Type e) {
     string errmess = "behavior undefined for type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
 
     results.put(ctx, results.get(ctx->expr_cast()));
   }
@@ -568,7 +568,7 @@ Any Compiler::visitMod(CoraxParser::ModContext *ctx)
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
   } catch (TypeDescriptor e) {
     string errmess = "modulo operator cannot accept operands of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
@@ -613,14 +613,14 @@ Any Compiler::visitBit_or(CoraxParser::Bit_orContext *ctx)
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
   } catch (TypeDescriptor e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
     results.put(ctx, res);
   } catch (Type e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
@@ -674,14 +674,14 @@ Any Compiler::visitShiftLeft(CoraxParser::ShiftLeftContext *ctx)
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
   } catch (TypeDescriptor e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
     results.put(ctx, res);
   } catch (Type e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
@@ -699,14 +699,14 @@ Any Compiler::visitShiftRight(CoraxParser::ShiftRightContext *ctx)
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
   } catch (TypeDescriptor e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
     results.put(ctx, res);
   } catch (Type e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
@@ -724,14 +724,14 @@ Any Compiler::visitBit_xor(CoraxParser::Bit_xorContext *ctx)
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
   } catch (TypeDescriptor e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
     results.put(ctx, res);
   } catch (Type e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
@@ -758,14 +758,14 @@ Any Compiler::visitBit_and(CoraxParser::Bit_andContext *ctx)
     operation(ctx, results.get(ctx->expr_arith()[0]), results.get(ctx->expr_arith()[1]), oper);
   } catch (TypeDescriptor e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
     results.put(ctx, res);
   } catch (Type e) {
     string errmess = "operation undefined for operand of type \"" + e.to_string();
-    addRuleErr(ctx, errmess + "\"");
+    addNodeError(ctx, errmess + "\"");
     // we'll just put a const 0 for now in case of error
     Result res;
     res.setValue(0);
@@ -867,7 +867,7 @@ Any Compiler::visitInitAssign(CoraxParser::InitAssignContext* ctx)
   if (!ass.isConst() && currentScope == globalTable.get())
   {
     string errmess = "attempting non-static calculation outside any function";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
     Result res;
     res.setValue(0);
     results.put(ctx, res);

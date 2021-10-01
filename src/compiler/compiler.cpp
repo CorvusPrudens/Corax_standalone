@@ -86,27 +86,23 @@ Result& Compiler::generateResult(Result& res)
 //   else err->Report();
 // }
 
-void Compiler::addRuleErr(ParserRuleContext* rule, string errmess)
+void Compiler::addNodeError(ParseTree* node, string errmess)
 {
-  int outline = rule->start->getLine() - 1; // zero-indexed
-  int cols = rule->start->getCharPositionInLine();
-  int cole = cols + rule->stop->getStopIndex() - rule->start->getStartIndex();
-  int line = code->lines.getLine(outline);
-  string file = code->lines.getFile(outline);
-  err->AddError(errmess, line, file, 1, cols, cole);
+  auto start = node->getSourceInterval().a;
+  int processed_line = tokens.get(start)->getLine();
+  string file = code->lines.getFile(processed_line - 1);
+  err->AddNodeErr(errmess, node, file, &tokens);
 }
 
-void Compiler::addRuleWarn(ParserRuleContext* rule, string warnmess)
+void Compiler::addNodeWarning(ParseTree* node, string warnmess)
 {
-  int outline = rule->start->getLine() - 1; // zero-indexed
-  int cols = rule->start->getCharPositionInLine();
-  int cole = cols + rule->stop->getStopIndex() - rule->start->getStartIndex();
-  int line = code->lines.getLine(outline);
-  string file = code->lines.getFile(outline);
-  err->AddWarning(warnmess, line, file, 1, cols, cole);
+  auto start = node->getSourceInterval().a;
+  int processed_line = tokens.get(start)->getLine();
+  string file = code->lines.getFile(processed_line - 1);
+  err->AddNodeWarn(warnmess, node, file, &tokens);
 }
 
-void Compiler::pushScope(ParserRuleContext* rule, SymbolTable::Scope scope)
+void Compiler::pushScope(ParseTree* rule, SymbolTable::Scope scope)
 {
   if (currentFunction != nullptr)
   {
@@ -115,7 +111,7 @@ void Compiler::pushScope(ParserRuleContext* rule, SymbolTable::Scope scope)
   currentScope->children.push_back(SymbolTable(currentScope, scope));
   currentScope = &currentScope->children.back();
 }
-void Compiler::popScope(ParserRuleContext* rule)
+void Compiler::popScope(ParseTree* rule)
 {
   if (currentFunction != nullptr)
   {
@@ -154,7 +150,7 @@ Any Compiler::visitParse(CoraxParser::ParseContext* ctx)
 //     currentScope->AddSymbol(tempid->copy());
 //   } catch (int e) {
 //     string errmess = "redefinition of identifier ";
-//     addRuleErr(ctx, errmess + "\"" + tempid->name + "\"");
+//     addNodeError(ctx, errmess + "\"" + tempid->name + "\"");
 //   }
   
 //   currentId.pop_back();
@@ -196,7 +192,7 @@ Any Compiler::visitDeclarator(CoraxParser::DeclaratorContext* ctx)
         func_decl_err = true;
         break;
     }
-    addRuleErr(ctx, errmess + "\"" + tempid.name + "\"");
+    addNodeError(ctx, errmess + "\"" + tempid.name + "\"");
   }
   currentId.pop_back();
   return nullptr;
@@ -270,7 +266,7 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
   if (!func_decl_err)
   {
     // construct new scope from args
-    pushScope(ctx, SymbolTable::Scope::FUNCTION);
+    pushScope(ctx->stat_compound()->OBRACE(), SymbolTable::Scope::FUNCTION);
     inherit = true;
     // the last identifier added to the global scope _must_ be the function
     currentFunction = &globalTable->GetLast();
@@ -280,7 +276,7 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
       currentScope->AddSymbol(arg);
     visit(ctx->stat_compound());
     currentFunction->funcTable = currentScope;
-    popScope(ctx);
+    popScope(ctx->stat_compound()->CBRACE());
 
     // cout << currentFunction->function.to_string();
     // cout << "\n";
@@ -322,9 +318,9 @@ Any Compiler::visitStat_compound(CoraxParser::Stat_compoundContext* ctx)
   }
   else
   {
-    pushScope(ctx);
+    pushScope(ctx->OBRACE());
     visitChildren(ctx);
-    popScope(ctx);
+    popScope(ctx->CBRACE());
   }
   
   return nullptr;
@@ -388,7 +384,7 @@ Any Compiler::visitStorageSpecifier(CoraxParser::StorageSpecifierContext* ctx)
 {
   if (currentType.back()->storageSet) {
     string errmess = "identifier cannot have more than one storage class";
-    addRuleErr(ctx, errmess);
+    addNodeError(ctx, errmess);
   }
   else
     currentType.back()->setStorage(ctx->getText());
@@ -432,7 +428,7 @@ Any Compiler::visitPointer_item(CoraxParser::Pointer_itemContext* ctx)
       // insert error here
       // NOTE -- actually this can't occur, there would be a syntax error (right?)
       string errmess = "unexpected type qualifier " + qual->getText();
-      addRuleErr(qual, errmess);
+      addNodeError(qual, errmess);
     }
   }
   currentId.back()->dataType.pointers.push_back(p);

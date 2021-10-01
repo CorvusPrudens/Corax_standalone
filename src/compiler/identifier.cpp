@@ -12,7 +12,7 @@ void FuncComp::add(Instruction inst)
   instructions.push_back(inst);
 }
 
-void FuncComp::addStatementEnd(antlr4::ParserRuleContext* ctx) {
+void FuncComp::addStatementEnd(ParseTree* ctx) {
   add(Instruction(ctx, Instruction::Abstr::STATEMENT_END));
 }
 
@@ -445,14 +445,14 @@ function = nullptr; \
 label1 = nullptr; \
 label2 = nullptr;
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i) {
+Instruction::Instruction(ParseTree* c, Abstr i) {
   SET_NULLS
   ctx = c;
   instr = i;
   single = true;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1) {
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1) {
   SET_NULLS
   ctx = c;
   instr = i;
@@ -460,7 +460,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1) {
   single = true;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& label)
+Instruction::Instruction(ParseTree* c, Abstr i, Identifier& label)
 {
   SET_NULLS
   ctx = c;
@@ -468,7 +468,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& label)
   label1 = &label;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass) 
+Instruction::Instruction(ParseTree* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass) 
 {
   SET_NULLS
   ctx = c;
@@ -478,7 +478,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector
   args = a;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass) 
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Identifier& ass) 
 {
   SET_NULLS
   ctx = c;
@@ -488,7 +488,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& 
   assignment = &ass;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2)
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Result op2)
 {
   SET_NULLS
   ctx = c;
@@ -498,7 +498,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2)
   single = false;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass) 
+Instruction::Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier& ass) 
 {
   SET_NULLS
   ctx = c;
@@ -509,7 +509,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, 
   assignment = &ass;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass) 
+Instruction::Instruction(ParseTree* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass) 
 {
   SET_NULLS
   ctx = c;
@@ -521,7 +521,7 @@ Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Res
   assignment = &ass;
 }
 
-Instruction::Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& lab1, Identifier& lab2)
+Instruction::Instruction(ParseTree* c, Abstr i, Cond co, Result op1, Result op2, Identifier& lab1, Identifier& lab2)
 {
   SET_NULLS
   ctx = c;
@@ -837,18 +837,22 @@ string Instruction::to_string() {
     {
       s += label1->name + ":";
     }
+    break;
     case STATEMENT_END:
     {
       s += "(end of statement)";
     }
+    break;
     case SCOPE_BEGIN:
     {
       s += "(beginning of scope)";
     }
+    break;
     case SCOPE_END:
     {
       s += "(end of scope)";
     }
+    break;
   }
   return s;
 }

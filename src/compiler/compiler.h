@@ -21,6 +21,7 @@
 using namespace antlr4;
 using antlrcpp::Any;
 using std::unique_ptr;
+using antlr4::tree::ParseTree;
 
 // forward declaration
 class OperatorBase;
@@ -35,8 +36,8 @@ class Compiler : CoraxBaseVisitor {
     void Complete();
     void EnableGraph(bool enable) { graphing = enable; }
 
-    void addRuleErr(ParserRuleContext* rule, string errmess);
-    void addRuleWarn(ParserRuleContext* rule, string warnmess);
+    void addNodeError(ParseTree* node, string errmess);
+    void addNodeWarning(ParseTree* node, string warnmess);
 
   // private:
 
@@ -95,12 +96,12 @@ class Compiler : CoraxBaseVisitor {
     bool func_decl_err;
     int unnamed_inc = 0;
 
-    void pushScope(ParserRuleContext* rule, SymbolTable::Scope scope = SymbolTable::Scope::LOCAL);
-    void popScope(ParserRuleContext* rule);
+    void pushScope(ParseTree* rule, SymbolTable::Scope scope = SymbolTable::Scope::LOCAL);
+    void popScope(ParseTree* rule);
 
-    void operation(antlr4::tree::ParseTree* ctx, Result op1, Result op2, OperatorBase& oper);
+    void operation(ParseTree* ctx, Result op1, Result op2, OperatorBase& oper);
     // unary
-    void operation(antlr4::tree::ParseTree* ctx, Result op1, OperatorBase& oper);
+    void operation(ParseTree* ctx, Result op1, OperatorBase& oper);
 
     Any visitParse(CoraxParser::ParseContext* ctx) override;
     // Any visitTopDecl(CoraxParser::TopDeclContext* ctx) override;

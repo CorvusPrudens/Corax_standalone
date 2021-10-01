@@ -52,9 +52,9 @@ type_spec    : 'void'        # typeStd
              | IDENTIFIER    # typeTypedef
              ;
 
-struct_union : 'struct' IDENTIFIER? '{' struct_decl '}' # structDefined
+struct_union : 'struct' IDENTIFIER? OBRACE struct_decl CBRACE # structDefined
              | 'struct' IDENTIFIER                      # structDeclared
-             | 'union' IDENTIFIER? '{' struct_decl '}'  # unionDefined
+             | 'union' IDENTIFIER? OBRACE struct_decl CBRACE  # unionDefined
              | 'union' IDENTIFIER                       # unionDeclared
              ;
 
@@ -70,7 +70,7 @@ struct_declr : declarator
              | declarator? ':' expr_const
              ;
 
-enum_spec    : 'enum' IDENTIFIER? '{' enumerator (',' enumerator)* ','? '}' # enumDefined
+enum_spec    : 'enum' IDENTIFIER? OBRACE enumerator (',' enumerator)* ','? CBRACE # enumDefined
              | 'enum' IDENTIFIER                                            # enumDeclared
              ;
 
@@ -144,7 +144,7 @@ abstract_decl : pointer
               ;
 
 initializer   : expr_assi          # initAssign
-              | '{' init_list '}'  # initList
+              | OBRACE init_list CBRACE  # initList
               ;
 
 init_list     : designation? initializer (',' designation? initializer)* ','?;
@@ -197,14 +197,14 @@ statement     : IDENTIFIER ':' statement                                        
               | 'return' expression? ';'                                              # statReturn
               ;
 
-stat_compound : '{' block_item* '}';
+stat_compound : OBRACE block_item* CBRACE;
 
 // stat_labeled  : IDENTIFIER ':' statement
 //               | 'case' expr_const ':' statement
 //               | 'default' ':' statement
 //               ;
 
-// stat_compound : '{' block_item* '}';
+// stat_compound : OBRACE block_item* CBRACE;
 
 // block_item    : declaration
 //               | statement
@@ -242,3 +242,5 @@ CHAR                   : '\'' (('\\'.)|~[\\]) '\'';
 COMMENT                : '//' ~[\n\r]* [\n\r] -> skip;
 COMMENT_BLOCK          : '/*' .*? '*/' -> skip;
 WHITESPACE             : [ \t\n\r] -> skip;
+OBRACE                 : '{';
+CBRACE                 : '}';

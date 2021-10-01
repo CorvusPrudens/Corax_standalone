@@ -811,8 +811,8 @@ class IncrPost : public OperatorBase {
           string warnmess = "ambiguous postfix operation order";
           // TODO -- add error option with mutliple nodes so we
           // can avoid referencing the same node twice with this (like if there's three!)
-          comp->addRuleWarn(ctx, warnmess);
-          comp->addRuleWarn(inst.ctx, warnmess);
+          comp->addNodeWarning(ctx, warnmess);
+          comp->addNodeWarning(inst.ctx, warnmess);
         }
       }
       
@@ -847,8 +847,8 @@ class DecrPost : public OperatorBase {
           string warnmess = "ambiguous postfix operation order";
           // TODO -- add error option with mutliple nodes so we
           // can avoid referencing the same node twice with this (like if there's three!)
-          comp->addRuleWarn(ctx, warnmess);
-          comp->addRuleWarn(inst.ctx, warnmess);
+          comp->addNodeWarning(ctx, warnmess);
+          comp->addNodeWarning(inst.ctx, warnmess);
         }
       }
       

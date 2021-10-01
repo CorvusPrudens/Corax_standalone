@@ -8,6 +8,7 @@
 
 using std::string;
 
+
 string get_line(string filename, int line)
 {
   std::ifstream file(filename);
@@ -39,6 +40,29 @@ void Error::AddWarning(string message, int line, string file, int code, int cols
 {
   item w {message, line, file, code, colstart, colend};
   warnings.push_back(w);
+}
+
+// TODO -- add detection for rules spanning multiple lines!
+void Error::AddNodeErr(string message, ParseTree* node, string file, antlr4::CommonTokenStream* toks)
+{
+  auto start = node->getSourceInterval().a;
+  auto end = node->getSourceInterval().b;
+
+  int line = toks->get(start)->getLine();
+  int cols = toks->get(start)->getCharPositionInLine();
+  int cole = cols + toks->get(end)->getStopIndex() - toks->get(start)->getStartIndex();
+  AddError(message, line, file, 1, cols, cole);
+}
+
+void Error::AddNodeWarn(string message, ParseTree* node, string file, antlr4::CommonTokenStream* toks)
+{
+  auto start = node->getSourceInterval().a;
+  auto end = node->getSourceInterval().b;
+  
+  int line = toks->get(start)->getLine();
+  int cols = toks->get(start)->getCharPositionInLine();
+  int cole = cols + toks->get(end)->getStopIndex() - toks->get(start)->getStartIndex();
+  AddWarning(message, line, file, 1, cols, cole);
 }
 
 void Error::Report()

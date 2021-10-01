@@ -8,7 +8,7 @@
 #include <vector>
 
 using std::string;
-using antlr4::ParserRuleContext;
+using antlr4::tree::ParseTree;
 using std::vector;
 
 class Instruction; // forward declaration
@@ -23,7 +23,7 @@ class FuncComp {
     FuncComp(const FuncComp& other) { instructions = other.instructions; }
 
     void add(Instruction inst);
-    void addStatementEnd(antlr4::ParserRuleContext* ctx);
+    void addStatementEnd(ParseTree* ctx);
 
     /** Removes any trivially unnecessary temporary variables
      * 
@@ -234,6 +234,7 @@ class Instruction {
       STATEMENT_END,
       SCOPE_BEGIN,
       SCOPE_END,
+      INSTRUCTION_COUNT,
     };
 
     enum Cond {
@@ -245,15 +246,15 @@ class Instruction {
       LESS_EQUAL,
     };
 
-    Instruction(ParserRuleContext* c, Abstr i); // for end of statements / nops
-    Instruction(ParserRuleContext* c, Abstr i, Result op1); // for returns
-    Instruction(ParserRuleContext* c, Abstr i, Identifier& label);
-    Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2);
-    Instruction(ParserRuleContext* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass); // for function calls
-    Instruction(ParserRuleContext* c, Abstr i, Result op1, Identifier& ass);
-    Instruction(ParserRuleContext* c, Abstr i, Result op1, Result op2, Identifier& ass);
-    Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& lab1, Identifier& lab2);
-    Instruction(ParserRuleContext* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass);
+    Instruction(ParseTree* c, Abstr i); // for end of statements / nops
+    Instruction(ParseTree* c, Abstr i, Result op1); // for returns
+    Instruction(ParseTree* c, Abstr i, Identifier& label);
+    Instruction(ParseTree* c, Abstr i, Result op1, Result op2);
+    Instruction(ParseTree* c, Abstr i, Identifier& func, vector<Result> a, Identifier& ass); // for function calls
+    Instruction(ParseTree* c, Abstr i, Result op1, Identifier& ass);
+    Instruction(ParseTree* c, Abstr i, Result op1, Result op2, Identifier& ass);
+    Instruction(ParseTree* c, Abstr i, Cond co, Result op1, Result op2, Identifier& lab1, Identifier& lab2);
+    Instruction(ParseTree* c, Abstr i, Cond co, Result op1, Result op2, Identifier& ass);
     Instruction(const Instruction& other);
     ~Instruction() {}
 
@@ -270,7 +271,7 @@ class Instruction {
     Identifier* function;
     Identifier* label1;
     Identifier* label2;
-    ParserRuleContext* ctx; // for easy error reporting
+    ParseTree* ctx; // for easy error reporting
     bool single;
 
 };
