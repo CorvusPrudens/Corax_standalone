@@ -563,6 +563,8 @@ string Instruction::name() {
       return "type conversion";
     case ASSIGN:
       return "assignment";
+    case DECLARE:
+      return "declaration";
     case ADD:
       return "addition";
     case SUB:
@@ -639,7 +641,8 @@ string Instruction::to_string() {
     instr != SETUP &&
     instr != IF &&
     instr != LABEL &&
-    instr != CONDITIONAL
+    instr != CONDITIONAL &&
+    instr != DECLARE
   ) {
     s = assignment->name + " = ";
   }
@@ -683,6 +686,11 @@ string Instruction::to_string() {
     case ASSIGN:
     {
       s +=  operand1.to_string();
+    }
+    break;
+    case DECLARE:
+    {
+      s += "Declared: " + label1->name;
     }
     break;
     case ADD:

@@ -399,3 +399,18 @@ void CorvassemblyTarget::RestoreUsedRegisters()
 {
 
 }
+
+void CorvassemblyTarget::TranslateScopeBegin(Instruction& inst)
+{
+
+}
+
+void CorvassemblyTarget::TranslateScopeEnd(Instruction& inst)
+{
+
+}
+
+void CorvassemblyTarget::TranslateDeclare(Instruction& inst)
+{
+  
+}

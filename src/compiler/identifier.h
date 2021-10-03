@@ -212,6 +212,7 @@ class Instruction {
       NEGATIVE,
       CONVERT,
       ASSIGN,
+      DECLARE,
       ADD,
       SUB,
       MULT,

@@ -119,6 +119,8 @@ class BaseTarget {
     virtual void TranslateConvert(Instruction& inst) { unsupported(inst); }
     virtual void TranslateAssign(Instruction& inst) { unsupported(inst); }
 
+    virtual void TranslateDeclare(Instruction& inst) { unsupported(inst); }
+
     virtual void TranslateCall(Instruction& inst) { unsupported(inst); }
     virtual void TranslateSetup(Instruction& inst) { unsupported(inst); }
     virtual void TranslateReturn(Instruction& inst) { unsupported(inst); }
@@ -145,6 +147,7 @@ class BaseTarget {
       &BaseTarget::TranslateNegative,
       &BaseTarget::TranslateConvert,
       &BaseTarget::TranslateAssign,
+      &BaseTarget::TranslateDeclare,
       &BaseTarget::TranslateAdd,
       &BaseTarget::TranslateSub,
       &BaseTarget::TranslateMult,
