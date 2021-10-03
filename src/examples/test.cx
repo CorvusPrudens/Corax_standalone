@@ -1,23 +1,23 @@
 
-short global;
-
-short add(short x, short y)
+int main()
 {
-  if (x > 2) {
-    return x + y;
+
+  int a;
+  int b = 20;
+
+  // inner scope
+  {
+    // second declaration of a with more locality
+    int a = b;
+    a++;
   }
-  return x;
+
+  a = b;
+  return a;
 }
 
-short expr(short x, short y)
+void func(int a, int b)
 {
-  short temp = add(x, y);
-  // TODO -- make this post increment not mess with the A register
-  return temp++; 
-  // note -- temp should be returned before the increment (which will be skipped)
-}
-
-void loop() 
-{
-  global = expr(2, global + 2) + expr(1, 2);
+  a = a + b;
+  // no return here
 }
