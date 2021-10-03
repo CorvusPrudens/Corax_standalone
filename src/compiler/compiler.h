@@ -96,8 +96,8 @@ class Compiler : CoraxBaseVisitor {
     bool func_decl_err;
     int unnamed_inc = 0;
 
-    void pushScope(ParseTree* rule, SymbolTable::Scope scope = SymbolTable::Scope::LOCAL);
-    void popScope(ParseTree* rule);
+    void pushScope(ParseTree* rule, SymbolTable::Scope scope = SymbolTable::Scope::LOCAL, bool add_instruction = true);
+    void popScope(ParseTree* rule, bool add_instruction = true);
 
     void operation(ParseTree* ctx, Result op1, Result op2, OperatorBase& oper);
     // unary

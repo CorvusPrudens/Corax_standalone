@@ -102,21 +102,17 @@ void Compiler::addNodeWarning(ParseTree* node, string warnmess)
   err->AddNodeWarn(warnmess, node, file, &tokens);
 }
 
-void Compiler::pushScope(ParseTree* rule, SymbolTable::Scope scope)
+void Compiler::pushScope(ParseTree* rule, SymbolTable::Scope scope, bool add_instruction)
 {
-  if (currentFunction != nullptr)
-  {
+  if (currentFunction != nullptr && add_instruction)
     currentFunction->function.add(Instruction(rule, Instruction::SCOPE_BEGIN));
-  }
   currentScope->children.push_back(SymbolTable(currentScope, scope));
   currentScope = &currentScope->children.back();
 }
-void Compiler::popScope(ParseTree* rule)
+void Compiler::popScope(ParseTree* rule, bool add_instruction)
 {
-  if (currentFunction != nullptr)
-  {
+  if (currentFunction != nullptr && add_instruction)
     currentFunction->function.add(Instruction(rule, Instruction::SCOPE_END));
-  }
   currentScope = currentScope->parent;
 }
 
@@ -175,6 +171,10 @@ Any Compiler::visitDeclarator(CoraxParser::DeclaratorContext* ctx)
   visitChildren(ctx); // this adds pointers too!
   try {
     currentScope->AddSymbol(tempid);
+    if (currentScope->scope != SymbolTable::Scope::GLOBAL)
+    {
+      currentFunction->function.add(Instruction(ctx, Instruction::DECLARE, currentScope->GetLast()));
+    }
   } catch (int e) {
     string errmess;
     switch (e)
@@ -202,14 +202,14 @@ Any Compiler::visitDirFunc(CoraxParser::DirFuncContext* ctx)
 {
   visit(ctx->direct_decl());
   currentId.back()->type = Identifier::IdType::FUNCTION;
-  pushScope(ctx, SymbolTable::Scope::FUNCTION);
+  pushScope(ctx, SymbolTable::Scope::FUNCTION, false);
   if (ctx->param_type_list() != nullptr)
     visit(ctx->param_type_list());
 
   for (auto arg : currentScope->ordered)
     currentId.back()->members.push_back(*arg);
 
-  popScope(ctx);
+  popScope(ctx, false);
   // visit(ctx->direct_decl());
   // if (ctx->param_type_list() != nullptr)
   //   visit(ctx->param_type_list());
@@ -265,11 +265,11 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
 
   if (!func_decl_err)
   {
-    // construct new scope from args
-    pushScope(ctx->stat_compound()->OBRACE(), SymbolTable::Scope::FUNCTION);
     inherit = true;
     // the last identifier added to the global scope _must_ be the function
     currentFunction = &globalTable->GetLast();
+    // construct new scope from args
+    pushScope(ctx->stat_compound()->OBRACE(), SymbolTable::Scope::FUNCTION);
     currentFunction->function.add(Instruction(ctx, Instruction::SETUP));
     if (graphing) graph.Addf(currentFunction->name);
     for (auto &arg : currentFunction->members)
