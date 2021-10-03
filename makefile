@@ -60,7 +60,7 @@ test_python:
 	
 post_java_build: ${SRC}/${GRAMMARS}/${POST}.g4
 	$(info Building main compiler parse tree...)
-	@ cd ${SRC}/${GRAMMARS}; ${ANTLR} -o ${JAVA_PATH}/${POST}_java ${POST}.g4; \
+	@ cd ${SRC}/${GRAMMARS}; ${ANTLR_REL} -o ${JAVA_PATH}/${POST}_java ${POST}.g4; \
 	javac -d ${JAVA_PATH}/${POST}_java ${JAVA_PATH}/${POST}_java/${POST}*.java
 
 post_java_test: ${SRC}/${EXAMPLE}
