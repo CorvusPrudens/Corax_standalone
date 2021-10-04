@@ -19,26 +19,26 @@ class OperatorBase {
     // TODO this can be much improved -- currently it eats up any temp vars it passes while looking for matching ones
     virtual Identifier& manageTemps(Type& t) {
       Identifier ass;
-      if (table->total_temps == 0) 
+      if (func->funcTable->total_temps == 0) 
       {
         // This ensures unique names, since $var is not valid C
         string tempname = "$temp_" + std::to_string(table->temp_vars);
-        table->total_temps++;
-        table->temp_vars++;
+        func->funcTable->total_temps++;
+        func->funcTable->temp_vars++;
         ass.name = tempname;
         ass.dataType = t;
-        table->AddSymbol(ass);
-        return table->GetLast();
+        func->funcTable->AddSymbol(ass);
+        return func->funcTable->GetLast();
       }
       else
       {
-        for (int i = table->temp_vars; i < table->total_temps; i++) {
+        for (int i = func->funcTable->temp_vars; i < func->funcTable->total_temps; i++) {
           string tempname = "$temp_" + std::to_string(i);
 
           try {
-            Identifier& ti = table->GetLocalSymbol(tempname);
+            Identifier& ti = func->funcTable->GetLocalSymbol(tempname);
             if (ti.dataType == t) {
-              table->temp_vars = i + 1;
+              func->funcTable->temp_vars = i + 1;
               return ti;
             }
           } catch (int e) {
@@ -46,13 +46,13 @@ class OperatorBase {
           }
         }
 
-        string tempname = "$temp_" + std::to_string(table->total_temps);
-        table->total_temps++;
-        table->temp_vars = table->total_temps;
+        string tempname = "$temp_" + std::to_string(func->funcTable->total_temps);
+        func->funcTable->total_temps++;
+        func->funcTable->temp_vars = func->funcTable->total_temps;
         ass.name = tempname;
         ass.dataType = t;
-        table->AddSymbol(ass);
-        return table->GetLast();
+        func->funcTable->AddSymbol(ass);
+        return func->funcTable->GetLast();
       }
     }
 

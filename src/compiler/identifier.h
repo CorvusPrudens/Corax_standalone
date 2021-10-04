@@ -268,6 +268,7 @@ class Instruction {
     Result operand1;
     Result operand2;
     vector<Result> args;
+    SymbolTable* scope;
     Identifier* assignment;
     Identifier* function;
     Identifier* label1;

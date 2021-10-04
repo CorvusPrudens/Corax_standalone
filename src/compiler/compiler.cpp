@@ -104,15 +104,23 @@ void Compiler::addNodeWarning(ParseTree* node, string warnmess)
 
 void Compiler::pushScope(ParseTree* rule, SymbolTable::Scope scope, bool add_instruction)
 {
-  if (currentFunction != nullptr && add_instruction)
-    currentFunction->function.add(Instruction(rule, Instruction::SCOPE_BEGIN));
   currentScope->children.push_back(SymbolTable(currentScope, scope));
   currentScope = &currentScope->children.back();
+  if (currentFunction != nullptr && add_instruction)
+  {
+    Instruction inst(rule, Instruction::SCOPE_BEGIN);
+    inst.scope = currentScope;
+    currentFunction->function.add(inst);
+  }
 }
 void Compiler::popScope(ParseTree* rule, bool add_instruction)
 {
   if (currentFunction != nullptr && add_instruction)
-    currentFunction->function.add(Instruction(rule, Instruction::SCOPE_END));
+  {
+    Instruction inst(rule, Instruction::SCOPE_END);
+    inst.scope = currentScope;
+    currentFunction->function.add(inst);
+  }
   currentScope = currentScope->parent;
 }
 
@@ -271,11 +279,11 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
     // construct new scope from args
     currentFunction->function.add(Instruction(ctx, Instruction::SETUP));
     pushScope(ctx->stat_compound()->OBRACE(), SymbolTable::Scope::FUNCTION);
+    currentFunction->funcTable = currentScope;
     if (graphing) graph.Addf(currentFunction->name);
     for (auto &arg : currentFunction->members)
       currentScope->AddSymbol(arg);
     visit(ctx->stat_compound());
-    currentFunction->funcTable = currentScope;
     popScope(ctx->stat_compound()->CBRACE());
 
     // cout << currentFunction->function.to_string();

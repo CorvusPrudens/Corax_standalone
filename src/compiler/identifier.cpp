@@ -547,6 +547,7 @@ Instruction::Instruction(const Instruction& other) {
   assignment = other.assignment;
   label1 = other.label1;
   label2 = other.label2;
+  scope = other.scope;
 }
 
 string Instruction::name() {

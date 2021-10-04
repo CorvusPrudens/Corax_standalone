@@ -8,6 +8,13 @@ void FuncTrans::AddLine(Line line, Instruction& inst, vector<Register*> regs)
     used_registers.emplace(r);
 }
 
+void FuncTrans::PrependLine(Line line, Instruction& inst, vector<Register*> regs)
+{
+  instruction_reference[&inst].insert(instruction_reference[&inst].begin(),line);
+  for (auto r : regs)
+    used_registers.emplace(r);
+}
+
 void FuncTrans::Flatten()
 {
   for (auto& inst : *instructions)
@@ -37,6 +44,72 @@ void FuncTrans::AssignArgumentOffsets(Identifier& function)
     auto idx = &function.funcTable->GetLocalSymbol(arg.name);
     stack_offsets[idx] = offset;
     offset -= idx->dataType.size();
+  }
+}
+
+// TODO -- this is also annoyingly target dependent... ABSTRACT!!!
+void FuncTrans::AllocateVariables(Register* stack_pointer)
+{
+  for (auto& inst : *instructions)
+  {
+    size_t size = 0;
+    if (inst.instr == Instruction::SCOPE_BEGIN)
+    {
+      int parent_stack_offset;
+      if (inst.scope->scope != SymbolTable::FUNCTION)
+        parent_stack_offset = inst.scope->parent->stack_offset;
+      else
+        // the base pointer points to the return address by default (right?), so we need an offset
+        // TODO -- remove this magic number here too
+        parent_stack_offset = 4;
+
+      auto& identifiers = allocated_variables[inst.scope];
+      for (auto ident : identifiers)
+      {
+        stack_offsets[ident] = parent_stack_offset + size;
+        size += ident->dataType.size();
+      }
+
+      inst.scope->stack_offset = size + parent_stack_offset;
+
+      if (size > 0)
+      {
+        Line temp("add", {LineArg(*stack_pointer), LineArg(std::to_string(size))});
+        AddLine(temp, inst, {});
+      }
+    }
+    else if (inst.instr == Instruction::SCOPE_END)
+    {
+      auto& identifiers = allocated_variables[inst.scope];
+      for (auto ident : identifiers)
+      {
+        size += ident->dataType.size();
+      }
+      
+      if (size > 0)
+      {
+        Line temp("sub", {LineArg(*stack_pointer), LineArg(std::to_string(size))});
+        PrependLine(temp, inst, {});
+      }
+    }
+    else if (inst.instr == Instruction::RETURN)
+    {
+      int parent_stack_offset;
+      if (inst.scope->scope != SymbolTable::FUNCTION)
+        parent_stack_offset = inst.scope->parent->stack_offset;
+
+      auto& identifiers = allocated_variables[inst.scope];
+      for (auto ident : identifiers)
+      {
+        size += ident->dataType.size();
+      }
+      
+      if (size > 0)
+      {
+        Line temp("sub", {LineArg(*stack_pointer), LineArg(std::to_string(size + parent_stack_offset))});
+        PrependLine(temp, inst, {});
+      }
+    }
   }
 }
 
@@ -212,8 +285,10 @@ void BaseTarget::Translate(Identifier& function)
   // store any remaining values before returning
   StoreAll(function, function.function.instructions.back());
   SaveUsedRegisters(function); // save all the registers that were used (prepending code)
-  RestoreUsedRegisters(function); // restore all the registers that were used (appending code)
   translations.back().AssignArgumentOffsets(function);
+  RestoreUsedRegisters(function); // restore all the registers that were used (appending code)
+  translations.back().AllocateVariables(&GetStackPointer());
+  
   ResetRegisters();
   translations.back().Flatten();
 }

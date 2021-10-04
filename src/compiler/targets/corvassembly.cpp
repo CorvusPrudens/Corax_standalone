@@ -303,7 +303,6 @@ void CorvassemblyTarget::TranslateCall(Instruction& inst)
 // AddLine("jmp [" + GetStackPointer().name + "]");
 
 #define FUNC_END \
-AddLine("", inst, {LineArg("<restore used>")}); \
 AddLine("add", inst, {LineArg(GetBasePointer()), LineArg("0"), LineArg(GetStackPointer())}); \
 AddLine("pop", inst, {LineArg(GetBasePointer())}); \
 AddLine("jmp", inst, {LineArg("[" + GetStackPointer().name + "]")});
@@ -328,7 +327,7 @@ void CorvassemblyTarget::TranslateReturn(Instruction& inst)
 
 void CorvassemblyTarget::TranslateSetup(Instruction& inst)
 {
-  AddLine("", inst, {LineArg("<save used>")});
+  // AddLine("", inst, {LineArg("<save used>")});
 }
 
 void CorvassemblyTarget::TranslateIf(Instruction& inst)
@@ -367,6 +366,21 @@ void CorvassemblyTarget::TranslateStore(Register& reg, Instruction& inst)
   }
   else
   {
+    bool allocated = false;
+    auto target_scope = current_scope->GetScope(reg.loaded->id);
+
+    for (auto var : translations.back().allocated_variables[target_scope])
+    {
+      if (var == reg.loaded->id)
+      {
+        allocated = true;
+        break;
+      }
+    }
+
+    if (!allocated)
+      translations.back().allocated_variables[target_scope].push_back(reg.loaded->id);
+
     AddLine("str", inst, {LineArg(reg), LineArg(*reg.loaded)});
   }
 }
@@ -413,11 +427,11 @@ void CorvassemblyTarget::RestoreUsedRegisters(Identifier& function)
     if (inst.instr == Instruction::RETURN)
     {
       int start_idx = function.dataType == void_ ? 0 : 1;
-      for (int i = registers.size() - 1; i > start_idx - 1; i--)
+      for (int i = start_idx; i < registers.size(); i++)
       {
         if (translation.used_registers.count(&registers[i]) && registers[i].rank == Register::GENERAL)
         {
-          translation.AddLine(Line("pop", {LineArg(registers[i])}), inst, {});
+          translation.PrependLine(Line("pop", {LineArg(registers[i])}), inst, {});
         }
       }
     }
@@ -426,15 +440,18 @@ void CorvassemblyTarget::RestoreUsedRegisters(Identifier& function)
 
 void CorvassemblyTarget::TranslateScopeBegin(Instruction& inst)
 {
-
+  current_scope = inst.scope;
 }
 
 void CorvassemblyTarget::TranslateScopeEnd(Instruction& inst)
 {
-
+  current_scope = inst.scope->parent;
 }
 
 void CorvassemblyTarget::TranslateDeclare(Instruction& inst)
 {
-  
+  // SymbolTable* scope = &current_scope->GetSymbolScope(inst.label1);
+  // If a symbol is declared, the scope will of course always be the current one
+  auto& translation = translations.back();
+  translation.allocated_variables[current_scope].push_back(inst.label1);
 }

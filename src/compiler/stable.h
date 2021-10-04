@@ -27,6 +27,8 @@ struct SymbolTable {
     scope = s;
     temp_vars = 0;
     total_temps = 0;
+    local_stored_bytes = 0;
+    stack_offset = 0;
   }
 
   // TODO -- this needs to check if the symbol already exists. 
@@ -49,6 +51,11 @@ struct SymbolTable {
    */
   Identifier& GetLast();
 
+  /** Get the symbol table that owns the given identifier
+   * 
+   */
+  SymbolTable* GetScope(Identifier* id);
+
   SymbolTable* parent;
   // Doesn't need to know child, since we only
   // need to walk up the tree
@@ -64,5 +71,8 @@ struct SymbolTable {
 
   unsigned int temp_vars;
   unsigned int total_temps;
+
+  unsigned int local_stored_bytes;
+  int stack_offset;
 
 };

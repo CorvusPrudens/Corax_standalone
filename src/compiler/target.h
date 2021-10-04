@@ -25,9 +25,12 @@ struct FuncTrans {
   unordered_set<Register*> used_registers;
   unordered_map<Instruction*, vector<Line>> instruction_reference; 
   unordered_map<Identifier*, int> stack_offsets;
+  unordered_map<SymbolTable*, vector<Identifier*>> allocated_variables;
 
   void AssignArgumentOffsets(Identifier& function);
+  void AllocateVariables(Register* stack_pointer);
   void AddLine(Line line, Instruction& inst, vector<Register*> regs);
+  void PrependLine(Line line, Instruction& inst, vector<Register*> regs);
   void Flatten();
   Instruction* GetSetupInstruction();
   Instruction* GetTeardownInstruction();
@@ -256,6 +259,8 @@ class BaseTarget {
     unsigned int operationStep;
     unsigned int conditionalLabels;
     std::list<Result> temp_results;
+
+    SymbolTable* current_scope;
 
     // maybe a bit silly?
     unordered_map<TypeDescriptor*, Register::Data> datatypes;

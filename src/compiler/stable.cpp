@@ -51,6 +51,24 @@ Identifier& SymbolTable::GetSymbol(string name)
   }
 }
 
+SymbolTable* SymbolTable::GetScope(Identifier* id)
+{
+  try
+  {
+    GetLocalSymbol(id->name);
+    return this;
+  }
+  catch (int e)
+  {
+    if (parent != nullptr)
+    {
+      return parent->GetScope(id);
+    }
+    else
+      throw 1;
+  }
+}
+
 Identifier& SymbolTable::GetLast()
 {
   return *ordered.back();
