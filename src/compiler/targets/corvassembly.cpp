@@ -27,54 +27,54 @@ void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
 {
   if (inst.operand1.isConst())
   {
-    Register& op2 = PrepareResult(inst.operand2);
-    Register& ass = PrepareAssign(*inst.assignment);
+    Register& op2 = PrepareResult(inst.operand2, inst);
+    Register& ass = PrepareAssign(*inst.assignment, inst);
 
     if (&ass == &op2)
-      AddLine(mnemonic, {LineArg(op2), LineArg(inst.operand1)});
+      AddLine(mnemonic, inst, {LineArg(op2), LineArg(inst.operand1)});
     else
-      AddLine(mnemonic, {LineArg(op2), LineArg(inst.operand1), LineArg(ass)});
+      AddLine(mnemonic, inst, {LineArg(op2), LineArg(inst.operand1), LineArg(ass)});
 
     UpdateRegister(ass);
-    ManageStorage(ass);
+    ManageStorage(ass, inst);
   }
   else if (inst.operand2.isConst())
   {
-    Register& op1 = PrepareResult(inst.operand1);
-    Register& ass = PrepareAssign(*inst.assignment);
+    Register& op1 = PrepareResult(inst.operand1, inst);
+    Register& ass = PrepareAssign(*inst.assignment, inst);
 
     if (&ass == &op1)
-      AddLine(mnemonic, {LineArg(op1), LineArg(inst.operand2)});
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(inst.operand2)});
       // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(inst.operand2));
     else
-      AddLine(mnemonic, {LineArg(op1), LineArg(inst.operand1), LineArg(ass)});
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(inst.operand1), LineArg(ass)});
       // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(inst.operand2) + ", " + LineArg(ass));
 
     UpdateRegister(ass);
-    ManageStorage(ass);
+    ManageStorage(ass, inst);
   }
   else // they can't both be const! (cause that would just be made an assignment)
   {
     // TODO -- in reality, these should all have a first pass search, and if
     // it's not already loaded somewhere, then after all the other operands
     // have had their search, we'll have a second round of searching/loading!!!
-    Register& op1 = PrepareResult(inst.operand1);
-    Register& op2 = PrepareResult(inst.operand2);
-    Register& ass = PrepareAssign(*inst.assignment);
+    Register& op1 = PrepareResult(inst.operand1, inst);
+    Register& op2 = PrepareResult(inst.operand2, inst);
+    Register& ass = PrepareAssign(*inst.assignment, inst);
 
     
     if (&ass == &op1)
-      AddLine(mnemonic, {LineArg(op1), LineArg(op1)});
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(op1)});
     // TODO -- this doesn't work for subtraction or division operations, 
     // so it has to be commented out
     // else if (&ass == &op2)
     //   AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1));
     else
-      AddLine(mnemonic, {LineArg(op1), LineArg(op1), LineArg(ass)});
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(op1), LineArg(ass)});
       // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1) + ", " + LineArg(ass));
 
     UpdateRegister(ass);
-    ManageStorage(ass);
+    ManageStorage(ass, inst);
   }
 }
 
@@ -217,16 +217,16 @@ void CorvassemblyTarget::TranslateDeref(Instruction& inst)
 }
 void CorvassemblyTarget::TranslateNot(Instruction& inst)
 {
-  Register& op1 = PrepareResult(inst.operand1);
-  Register& ass = PrepareAssign(*inst.assignment);
+  Register& op1 = PrepareResult(inst.operand1, inst);
+  Register& ass = PrepareAssign(*inst.assignment, inst);
 
   if (&ass == &op1)
-    AddLine("not", {LineArg(op1)});
+    AddLine("not", inst, {LineArg(op1)});
   else
-    AddLine("not", {LineArg(op1), LineArg(*ass.loaded)});
+    AddLine("not", inst, {LineArg(op1), LineArg(*ass.loaded)});
 
   UpdateRegister(ass);
-  ManageStorage(ass);
+  ManageStorage(ass, inst);
 }
 void CorvassemblyTarget::TranslateNegate(Instruction& inst)
 {
@@ -243,13 +243,13 @@ void CorvassemblyTarget::TranslateConvert(Instruction& inst)
 // This could probably be cleverly optimized!
 void CorvassemblyTarget::TranslateAssign(Instruction& inst)
 {
-    Register& op2 = PrepareResult(inst.operand1);
+    Register& op2 = PrepareResult(inst.operand1, inst);
 
     try {
       Register& ass = CheckLoaded(*inst.assignment);
       // AddLine("add " + LineArg(op1) + ", 0, " + LineArg(ass));
-      AddLine("add", {LineArg(op2), LineArg("0"), LineArg(ass)});
-      ManageStorage(ass);
+      AddLine("add", inst, {LineArg(op2), LineArg("0"), LineArg(ass)});
+      ManageStorage(ass, inst);
     } catch (int e) {
       // for now, since a register can only hold one pointer,
       // the loaded value will change to the assignee
@@ -257,7 +257,7 @@ void CorvassemblyTarget::TranslateAssign(Instruction& inst)
       // this would be ideal, but the register needs a pointer to a result!!
       op2.load(temp);
       UpdateRegister(op2);
-      ManageStorage(op2);
+      ManageStorage(op2, inst);
       // StoreRegister(op2, *inst.assignment);
     }
 }
@@ -266,33 +266,33 @@ void CorvassemblyTarget::TranslateCall(Instruction& inst)
 {
   // the A register is the only one we'll save before the jump
   if (returnVal->loaded != nullptr && !returnVal->loaded->isConst())
-    StoreRegister(*returnVal);
+    StoreRegister(*returnVal, inst);
   for (int i = inst.args.size() - 1; i > -1; i--)
   {
-    Register& pr = PrepareResult(inst.args[i]);
-    AddLine("push", {pr});
+    Register& pr = PrepareResult(inst.args[i], inst);
+    AddLine("push", inst, {pr});
   }
   // AddLine("push pc, 4");
-  AddLine("push", {LineArg(GetProgramCounter()), LineArg("4")});
+  AddLine("push", inst, {LineArg(GetProgramCounter()), LineArg("4")});
   Result& res = GenerateResult(*inst.function);
-  AddLine("jmp", {LineArg(res)});
+  AddLine("jmp", inst, {LineArg(res)});
 
   size_t sp_offset = 0;
   for (auto& arg : inst.args)
     sp_offset += arg.getSize() / 2; // corvassembly is a strictly 16-bit-word language
-  AddLine("add", {LineArg(GetStackPointer()), LineArg(std::to_string(sp_offset + 1))});
+  AddLine("add", inst, {LineArg(GetStackPointer()), LineArg(std::to_string(sp_offset + 1))});
   // Register& reg = PrepareAssign(inst.assignment);
   try {
     Register& ass = CheckLoaded(*inst.assignment);
     // AddLine("add " + returnVal->name + ", 0, " + LineArg(ass));
-    AddLine("add", {LineArg(*returnVal), LineArg("0"), LineArg(ass)});
+    AddLine("add", inst, {LineArg(*returnVal), LineArg("0"), LineArg(ass)});
     UpdateRegister(ass);
-    ManageStorage(ass);
+    ManageStorage(ass, inst);
   } catch (int e) {
     Result& res = GenerateResult(*inst.assignment);
     returnVal->load(res);
     UpdateRegister(*returnVal);
-    ManageStorage(*returnVal);
+    ManageStorage(*returnVal, inst);
   }
 }
 
@@ -303,10 +303,10 @@ void CorvassemblyTarget::TranslateCall(Instruction& inst)
 // AddLine("jmp [" + GetStackPointer().name + "]");
 
 #define FUNC_END \
-AddLine("", {LineArg("<restore used>")}); \
-AddLine("add", {LineArg(GetBasePointer()), LineArg("0"), LineArg(GetStackPointer())}); \
-AddLine("pop", {LineArg(GetBasePointer())}); \
-AddLine("jmp", {LineArg("[" + GetStackPointer().name + "]")});
+AddLine("", inst, {LineArg("<restore used>")}); \
+AddLine("add", inst, {LineArg(GetBasePointer()), LineArg("0"), LineArg(GetStackPointer())}); \
+AddLine("pop", inst, {LineArg(GetBasePointer())}); \
+AddLine("jmp", inst, {LineArg("[" + GetStackPointer().name + "]")});
 
 // TODO -- this could be optimized better!!
 void CorvassemblyTarget::TranslateReturn(Instruction& inst)
@@ -316,10 +316,10 @@ void CorvassemblyTarget::TranslateReturn(Instruction& inst)
   }
   else
   {
-    Register& ret = PrepareResult(inst.operand1);
+    Register& ret = PrepareResult(inst.operand1, inst);
     if (&ret != returnVal) {
-      StoreRegister(*returnVal);
-      AddLine("add", {LineArg(ret), LineArg("0"), LineArg(*returnVal)});
+      StoreRegister(*returnVal, inst);
+      AddLine("add", inst, {LineArg(ret), LineArg("0"), LineArg(*returnVal)});
       returnVal->load(inst.operand1);
     }
     FUNC_END
@@ -328,7 +328,7 @@ void CorvassemblyTarget::TranslateReturn(Instruction& inst)
 
 void CorvassemblyTarget::TranslateSetup(Instruction& inst)
 {
-  AddLine("", {LineArg("<save used>")});
+  AddLine("", inst, {LineArg("<save used>")});
 }
 
 void CorvassemblyTarget::TranslateIf(Instruction& inst)
@@ -337,13 +337,13 @@ void CorvassemblyTarget::TranslateIf(Instruction& inst)
 }
 void CorvassemblyTarget::TranslateLabel(Instruction& inst)
 {
-  AddLine(inst.label1->name + ":", {});
+  AddLine(inst.label1->name + ":", inst, {});
 }
 void CorvassemblyTarget::TranslateConditional(Instruction& inst)
 {
-  Register& op1 = PrepareResult(inst.operand1);
-  Register& op2 = PrepareResult(inst.operand2);
-  AddLine("cmp", {LineArg(op1), LineArg(op1)});
+  Register& op1 = PrepareResult(inst.operand1, inst);
+  Register& op2 = PrepareResult(inst.operand2, inst);
+  AddLine("cmp", inst, {LineArg(op1), LineArg(op1)});
   switch (inst.condition)
   {
     default:
@@ -351,15 +351,15 @@ void CorvassemblyTarget::TranslateConditional(Instruction& inst)
     {
       Result& res1 = GenerateResult(*inst.label1);
       Result& res2 = GenerateResult(*inst.label2);
-      AddLine("joc", {LineArg("greater"), LineArg(res1)});
-      AddLine("jmp", {LineArg(res2)});
+      AddLine("joc", inst, {LineArg("greater"), LineArg(res1)});
+      AddLine("jmp", inst, {LineArg(res2)});
     }
     break;
   }
 }
 
 // will only work if it's been loaded _and_ has a non-const loaded value
-void CorvassemblyTarget::TranslateStore(Register& reg)
+void CorvassemblyTarget::TranslateStore(Register& reg, Instruction& inst)
 {
   if (reg.loaded->isConst())
   {
@@ -367,22 +367,22 @@ void CorvassemblyTarget::TranslateStore(Register& reg)
   }
   else
   {
-    AddLine("str", {LineArg(reg), LineArg(*reg.loaded)});
+    AddLine("str", inst, {LineArg(reg), LineArg(*reg.loaded)});
   }
 }
-void CorvassemblyTarget::TranslateStore(Register& reg, Identifier& id)
+void CorvassemblyTarget::TranslateStore(Register& reg, Instruction& inst, Identifier& id)
 {
   // string line = "";
   // line += "str " + reg.name + ", " + id.name;
   // AddLine(line);
   Result& res = GenerateResult(id);
-  AddLine("Str", {LineArg(reg), LineArg(res)});
+  AddLine("Str", inst, {LineArg(reg), LineArg(res)});
 }
-void CorvassemblyTarget::TranslateLoad(Register& reg, Result& res)
+void CorvassemblyTarget::TranslateLoad(Register& reg, Instruction& inst, Result& res)
 {
   // string line = "ldr " + reg.name + ", " + res.to_string();
   // AddLine(line);
-  AddLine("ldr", {LineArg(reg), LineArg(res)});
+  AddLine("ldr", inst, {LineArg(reg), LineArg(res)});
 }
 
 // TODO -- variable management needs to be carefully done!
@@ -390,14 +390,38 @@ void CorvassemblyTarget::TranslateLoad(Register& reg, Result& res)
 // last step, since some may only exist in the registers
 // We'll need to know if a declared variable is local or not
 // in the last step, though, since it'll be added to the stack! 
-void CorvassemblyTarget::SaveUsedRegisters()
+void CorvassemblyTarget::SaveUsedRegisters(Identifier& function)
 {
-
+  auto translation = &translations.back();
+  Instruction* setup = translation->GetSetupInstruction();
+  // If the function returns nothing, then the r0 register needs to be preserved
+  int start_idx = function.dataType == void_ ? 0 : 1;
+  for (int i = start_idx; i < registers.size(); i++)
+  {
+    if (translation->used_registers.count(&registers[i]) && registers[i].rank == Register::GENERAL)
+    {
+      translation->AddLine(Line("push", {LineArg(registers[i])}), *setup, {});
+    }
+  }
 }
 
-void CorvassemblyTarget::RestoreUsedRegisters()
+void CorvassemblyTarget::RestoreUsedRegisters(Identifier& function)
 {
-
+  auto& translation = translations.back();
+  for (auto& inst : *translation.instructions)
+  {
+    if (inst.instr == Instruction::RETURN)
+    {
+      int start_idx = function.dataType == void_ ? 0 : 1;
+      for (int i = registers.size() - 1; i > start_idx - 1; i--)
+      {
+        if (translation.used_registers.count(&registers[i]) && registers[i].rank == Register::GENERAL)
+        {
+          translation.AddLine(Line("pop", {LineArg(registers[i])}), inst, {});
+        }
+      }
+    }
+  }
 }
 
 void CorvassemblyTarget::TranslateScopeBegin(Instruction& inst)

@@ -50,12 +50,12 @@ class CorvassemblyTarget : public BaseTarget {
 
     void TranslateDeclare(Instruction& inst) override;
 
-    void TranslateStore(Register& reg) override;
-    void TranslateStore(Register& reg, Identifier& id) override;
-    void TranslateLoad(Register& reg, Result& res) override;
+    void TranslateStore(Register& reg, Instruction& inst) override;
+    void TranslateStore(Register& reg, Instruction& inst, Identifier& id) override;
+    void TranslateLoad(Register& reg, Instruction& inst, Result& res) override;
 
-    void SaveUsedRegisters() override;
-    void RestoreUsedRegisters() override;
+    void SaveUsedRegisters(Identifier& function) override;
+    void RestoreUsedRegisters(Identifier& function) override;
 };
 
 #endif

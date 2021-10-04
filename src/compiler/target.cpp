@@ -1,11 +1,43 @@
 #include <limits>
 #include "target.h"
 
-void FuncTrans::AddLine(Line line, vector<Register*> regs)
+void FuncTrans::AddLine(Line line, Instruction& inst, vector<Register*> regs)
 {
-  translation.push_back(line);
+  instruction_reference[&inst].push_back(line);
   for (auto r : regs)
     used_registers.emplace(r);
+}
+
+void FuncTrans::Flatten()
+{
+  for (auto& inst : *instructions)
+  {
+    for (auto& line : instruction_reference[&inst])
+    {
+      translation.push_back(line);
+    }
+  }
+}
+
+Instruction* FuncTrans::GetSetupInstruction()
+{
+  for (auto& inst : *instructions)
+  {
+    if (inst.instr == Instruction::SETUP)
+      return &inst;
+  }
+  throw 1;
+}
+
+void FuncTrans::AssignArgumentOffsets(Identifier& function)
+{
+  int offset = -2; // TODO -- remove this magic number
+  for (auto& arg : function.members)
+  {
+    auto idx = &function.funcTable->GetLocalSymbol(arg.name);
+    stack_offsets[idx] = offset;
+    offset -= idx->dataType.size();
+  }
 }
 
 Register::Register(string n, Data d, Register::Rank r, unsigned int b)
@@ -119,6 +151,34 @@ string Line::to_string()
   return out;
 }
 
+// TODO -- this is implementation-specific, so we need to figure out a
+// general solution here
+string Line::to_string(unordered_map<Identifier*, int> stack_offsets, string base_reg)
+{
+  string out = mnemonic + " ";
+  for (int i = 0; i < args.size(); i++)
+  {
+    if (
+      args[i].GetType() == LineArg::RESULT &&
+      args[i].result->kind == Result::ID &&
+      stack_offsets.count(args[i].result->id) > 0
+    )
+    {
+      out += '[' + base_reg + ',' + std::to_string(stack_offsets[args[i].result->id]) + ']';
+    }
+    else
+    {
+      out += args[i].to_string();
+    }
+    
+    if (i < args.size() - 1)
+      out += ", ";
+  }
+  if (condition != "")
+    out += " -> " + condition;
+  return out;
+}
+
 void BaseTarget::TranslateAll()
 {
   for (const auto id : comp->globalTable->ordered)
@@ -136,6 +196,7 @@ void BaseTarget::Translate(Identifier& function)
   temptrans.id.dataType = function.dataType;
   temptrans.id.members = function.members;
   temptrans.language = targetName;
+  temptrans.instructions = &function.function.instructions;
   translations.push_back(temptrans);
 
   for (auto& inst : function.function.instructions)
@@ -149,10 +210,12 @@ void BaseTarget::Translate(Identifier& function)
   // }
 
   // store any remaining values before returning
-  StoreAll(function);
-  SaveUsedRegisters(); // save all the registers that were used (prepending code)
-  RestoreUsedRegisters(); // restore all the registers that were used (appending code)
+  StoreAll(function, function.function.instructions.back());
+  SaveUsedRegisters(function); // save all the registers that were used (prepending code)
+  RestoreUsedRegisters(function); // restore all the registers that were used (appending code)
+  translations.back().AssignArgumentOffsets(function);
   ResetRegisters();
+  translations.back().Flatten();
 }
 
 void BaseTarget::UpdateRegister(Register& reg)
@@ -203,7 +266,7 @@ void BaseTarget::ResetRegisters()
   }
 }
 
-void BaseTarget::StoreRegister(Register& reg)
+void BaseTarget::StoreRegister(Register& reg, Instruction& inst)
 {
   // Not totally sure how we should deal with this, but for now...
   if ((reg.loaded->id->latest < reg.latest || 
@@ -212,26 +275,26 @@ void BaseTarget::StoreRegister(Register& reg)
   )
   {
     reg.loaded->id->latest = reg.latest;
-    TranslateStore(reg);
+    TranslateStore(reg, inst);
   }
   // reg.status = Register::Status::FREE;
   reg.requires_storage = false;
 }
 
-void BaseTarget::StoreRegister(Register& reg, Identifier& ass)
+void BaseTarget::StoreRegister(Register& reg, Instruction& inst, Identifier& ass)
 {
   // Not totally sure how we should deal with this, but for now...
   if (ass.latest < reg.latest || (ass.dataType.qualifiers & Qualifier::VOLATILE))
   {
     ass.latest = reg.latest;
-    TranslateStore(reg, ass);
+    TranslateStore(reg, inst, ass);
   }
   // reg.status = Register::Status::FREE;
   reg.requires_storage = false;
 }
 
 // NOTE -- this is only really for use at the end of the function
-void BaseTarget::StoreAll(Identifier& function, bool include)
+void BaseTarget::StoreAll(Identifier& function, Instruction& inst, bool include)
 {
   for (auto& reg : registers)
   {
@@ -241,13 +304,13 @@ void BaseTarget::StoreAll(Identifier& function, bool include)
         function.funcTable->GetLocalSymbol(reg.loaded->id->name);
         if (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE) {
           // if it's volatile, store it anyway
-          StoreRegister(reg);
+          StoreRegister(reg, inst);
         }
       } catch (int e) {
         // bit of a hacky way to determine if it's a global, but it works...
         try {
           function.funcTable->GetSymbol(reg.loaded->id->name);
-          StoreRegister(reg);
+          StoreRegister(reg, inst);
         } catch (int e) {
 
         }
@@ -278,7 +341,7 @@ Register::Data BaseTarget::FetchDataType(Identifier& id)
   throw 1;
 }
 
-Register& BaseTarget::GetLastUsed(Register::Data data, Register::Rank rank)
+Register& BaseTarget::GetLastUsed(Instruction& inst, Register::Data data, Register::Rank rank)
 {
   auto lowest = std::numeric_limits<unsigned int>::max();
   auto lowestFree = std::numeric_limits<unsigned int>::max();
@@ -302,14 +365,14 @@ Register& BaseTarget::GetLastUsed(Register::Data data, Register::Rank rank)
   }
   if (lastFree == nullptr) {
     if (lastToStore == nullptr) throw 1;
-    StoreRegister(*lastToStore);
+    StoreRegister(*lastToStore, inst);
     // TranslateStore(*lastToStore);
     return *lastToStore;
   }
   return *lastFree;
 }
 
-Register& BaseTarget::PrepareResult(Result& res)
+Register& BaseTarget::PrepareResult(Result& res, Instruction& inst)
 {
   // Check if it's already loaded and not out-of-date
   for (auto& reg : registers)
@@ -328,18 +391,18 @@ Register& BaseTarget::PrepareResult(Result& res)
   Register* reg;
   Register::Data d = FetchDataType(res);
 
-  reg = &GetLastUsed(d);
+  reg = &GetLastUsed(inst, d);
 
   reg->operationStep = operationStep++;
   reg->load(res);
   reg->status = Register::Status::USED;
-  TranslateLoad(*reg, res);
+  TranslateLoad(*reg, inst, res);
   return *reg;
 }
 
 // TODO -- this should look for the register with the _latest_ copy of the
 // intended assignee
-Register& BaseTarget::PrepareAssign(Identifier& res)
+Register& BaseTarget::PrepareAssign(Identifier& res, Instruction& inst)
 {
   // Check if it's already loaded and not out-of-date
   for (auto& reg : registers)
@@ -355,7 +418,7 @@ Register& BaseTarget::PrepareAssign(Identifier& res)
   Register* reg;
   Register::Data d = FetchDataType(res);
   
-  reg = &GetLastUsed(d);
+  reg = &GetLastUsed(inst, d);
 
   Result& temp = GenerateResult(res);
   reg->load(temp);
@@ -404,13 +467,13 @@ void BaseTarget::TranslateStat(Instruction& inst)
   }
 }
 
-void BaseTarget::ManageStorage(Register& reg)
+void BaseTarget::ManageStorage(Register& reg, Instruction& inst)
 {
   if (reg.loaded != nullptr && !reg.loaded->isConst())
   {
     if (reg.loaded->id->dataType.qualifiers & Qualifier::VOLATILE)
     {
-      TranslateStore(reg);
+      TranslateStore(reg, inst);
       reg.requires_storage = false;
     }
     else
@@ -435,7 +498,7 @@ string BaseTarget::to_string()
 
     for (auto& line : func.translation)
     {
-      output += " " + line.to_string() + "\n";
+      output += " " + line.to_string(func.stack_offsets, GetBasePointer().name) + "\n";
     }
       
     output += "\n";
@@ -473,7 +536,7 @@ Register& BaseTarget::GetProgramCounter()
   throw 1;
 }
 
-void BaseTarget::AddLine(string mnemonic, vector<LineArg> args)
+void BaseTarget::AddLine(string mnemonic, Instruction& inst, vector<LineArg> args)
 {
   Line l(mnemonic, args);
   vector<Register*> regs;
@@ -484,10 +547,10 @@ void BaseTarget::AddLine(string mnemonic, vector<LineArg> args)
       regs.push_back(a.reg);
     }
   }
-  translations.back().AddLine(l, regs);
+  translations.back().AddLine(l, inst, regs);
 }
 
-void BaseTarget::AddLine(string mnemonic, vector<LineArg> args, string condition)
+void BaseTarget::AddLine(string mnemonic, Instruction& inst, vector<LineArg> args, string condition)
 {
   Line l(mnemonic, args, condition);
   vector<Register*> regs;
@@ -498,5 +561,5 @@ void BaseTarget::AddLine(string mnemonic, vector<LineArg> args, string condition
       regs.push_back(a.reg);
     }
   }
-  translations.back().AddLine(l, regs);
+  translations.back().AddLine(l, inst, regs);
 }

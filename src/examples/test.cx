@@ -1,23 +1,30 @@
 
-int main()
+// int main()
+// {
+
+//   int a;
+//   int b = 20;
+
+//   // inner scope
+//   {
+//     // second declaration of a with more locality
+//     int a = b;
+//     a++;
+//   }
+
+//   a = b;
+//   return a;
+// }
+
+// void func(int a, int b)
+// {
+//   a = a + b;
+//   // no return here
+// }
+
+int identifiers(int a, int b)
 {
-
-  int a;
-  int b = 20;
-
-  // inner scope
-  {
-    // second declaration of a with more locality
-    int a = b;
-    a++;
-  }
-
-  a = b;
+  a = a + 2;
+  b = a + b;
   return a;
-}
-
-void func(int a, int b)
-{
-  a = a + b;
-  // no return here
 }

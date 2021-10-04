@@ -21,9 +21,16 @@ struct Register;
 struct FuncTrans {
   Identifier id; // NOTE -- this should only contain a name, return type, and members
   string language;
+  vector<Instruction>* instructions;
   unordered_set<Register*> used_registers;
+  unordered_map<Instruction*, vector<Line>> instruction_reference; 
+  unordered_map<Identifier*, int> stack_offsets;
 
-  void AddLine(Line line, vector<Register*> registers);
+  void AssignArgumentOffsets(Identifier& function);
+  void AddLine(Line line, Instruction& inst, vector<Register*> regs);
+  void Flatten();
+  Instruction* GetSetupInstruction();
+  Instruction* GetTeardownInstruction();
 
   vector<Line> translation;
 };
@@ -77,6 +84,7 @@ struct Line {
   Line(string mnem, vector<LineArg> a, string cond);
 
   string to_string();
+  string to_string(unordered_map<Identifier*, int> stack_offsets, string base_reg);
 
   string mnemonic;
   string condition;
@@ -133,9 +141,9 @@ class BaseTarget {
     virtual void TranslateScopeBegin(Instruction& inst) { unsupported(inst); }
     virtual void TranslateScopeEnd(Instruction& inst) { unsupported(inst); }
 
-    virtual void TranslateStore(Register& reg) { unsupported("register store"); }
-    virtual void TranslateStore(Register& reg, Identifier& id) { unsupported("register store"); }
-    virtual void TranslateLoad(Register& reg, Result& res) { unsupported("register load"); }
+    virtual void TranslateStore(Register& reg, Instruction& inst) { unsupported("register store"); }
+    virtual void TranslateStore(Register& reg, Instruction& inst, Identifier& id) { unsupported("register store"); }
+    virtual void TranslateLoad(Register& reg, Instruction& inst, Result& res) { unsupported("register load"); }
 
     typedef void (BaseTarget::*TranslateMethod)(Instruction&);
 
@@ -181,19 +189,20 @@ class BaseTarget {
       Register::Rank rank = Register::Rank::GENERAL
     );
     virtual Register& GetLastUsed(
+      Instruction& inst,
       Register::Data data = Register::Data::INTEGER,
       Register::Rank rank = Register::Rank::GENERAL
     );
 
     // references from the vector are safe because it
     // will never be modified after initialization
-    virtual void StoreRegister(Register& reg);
-    virtual void StoreRegister(Register& reg, Identifier& ass);
+    virtual void StoreRegister(Register& reg, Instruction& inst);
+    virtual void StoreRegister(Register& reg, Instruction& inst, Identifier& ass);
 
     /** Stores all currently used registers
      * 
      */
-    virtual void StoreAll(Identifier& function, bool includeSpecial = false);
+    virtual void StoreAll(Identifier& function, Instruction& inst, bool includeSpecial = false);
 
     /** Intelligently manages registers, either selecting a register
      * with the value already in it, loading the value into a 
@@ -201,7 +210,7 @@ class BaseTarget {
      * loading in that register.
      * \returns Reference to register containing newly loaded value
      */
-    virtual Register& PrepareResult(Result& res);
+    virtual Register& PrepareResult(Result& res, Instruction& inst);
     virtual Register::Data FetchDataType(Result& res);
     virtual Register::Data FetchDataType(Identifier& id);
 
@@ -220,11 +229,11 @@ class BaseTarget {
     /** Similar to PrepareResult without loading any values --
      *  i.e. for setting up assignments
      */
-    virtual Register& PrepareAssign(Identifier& id);
+    virtual Register& PrepareAssign(Identifier& id, Instruction& inst);
     virtual Register& CheckLoaded(Identifier& id);
     virtual Result& GenerateResult(Identifier& id);
     virtual Result& GenerateResult(Result& res);
-    virtual void ManageStorage(Register& reg);
+    virtual void ManageStorage(Register& reg, Instruction& inst);
 
     virtual void UpdateRegister(Register& reg);
     virtual void ResetRegisters();
@@ -232,11 +241,11 @@ class BaseTarget {
     virtual void unsupported(Instruction& inst);
     virtual void unsupported(string mess);
 
-    virtual void SaveUsedRegisters() = 0;
-    virtual void RestoreUsedRegisters() = 0;
+    virtual void SaveUsedRegisters(Identifier& function) = 0;
+    virtual void RestoreUsedRegisters(Identifier& function) = 0;
 
-    virtual void AddLine(string mnemonic, vector<LineArg> args);
-    virtual void AddLine(string mnemonic, vector<LineArg> args, string condition);
+    virtual void AddLine(string mnemonic, Instruction& inst, vector<LineArg> args);
+    virtual void AddLine(string mnemonic, Instruction& inst, vector<LineArg> args, string condition);
     virtual string to_string();
 
     Compiler* comp;
