@@ -269,8 +269,8 @@ Any Compiler::visitFunc_def(CoraxParser::Func_defContext* ctx)
     // the last identifier added to the global scope _must_ be the function
     currentFunction = &globalTable->GetLast();
     // construct new scope from args
-    pushScope(ctx->stat_compound()->OBRACE(), SymbolTable::Scope::FUNCTION);
     currentFunction->function.add(Instruction(ctx, Instruction::SETUP));
+    pushScope(ctx->stat_compound()->OBRACE(), SymbolTable::Scope::FUNCTION);
     if (graphing) graph.Addf(currentFunction->name);
     for (auto &arg : currentFunction->members)
       currentScope->AddSymbol(arg);
