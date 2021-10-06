@@ -611,6 +611,8 @@ string Instruction::name() {
     }
     case CALL:
       return "function call";
+    case RETURN_PREP:
+      return "return statement preparation";
     case RETURN:
       return "return statement";
     case SETUP:
@@ -634,19 +636,22 @@ string Instruction::name() {
 
 string Instruction::to_string() {
   string s = "";
-  if (
-    instr != STATEMENT_END && 
-    instr != SCOPE_BEGIN &&
-    instr != SCOPE_END &&
-    instr != RETURN && 
-    instr != SETUP &&
-    instr != IF &&
-    instr != LABEL &&
-    instr != CONDITIONAL &&
-    instr != DECLARE
-  ) {
+  // if (
+  //   instr != STATEMENT_END && 
+  //   instr != SCOPE_BEGIN &&
+  //   instr != SCOPE_END &&
+  //   instr != RETURN_PREP &&
+  //   instr != RETURN && 
+  //   instr != SETUP &&
+  //   instr != IF &&
+  //   instr != LABEL &&
+  //   instr != CONDITIONAL &&
+  //   instr != DECLARE
+  // ) {
+  //   s = assignment->name + " = ";
+  // }
+  if (assignment != nullptr)
     s = assignment->name + " = ";
-  }
   switch (instr) {
     case DEREF:
     {
@@ -826,6 +831,11 @@ string Instruction::to_string() {
     case SETUP:
     {
       s += "<function setup>";
+    }
+    break;
+    case RETURN_PREP:
+    {
+      s += "<return preparation>";
     }
     break;
     case RETURN:

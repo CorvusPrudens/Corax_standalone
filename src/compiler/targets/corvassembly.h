@@ -39,6 +39,7 @@ class CorvassemblyTarget : public BaseTarget {
 
     void TranslateCall(Instruction& inst) override;
     void TranslateSetup(Instruction& inst) override;
+    void TranslateReturnPrep(Instruction& inst) override;
     void TranslateReturn(Instruction& inst) override;
 
     void TranslateIf(Instruction& inst) override;

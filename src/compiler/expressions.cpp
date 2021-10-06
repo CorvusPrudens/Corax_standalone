@@ -205,6 +205,10 @@ Any Compiler::visitStatReturn(CoraxParser::StatReturnContext* ctx)
   visitChildren(ctx);
   if (ctx->expression() != nullptr)
   {
+    Instruction inst_prep(ctx, Instruction::RETURN_PREP, results.get(ctx->expression()));
+    inst_prep.scope = currentScope;
+    currentFunction->function.add(inst_prep);
+
     Instruction inst(ctx, Instruction::RETURN, results.get(ctx->expression()));
     inst.scope = currentScope;
     currentFunction->function.add(inst);
@@ -214,6 +218,11 @@ Any Compiler::visitStatReturn(CoraxParser::StatReturnContext* ctx)
     Result res;
     res.setValue(0);
     res.type.type_specifiers = {"void"};
+    
+    Instruction inst_prep(ctx, Instruction::RETURN_PREP, res);
+    inst_prep.scope = currentScope;
+    currentFunction->function.add(inst_prep);
+
     Instruction inst(ctx, Instruction::RETURN, res);
     inst.scope = currentScope;
     currentFunction->function.add(inst);

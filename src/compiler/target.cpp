@@ -239,7 +239,7 @@ string Line::to_string(unordered_map<Identifier*, int> stack_offsets, string bas
       stack_offsets.count(args[i].result->id) > 0
     )
     {
-      out += '[' + base_reg + ',' + std::to_string(stack_offsets[args[i].result->id]) + ']';
+      out += '[' + base_reg + ',' + std::to_string(stack_offsets[args[i].result->id]) + ']' + " (" + args[i].result->id->name + ")";
     }
     else
     {
@@ -267,9 +267,7 @@ void BaseTarget::Translate(Identifier& function)
 {
   operationStep = 0;
   FuncTrans temptrans;
-  temptrans.id.name = function.name;
-  temptrans.id.dataType = function.dataType;
-  temptrans.id.members = function.members;
+  temptrans.id = &function;
   temptrans.language = targetName;
   temptrans.instructions = &function.function.instructions;
   translations.push_back(temptrans);
@@ -565,9 +563,9 @@ string BaseTarget::to_string()
   string output = "";
   for (auto& func : translations)
   {
-    output += func.id.name + " compiled to " + targetName + "\n";
+    output += func.id->name + " compiled to " + targetName + "\n";
     output += "arguments:\n";
-    for (auto& arg : func.id.members)
+    for (auto& arg : func.id->members)
     {
       output += "  " + arg.dataType.to_string() + " " + arg.name + "\n";
     }

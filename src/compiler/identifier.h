@@ -228,6 +228,7 @@ class Instruction {
       CMP,
       CALL,
       SETUP,
+      RETURN_PREP,
       RETURN,
       IF,
       LABEL,

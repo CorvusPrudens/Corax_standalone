@@ -47,7 +47,7 @@ void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
       AddLine(mnemonic, inst, {LineArg(op1), LineArg(inst.operand2)});
       // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(inst.operand2));
     else
-      AddLine(mnemonic, inst, {LineArg(op1), LineArg(inst.operand1), LineArg(ass)});
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(inst.operand2), LineArg(ass)});
       // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(inst.operand2) + ", " + LineArg(ass));
 
     UpdateRegister(ass);
@@ -302,27 +302,27 @@ void CorvassemblyTarget::TranslateCall(Instruction& inst)
 // AddLine("pop " + GetBasePointer().name); \
 // AddLine("jmp [" + GetStackPointer().name + "]");
 
-#define FUNC_END \
-AddLine("add", inst, {LineArg(GetBasePointer()), LineArg("0"), LineArg(GetStackPointer())}); \
-AddLine("pop", inst, {LineArg(GetBasePointer())}); \
-AddLine("jmp", inst, {LineArg("[" + GetStackPointer().name + "]")});
+void CorvassemblyTarget::TranslateReturnPrep(Instruction& inst)
+{
+  if (!inst.operand1.isConst() && !(inst.operand1.type == void_))
+  {
+    Register& ret = PrepareResult(inst.operand1, inst);
+    if (&ret != returnVal) {
+      auto scope = current_scope->GetScope(returnVal->loaded->id);
+      if (scope->scope == SymbolTable::GLOBAL)
+        StoreRegister(*returnVal, inst);
+      AddLine("add", inst, {LineArg(ret), LineArg("0"), LineArg(*returnVal)});
+      returnVal->load(inst.operand1);
+    }
+  }
+}
 
 // TODO -- this could be optimized better!!
 void CorvassemblyTarget::TranslateReturn(Instruction& inst)
 {
-  if (inst.operand1.isConst() && inst.operand1.type == void_) {
-    FUNC_END
-  }
-  else
-  {
-    Register& ret = PrepareResult(inst.operand1, inst);
-    if (&ret != returnVal) {
-      StoreRegister(*returnVal, inst);
-      AddLine("add", inst, {LineArg(ret), LineArg("0"), LineArg(*returnVal)});
-      returnVal->load(inst.operand1);
-    }
-    FUNC_END
-  }
+  AddLine("add", inst, {LineArg(GetBasePointer()), LineArg("0"), LineArg(GetStackPointer())});
+  AddLine("pop", inst, {LineArg(GetBasePointer())});
+  AddLine("jmp", inst, {LineArg("[" + GetStackPointer().name + "]")});
 }
 
 void CorvassemblyTarget::TranslateSetup(Instruction& inst)
@@ -376,6 +376,18 @@ void CorvassemblyTarget::TranslateStore(Register& reg, Instruction& inst)
         allocated = true;
         break;
       }
+    }
+
+    // SUPER UGGO EW (seeing if variable is an arg)
+    for (auto& arg : translations.back().id->members)
+    {
+      try 
+      {
+        translations.back().id->funcTable->GetLocalSymbol(arg.name);
+        allocated = true;
+        break;
+      }
+      catch (int e) {}
     }
 
     if (!allocated)
@@ -445,6 +457,18 @@ void CorvassemblyTarget::TranslateScopeBegin(Instruction& inst)
 
 void CorvassemblyTarget::TranslateScopeEnd(Instruction& inst)
 {
+  for (auto& reg : registers)
+  {
+    try {
+      if (reg.loaded != nullptr && reg.loaded->kind == Result::Kind::ID)
+      {
+        current_scope->GetLocalSymbol(reg.loaded->id->name);
+        // reg.requires_storage = false;
+        reg.flush(); // maybe this should be done?
+      }
+      
+    } catch (int e) {}
+  }
   current_scope = inst.scope->parent;
 }
 

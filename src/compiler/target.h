@@ -19,7 +19,7 @@ struct Line; // forward decl
 struct Register;
 
 struct FuncTrans {
-  Identifier id; // NOTE -- this should only contain a name, return type, and members
+  Identifier* id; // NOTE -- this should only contain a name, return type, and members
   string language;
   vector<Instruction>* instructions;
   unordered_set<Register*> used_registers;
@@ -134,6 +134,7 @@ class BaseTarget {
 
     virtual void TranslateCall(Instruction& inst) { unsupported(inst); }
     virtual void TranslateSetup(Instruction& inst) { unsupported(inst); }
+    virtual void TranslateReturnPrep(Instruction& inst) { unsupported(inst); }
     virtual void TranslateReturn(Instruction& inst) { unsupported(inst); }
     virtual void TranslateStat(Instruction& inst);
 
@@ -174,6 +175,7 @@ class BaseTarget {
       &BaseTarget::TranslateCmp,
       &BaseTarget::TranslateCall,
       &BaseTarget::TranslateSetup,
+      &BaseTarget::TranslateReturnPrep,
       &BaseTarget::TranslateReturn,
       &BaseTarget::TranslateIf,
       &BaseTarget::TranslateLabel,
