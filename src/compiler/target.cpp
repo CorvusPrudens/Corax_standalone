@@ -97,6 +97,8 @@ void FuncTrans::AllocateVariables(Register* stack_pointer)
       int parent_stack_offset;
       if (inst.scope->scope != SymbolTable::FUNCTION)
         parent_stack_offset = inst.scope->parent->stack_offset;
+      else
+        parent_stack_offset = 0;
 
       auto& identifiers = allocated_variables[inst.scope];
       for (auto ident : identifiers)
