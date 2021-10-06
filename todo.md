@@ -36,3 +36,19 @@ ldr c, [b, -4]
 - With function calls, the convention will be for the callee to restore all registers is uses (i.e. a-f)
 - BUG -- inline comments after code cause the error reporting to move down by a line
 - Need to add implicit return (if not given)
+
+# October 3, 2021
+
+- We need a method that cleans unreachable code (i.e. after a return statement within a particular scope)
+- Still need to add that return detection (should be pretty easy with a single bool for each scope to check
+  if a return has been declared anywhere)
+- We could also add a trivial optimization for situations like:
+~~~arm
+add r2, r1, r2
+add r2, 0, r0
+// or
+add r2, r1
+add r2, 0, r0
+// which should be
+add r2, r1, r0
+~~~
