@@ -59,19 +59,33 @@ void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
     // it's not already loaded somewhere, then after all the other operands
     // have had their search, we'll have a second round of searching/loading!!!
     Register& op1 = PrepareResult(inst.operand1, inst);
-    Register& op2 = PrepareResult(inst.operand2, inst);
+
+    // TODO -- this should be checked -- if it's in a register, then use that,
+    // otherwise it should just come from the variable (e.g. add r0, variable)
+    // Register& op2 = PrepareResult(inst.operand2, inst);
+
     Register& ass = PrepareAssign(*inst.assignment, inst);
 
     
-    if (&ass == &op1)
-      AddLine(mnemonic, inst, {LineArg(op1), LineArg(op2)});
-    // TODO -- this doesn't work for subtraction or division operations, 
-    // so it has to be commented out
-    // else if (&ass == &op2)
-      // AddLine(mnemonic, inst, {LineArg(op2), LineArg(op1)});
-    else
+    // if (&ass == &op1)
+    //   AddLine(mnemonic, inst, {LineArg(op1), LineArg(op2)});
+    // // TODO -- this doesn't work for subtraction or division operations, 
+    // // so it has to be commented out
+    // // else if (&ass == &op2)
+    //   // AddLine(mnemonic, inst, {LineArg(op2), LineArg(op1)});
+    // else
+    //   AddLine(mnemonic, inst, {LineArg(op1), LineArg(op2), LineArg(ass)});
+    //   // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1) + ", " + LineArg(ass));
+
+    try 
+    {
+      Register& op2 = CheckLoaded(*inst.operand2.id);
       AddLine(mnemonic, inst, {LineArg(op1), LineArg(op2), LineArg(ass)});
-      // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1) + ", " + LineArg(ass));
+    } 
+    catch (int e)
+    {
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(inst.operand2), LineArg(ass)});
+    }
 
     UpdateRegister(ass);
     ManageStorage(ass, inst);

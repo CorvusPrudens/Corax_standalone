@@ -20,15 +20,16 @@ int main()
   return a;
 }
 
-// void func(int a, int b)
-// {
-//   a = a + b;
-//   // no return here
-// }
+void func(int a, int b)
+{
+  a = a + b;
+  // no return here
+}
+int global = 100;
 
 int identifiers(int a, int b)
 {
   a += 3;
-  b += a;
+  b += a + global;
   return b;
 }
