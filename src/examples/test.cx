@@ -27,5 +27,5 @@ int identifiers(int a, int b)
 {
   a += 3;
   b += a;
-  return b; // TODO -- spurious "a"s are being produced
+  return b;
 }
