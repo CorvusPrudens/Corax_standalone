@@ -804,52 +804,112 @@ Any Compiler::visitTernary(CoraxParser::TernaryContext *ctx)
 
 Any Compiler::visitAssignmentMult(CoraxParser::AssignmentMultContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Mult oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentDiv(CoraxParser::AssignmentDivContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Div oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentMod(CoraxParser::AssignmentModContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Mod oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentPlus(CoraxParser::AssignmentPlusContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Add oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentMinus(CoraxParser::AssignmentMinusContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Sub oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentShiftLeft(CoraxParser::AssignmentShiftLeftContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Shiftl oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentShiftRight(CoraxParser::AssignmentShiftRightContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  Shiftr oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentBitAnd(CoraxParser::AssignmentBitAndContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  BitAnd oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentBitXor(CoraxParser::AssignmentBitXorContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  BitXor oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitAssignmentBitOr(CoraxParser::AssignmentBitOrContext *ctx) 
 {
-  return visitChildren(ctx);
+  visitChildren(ctx);
+  BitOr oper(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx->expr_assi()), oper);
+  Assign oper2(ctx, currentScope, currentFunction, this);
+  operation(ctx, results.get(ctx->expr_primary()), results.get(ctx), oper2);
+
+  return nullptr;
 }
 
 Any Compiler::visitComma(CoraxParser::CommaContext *ctx) 
