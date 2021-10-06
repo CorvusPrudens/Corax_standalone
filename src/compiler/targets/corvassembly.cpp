@@ -64,13 +64,13 @@ void CorvassemblyTarget::StandardInstruction(Instruction& inst, string mnemonic)
 
     
     if (&ass == &op1)
-      AddLine(mnemonic, inst, {LineArg(op1), LineArg(op1)});
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(op2)});
     // TODO -- this doesn't work for subtraction or division operations, 
     // so it has to be commented out
     // else if (&ass == &op2)
-    //   AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1));
+      // AddLine(mnemonic, inst, {LineArg(op2), LineArg(op1)});
     else
-      AddLine(mnemonic, inst, {LineArg(op1), LineArg(op1), LineArg(ass)});
+      AddLine(mnemonic, inst, {LineArg(op1), LineArg(op2), LineArg(ass)});
       // AddLine(mnemonic + " " + LineArg(op1) + ", " + LineArg(op1) + ", " + LineArg(ass));
 
     UpdateRegister(ass);
